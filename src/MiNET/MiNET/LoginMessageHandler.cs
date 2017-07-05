@@ -417,10 +417,6 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpeRemoveBlock(McpeRemoveBlock message)
-		{
-		}
-
 		public void HandleMcpeLevelSoundEvent(McpeLevelSoundEvent message)
 		{
 		}
@@ -445,10 +441,6 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpeUseItem(McpeUseItem message)
-		{
-		}
-
 		public void HandleMcpePlayerAction(McpePlayerAction message)
 		{
 		}
@@ -465,15 +457,19 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpeDropItem(McpeDropItem message)
-		{
-		}
-
 		public void HandleMcpeContainerClose(McpeContainerClose message)
 		{
 		}
 
-		public void HandleMcpeContainerSetSlot(McpeContainerSetSlot message)
+		public void HandleMcpePlayerHotbarPacket(McpePlayerHotbarPacket message)
+		{
+		}
+
+		public void HandleMcpeInventoryContentPacket(McpeInventoryContentPacket message)
+		{
+		}
+
+		public void HandleMcpeInventorySlotPacket(McpeInventorySlotPacket message)
 		{
 		}
 
@@ -505,7 +501,7 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpeCommandStep(McpeCommandStep message)
+		public void HandleMcpeCommandRequestPacket(McpeCommandRequestPacket message)
 		{
 		}
 
