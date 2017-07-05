@@ -422,6 +422,10 @@ namespace MiNET
 		{
 		}
 
+		public void HandleMcpeInventoryTransactionPacket(McpeInventoryTransactionPacket message)
+		{
+		}
+
 		public void HandleMcpeMobEquipment(McpeMobEquipment message)
 		{
 		}
