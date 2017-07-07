@@ -422,7 +422,7 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpeInventoryTransactionPacket(McpeInventoryTransactionPacket message)
+		public void HandleMcpeInventoryTransaction(McpeInventoryTransaction message)
 		{
 		}
 
@@ -462,15 +462,15 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpePlayerHotbarPacket(McpePlayerHotbarPacket message)
+		public void HandleMcpePlayerHotbar(McpePlayerHotbar message)
 		{
 		}
 
-		public void HandleMcpeInventoryContentPacket(McpeInventoryContentPacket message)
+		public void HandleMcpeInventoryContent(McpeInventoryContent message)
 		{
 		}
 
-		public void HandleMcpeInventorySlotPacket(McpeInventorySlotPacket message)
+		public void HandleMcpeInventorySlot(McpeInventorySlot message)
 		{
 		}
 
@@ -502,7 +502,7 @@ namespace MiNET
 		{
 		}
 
-		public void HandleMcpeCommandRequestPacket(McpeCommandRequestPacket message)
+		public void HandleMcpeCommandRequest(McpeCommandRequest message)
 		{
 		}
 
