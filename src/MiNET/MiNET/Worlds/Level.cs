@@ -1160,11 +1160,24 @@ namespace MiNET.Worlds
 			{
 				// Revert
 
-				var message = McpeUpdateBlock.CreateObject();
-				message.blockId = block.Id;
-				message.coordinates = block.Coordinates;
-				message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
-				player.SendPackage(message);
+			    RevertBlockAction(player, block, blockEntity);
+			}
+			else
+			{
+				BreakBlock(block, blockEntity, inHand);
+
+				player.HungerManager.IncreaseExhaustion(0.025f);
+				player.AddExperience(block.GetExperiencePoints());
+			}
+		}
+
+	    private static void RevertBlockAction(Player player, Block block, BlockEntity blockEntity)
+	    {
+	        var message = McpeUpdateBlock.CreateObject();
+	        message.blockId = block.Id;
+	        message.coordinates = block.Coordinates;
+	        message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
+	        player.SendPackage(message);
 
 			// Revert block entity if exists
 			if (blockEntity != null)
