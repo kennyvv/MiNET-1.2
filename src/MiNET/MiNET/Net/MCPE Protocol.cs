@@ -1861,6 +1861,7 @@ namespace MiNET.Net
 		}
 
 		public byte type; // = null;
+		public bool unknown0; // = null;
 
 		public McpeText()
 		{
@@ -1875,6 +1876,7 @@ namespace MiNET.Net
 			BeforeEncode();
 
 			Write(type);
+			Write(unknown0);
 
 			AfterEncode();
 		}
@@ -1889,6 +1891,7 @@ namespace MiNET.Net
 			BeforeDecode();
 
 			type = ReadByte();
+			unknown0 = ReadBool();
 
 			AfterDecode();
 		}
@@ -1901,6 +1904,7 @@ namespace MiNET.Net
 			base.ResetPackage();
 
 			type=default(byte);
+			unknown0=default(bool);
 		}
 
 	}

@@ -215,6 +215,8 @@ namespace MiNET.Entities
 			Chested,
 
 			Stackable,
+
+			AffectedByGravity = 46
 		}
 
 		protected virtual BitArray GetFlags()
@@ -254,6 +256,7 @@ namespace MiNET.Entities
 			bits[(int) DataFlags.Breathing] = IsBreathing;
 			bits[(int) DataFlags.Chested] = IsChested;
 			bits[(int) DataFlags.Stackable] = IsStackable;
+			bits[(int) DataFlags.AffectedByGravity] = true;
 
 			return bits;
 		}

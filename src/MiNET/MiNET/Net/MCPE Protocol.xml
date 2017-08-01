@@ -186,6 +186,7 @@
 		</enums>
 
 		<field name="Type" type="byte" />
+	  <field name="Unknown0" type="bool" />
 	</pdu>
 
 	<pdu id="0x0a" online="false" client="false" server="true" name="MCPE_SET_TIME">

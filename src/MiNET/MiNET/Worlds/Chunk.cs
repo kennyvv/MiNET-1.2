@@ -128,8 +128,6 @@ namespace MiNET.Worlds
 
 				writer.Write(blocks);
 				writer.Write(metadata.Data);
-				writer.Write(skylight.Data);
-				writer.Write(blocklight.Data);
 				_cache = stream.ToArray();
 			}
 
