@@ -184,6 +184,8 @@ namespace MiNET.Entities.World
 						player.SendPackage(takeItemEntity);
 					}
 
+					player.Inventory.SetFirstEmptySlot(Item, true, false);
+
 					DespawnEntity();
 					break;
 				}

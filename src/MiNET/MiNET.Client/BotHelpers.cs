@@ -75,24 +75,24 @@ namespace MiNET.Client
 		{
 			Action<Task, string> doUseItem = (t, command) =>
 			{
-				McpeCommandRequest commandStep = McpeCommandRequest.CreateObject();
-				commandStep.commandName = "fill";
-				commandStep.commandOverload = "replace";
-				commandStep.unknown1 = 0;
-				commandStep.currentStep = 0;
-				commandStep.isOutput = false;
-				commandStep.clientId = client.ClientId;
-				//commandStep.commandInputJson = "{\n   \"tileName\" : \"dirt\",\n   \"from\" : {\n      \"x\" : 0,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 0,\n      \"zrelative\" : false\n   },\n   \"to\" : {\n      \"x\" : 10,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 10,\n      \"zrelative\" : false\n   }\n}\n";
-				commandStep.commandInputJson = "{\n   \"from\" : {\n      \"x\" : 0,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 0,\n      \"zrelative\" : false\n   },\n   \"tileName\" : \"dirt\",\n   \"to\" : {\n      \"x\" : 10,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 10,\n      \"zrelative\" : false\n   }\n}\n";
-				//   "commandInputJson": "{\n   \"from\" : {\n      \"x\" : 0,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 0,\n      \"zrelative\" : false\n   },\n   \"tileName\" : \"dirt\",\n   \"to\" : {\n      \"x\" : 10,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 10,\n      \"zrelative\" : false\n   }\n}\n",
-
-				//commandStep.commandInputJson = "null\n";
-				commandStep.commandOutputJson = "null\n";
-				commandStep.unknown7 = 0;
-				commandStep.unknown8 = 0;
-				commandStep.entityIdSelf = client.NetworkEntityId;
-				//Log.Error($"Entity ID used={commandStep.entityIdSelf}\n{Package.HexDump(commandStep.Encode())}");
-				client.SendPackage(commandStep);
+				/*	McpeCommandRequest commandStep = McpeCommandRequest.CreateObject();
+					commandStep.CommandName = "fill";
+					commandStep.commandOverload = "replace";
+					commandStep.unknown1 = 0;
+					commandStep.currentStep = 0;
+					commandStep.isOutput = false;
+					commandStep.clientId = client.ClientId;
+					//commandStep.commandInputJson = "{\n   \"tileName\" : \"dirt\",\n   \"from\" : {\n      \"x\" : 0,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 0,\n      \"zrelative\" : false\n   },\n   \"to\" : {\n      \"x\" : 10,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 10,\n      \"zrelative\" : false\n   }\n}\n";
+					commandStep.commandInputJson = "{\n   \"from\" : {\n      \"x\" : 0,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 0,\n      \"zrelative\" : false\n   },\n   \"tileName\" : \"dirt\",\n   \"to\" : {\n      \"x\" : 10,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 10,\n      \"zrelative\" : false\n   }\n}\n";
+					//   "commandInputJson": "{\n   \"from\" : {\n      \"x\" : 0,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 0,\n      \"zrelative\" : false\n   },\n   \"tileName\" : \"dirt\",\n   \"to\" : {\n      \"x\" : 10,\n      \"xrelative\" : false,\n      \"y\" : 10,\n      \"yrelative\" : false,\n      \"z\" : 10,\n      \"zrelative\" : false\n   }\n}\n",
+	
+					//commandStep.commandInputJson = "null\n";
+					commandStep.commandOutputJson = "null\n";
+					commandStep.unknown7 = 0;
+					commandStep.unknown8 = 0;
+					commandStep.entityIdSelf = client.NetworkEntityId;
+					//Log.Error($"Entity ID used={commandStep.entityIdSelf}\n{Package.HexDump(commandStep.Encode())}");
+					client.SendPackage(commandStep);*/
 			};
 			return doUseItem;
 		}
@@ -111,7 +111,7 @@ namespace MiNET.Client
 					McpeMovePlayer movePlayerPacket = McpeMovePlayer.CreateObject();
 					movePlayerPacket.runtimeEntityId = client.EntityId;
 					movePlayerPacket.x = client.CurrentLocation.X;
-					movePlayerPacket.y = client.CurrentLocation.Y;
+					movePlayerPacket.y = client.CurrentLocation.Y - 1.62f;
 					movePlayerPacket.z = client.CurrentLocation.Z;
 					movePlayerPacket.yaw = lookAtPos.Yaw;
 					movePlayerPacket.pitch = lookAtPos.Pitch;
@@ -130,11 +130,11 @@ namespace MiNET.Client
 						weight = Math.Abs((float) ((lenLeft - stepLen)/lenght));
 
 						client.CurrentLocation = new PlayerLocation(Vector3.Lerp(originalPosition, targetPosition, 1 - weight));
-
+						
 						McpeMovePlayer movePlayerPacket = McpeMovePlayer.CreateObject();
 						movePlayerPacket.runtimeEntityId = client.EntityId;
 						movePlayerPacket.x = client.CurrentLocation.X;
-						movePlayerPacket.y = client.CurrentLocation.Y;
+						movePlayerPacket.y = client.CurrentLocation.Y - 1.62f;
 						movePlayerPacket.z = client.CurrentLocation.Z;
 						movePlayerPacket.yaw = lookAtPos.Yaw;
 						movePlayerPacket.pitch = lookAtPos.Pitch;
@@ -151,7 +151,7 @@ namespace MiNET.Client
 						McpeMovePlayer movePlayerPacket = McpeMovePlayer.CreateObject();
 						movePlayerPacket.runtimeEntityId = client.EntityId;
 						movePlayerPacket.x = client.CurrentLocation.X;
-						movePlayerPacket.y = client.CurrentLocation.Y;
+						movePlayerPacket.y = client.CurrentLocation.Y - 1.62f;
 						movePlayerPacket.z = client.CurrentLocation.Z;
 						movePlayerPacket.yaw = lookAtPos.Yaw;
 						movePlayerPacket.pitch = lookAtPos.Pitch;

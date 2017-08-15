@@ -45,6 +45,8 @@ using MiNET.Net;
 using MiNET.Plugins;
 using MiNET.Plugins.Attributes;
 using MiNET.Plugins.Commands;
+using MiNET.UI.Elements;
+using MiNET.UI.Forms;
 using MiNET.Utils;
 using MiNET.Worlds;
 
@@ -77,8 +79,16 @@ namespace TestPlugin
 		//    return packet;
 		//}
 
+	//	[Command(Description = "Do a forms test")]
+		//public void FormTest(Player player)
+		//{
+		//	var form = new GAuthForm();
+			//form.Show(player);
+		//	player.OpenForm(form);
+		//}
+
 		[Command(Description = "Save world")]
-		[Authorize(Permission = UserPermission.Admin)]
+		[Authorize(Permission = UserPermission.Operator)]
 		public void Save(Player player)
 		{
 			AnvilWorldProvider provider = player.Level.WorldProvider as AnvilWorldProvider;

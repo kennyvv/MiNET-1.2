@@ -16,10 +16,12 @@ namespace MiNET
 		public const int InventorySize = HotbarSize + 36;
 		public Player Player { get; private set; }
 
-		public List<Item> Slots { get; private set; }
-		public int[] ItemHotbar { get; private set; }
-		public int InHandSlot { get; set; }
-
+		public Item[] Slots { get; private set; }
+		//public int[] ItemHotbar { get; private set; }
+		public int InHandSlot { get; set; } = 36;
+		public int Cursor { get; set; } = -1;
+		public Item CursorItem { get; set; } 
+		public int SelectedHotbarSlot { get; private set; }
 
 		// Armour
 		public Item Boots { get; set; }
@@ -31,10 +33,10 @@ namespace MiNET
 		{
 			Player = player;
 
-			int idx = 1;
-			Slots = Enumerable.Repeat((Item) new ItemAir(), InventorySize).ToList();
-			//Slots[idx++] = new ItemCompass(); // test with y=-1
-			//Slots[idx++] = new ItemSpawnEgg(EntityType.Wither);
+			int idx = 0;
+			Slots = Enumerable.Repeat((Item) new ItemAir(), InventorySize).ToArray();
+			Slots[idx++] = new ItemCompass(); // test with y=-1
+		//	Slots[idx++] = new ItemSpawnEgg(EntityType.Wither);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Wolf);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Pig);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Horse);
@@ -42,28 +44,25 @@ namespace MiNET
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Npc);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Zombie);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.IronGolem);
-			//Slots[idx++] = new ItemSnowball();
-			//Slots[idx++] = new ItemBow();
-			//Slots[idx++] = new ItemArrow() {Count = 64};
+			Slots[idx++] = new ItemSnowball();
+			Slots[idx++] = new ItemBow();
+			Slots[idx++] = new ItemArrow() {Count = 64};
 
-			ItemHotbar = new int[HotbarSize];
-			for (byte i = 0; i < ItemHotbar.Length; i++)
-			{
-				ItemHotbar[i] = i;
-			}
+			Slots[35] = new ItemApple();
+			Slots[9] = new ItemDiamond();
 
-			InHandSlot = 0;
-
-			Boots = new ItemAir();
-			Leggings = new ItemAir();
-			Chest = new ItemAir();
-			Helmet = new ItemAir();
+			Boots = new ItemDiamondBoots();
+			Leggings = new ItemDiamondLeggings();
+			Chest = new ItemDiamondChestplate();
+			Helmet = new ItemDiamondHelmet();
+			CursorItem = new ItemAir();
 		}
 
 		public virtual Item GetItemInHand()
 		{
-			var index = ItemHotbar[InHandSlot];
-			if (index == -1 || index >= Slots.Count) return new ItemAir();
+			//var index = ItemHotbar[InHandSlot];
+			var index = InHandSlot;
+			if (index == -1 || index >= Slots.Length) return new ItemAir();
 
 			return Slots[index] ?? new ItemAir();
 		}
@@ -90,28 +89,10 @@ namespace MiNET
 			existing.ExtraData = item.ExtraData;
 		}
 
-		public MetadataInts GetHotbar()
-		{
-			MetadataInts metadata = new MetadataInts();
-			for (byte i = 0; i < ItemHotbar.Length; i++)
-			{
-				if (ItemHotbar[i] == -1)
-				{
-					metadata[i] = new MetadataInt(-1);
-				}
-				else
-				{
-					metadata[i] = new MetadataInt(ItemHotbar[i] + HotbarSize);
-				}
-			}
-
-			return metadata;
-		}
-
 		public ItemStacks GetSlots()
 		{
 			ItemStacks slotData = new ItemStacks();
-			for (int i = 0; i < Slots.Count; i++)
+			for (int i = 0; i < Slots.Length; i++)
 			{
 				if (Slots[i].Count == 0) Slots[i] = new ItemAir();
 				slotData.Add(Slots[i]);
@@ -135,14 +116,14 @@ namespace MiNET
 		{
 			if (reverseOrder)
 			{
-				for (int si = Slots.Count; si > 0; si--)
+				for (int si = Slots.Length; si > 9; si--)
 				{
 					if (FirstEmptySlot(item, update, si - 1)) return true;
 				}
 			}
 			else
 			{
-				for (int si = 0; si < Slots.Count; si++)
+				for (int si = 9; si < Slots.Length; si++)
 				{
 					if (FirstEmptySlot(item, update, si)) return true;
 				}
@@ -175,7 +156,12 @@ namespace MiNET
 
 		public void SetHeldItemSlot(int selectedHotbarSlot, bool sendToPlayer = true)
 		{
+			SelectedHotbarSlot = selectedHotbarSlot;
 			InHandSlot = selectedHotbarSlot;
+			if (selectedHotbarSlot >= 0 && selectedHotbarSlot <= 8)
+			{
+				InHandSlot = 36 + selectedHotbarSlot;
+			}
 
 			if (sendToPlayer)
 			{
@@ -183,7 +169,7 @@ namespace MiNET
 				order.runtimeEntityId = EntityManager.EntityIdSelf;
 				order.item = GetItemInHand();
 				order.selectedSlot = (byte) selectedHotbarSlot;
-				order.slot = (byte) ItemHotbar[InHandSlot];
+				order.slot = (byte) InHandSlot; //(byte) ItemHotbar[InHandSlot];
 				Player.SendPackage(order);
 			}
 
@@ -191,7 +177,7 @@ namespace MiNET
 			broadcast.runtimeEntityId = Player.EntityId;
 			broadcast.item = GetItemInHand();
 			broadcast.selectedSlot = (byte) selectedHotbarSlot;
-			broadcast.slot = (byte) ItemHotbar[InHandSlot];
+			broadcast.slot = (byte) InHandSlot;//(byte) ItemHotbar[InHandSlot];
 			Player.Level?.RelayBroadcast(Player, broadcast);
 		}
 
@@ -206,7 +192,7 @@ namespace MiNET
 
 		public bool HasItem(Item item)
 		{
-			for (byte i = 0; i < Slots.Count; i++)
+			for (byte i = 0; i < Slots.Length; i++)
 			{
 				if ((Slots[i]).Id == item.Id && (Slots[i]).Metadata == item.Metadata)
 				{
@@ -218,7 +204,7 @@ namespace MiNET
 
 		public void RemoveItems(short id, byte count)
 		{
-			for (byte i = 0; i < Slots.Count; i++)
+			for (byte i = 0; i < Slots.Length; i++)
 			{
 				var slot = Slots[i];
 				if (slot.Id == id)
@@ -237,15 +223,23 @@ namespace MiNET
 
 		public void SendSetSlot(int slot)
 		{
-			if (slot < HotbarSize && (ItemHotbar[slot] == -1 || ItemHotbar[slot] == slot))
+			Log.Warn("!!! Send set slot: " + slot);
+			McpeInventorySlot ssendSlot = McpeInventorySlot.CreateObject();
+			ssendSlot.inventoryId = 0;
+			ssendSlot.slot = slot;
+			ssendSlot.item = Slots[slot];
+			Player.SendPackage(ssendSlot);
+			return;
+			if (slot < HotbarSize || (slot >= 36 && slot <= 45)/* && (ItemHotbar[slot] == -1 || ItemHotbar[slot] == slot)*/)
 			{
-				ItemHotbar[slot] = slot /* + HotbarSize*/;
-				Player.SendPlayerInventory();
+			//	ItemHotbar[slot] = slot;
+				//Player.SendPlayerInventory();
 
 				McpeMobEquipment order = McpeMobEquipment.CreateObject();
 				order.runtimeEntityId = EntityManager.EntityIdSelf;
-				order.item = GetItemInHand();
-				order.selectedSlot = (byte) slot; // Selected hotbar slot
+				order.item = Slots[slot];
+				order.slot = (byte) slot;
+				order.selectedSlot = (byte) (slot); // Selected hotbar slot
 				Player.SendPackage(order);
 			}
 			else
@@ -253,14 +247,14 @@ namespace MiNET
 				McpeInventorySlot sendSlot = McpeInventorySlot.CreateObject();
 				sendSlot.inventoryId = 0;
 				sendSlot.slot = slot;
-				sendSlot.item = GetItemInHand();
+				sendSlot.item = Slots[slot];
 				Player.SendPackage(sendSlot);
 			}
 		}
 
 		public void Clear()
 		{
-			for (int i = 0; i < Slots.Count; ++i)
+			for (int i = 0; i < Slots.Length; ++i)
 			{
 				if (Slots[i] == null || Slots[i].Id != 0) Slots[i] = new ItemAir();
 			}

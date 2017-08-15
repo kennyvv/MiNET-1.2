@@ -557,7 +557,34 @@ namespace MiNET
 			{
 				handler.HandleMcpeCommandBlockUpdate((McpeCommandBlockUpdate) message);
 			}
-
+			else if (typeof (McpeInventoryTransaction) == message.GetType())
+			{
+				handler.HandleMcpeInventoryTransaction((McpeInventoryTransaction) message);
+			}
+			else if (typeof (McpePlayerHotbar) == message.GetType())
+			{
+				handler.HandleMcpePlayerHotbar((McpePlayerHotbar) message);
+			}
+			else if (typeof (McpeCommandRequest) == message.GetType())
+			{
+				handler.HandleMcpeCommandRequest((McpeCommandRequest) message);
+			}
+			else if (typeof (McpeSetDifficulty) == message.GetType())
+			{
+				handler.HandleMcpeSetDifficulty((McpeSetDifficulty) message);
+			}
+			else if (typeof(McpeModalFormResponse) == message.GetType())
+			{
+				handler.HandleMcpeModalFormResponse((McpeModalFormResponse)message);
+			}
+			else if (typeof (McpeServerSettingsRequest) == message.GetType())
+			{
+				handler.HandleMcpeServerSettingsRequest((McpeServerSettingsRequest) message);
+			}
+			else if (typeof (McpeSimpleEvent) == message.GetType())
+			{
+				handler.HandleMcpeSimpleEvent((McpeSimpleEvent) message);
+			}
 			else
 			{
 				Log.Error($"Unhandled package: {message.GetType().Name} 0x{message.Id:X2} for user: {Username}, IP {EndPoint.Address}");

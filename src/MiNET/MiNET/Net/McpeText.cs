@@ -13,6 +13,7 @@ namespace MiNET.Net
 
 		partial void AfterEncode()
 		{
+			Write((byte)0);
 			switch (type)
 			{
 				case TypeChat:
@@ -45,6 +46,7 @@ namespace MiNET.Net
 
 		partial void AfterDecode()
 		{
+			ReadByte();
 			switch (type)
 			{
 				case TypeChat:

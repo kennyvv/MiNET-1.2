@@ -87,7 +87,7 @@
 	<pdu namespace="raknet" id="0x10" online="false" client="false" server="true" name="ID_CONNECTION_REQUEST_ACCEPTED">
 		<field name="System Address" type="IPEndPoint" />
 		<field name="System Index" type="short" endianess="BE"/>
-		<field name="System Addresses" type="IPEndPoint[]" size="20" />
+		<field name="System Addresses" type="IPEndPoint[]" size="10" />
 		<field name="Incoming Timestamp" type="long" />
 		<field name="Server Timestamp" type="long" />
 	</pdu>
@@ -117,7 +117,7 @@
 	</pdu>
 
 	<pdu id="0x01" online="false" client="true" server="false" name="MCPE_LOGIN">
-		<field name="Protocol Version" type="int" endianess="BE"/>
+	  <field name="Protocol Version" type="int" endianess="BE"/>
 		<field name="Payload" type="ByteArray"/>
 	</pdu>
 
@@ -136,9 +136,7 @@
 	</pdu>
 
 	<pdu id="0x03" online="false" client="false" server="true" name="MCPE_SERVER_TO_CLIENT_HANDSHAKE">
-		<field name="Server Public Key" type="string" />
-		<field name="Token Length" type="Length" />
-		<field name="Token" type="byte[]" size="0" />
+	  <field name="Token" type="string" />
 	</pdu>
 
 	<pdu id="0x04" online="false" client="true" server="false" name="MCPE_CLIENT_TO_SERVER_HANDSHAKE">
@@ -174,19 +172,18 @@
 	</pdu>
 
 	<pdu id="0x09" online="false" client="true" server="true" name="MCPE_TEXT">
-		<enums id="Chat types">
-			<enum id="Raw" value="0" />
-			<enum id="Chat" value="1" />
-			<enum id="Translation" value="2" />
-			<enum id="Popup" value="3" />
-			<enum id="Tip" value="4" />
-			<enum id="System" value="5" />
-			<enum id="Whisper" value="6" />
-			<enum id="Announcement" value="7" />
-		</enums>
+	  <enums id="Chat types">
+	    <enum id="Raw" value="0" />
+	    <enum id="Chat" value="1" />
+	    <enum id="Translation" value="2" />
+	    <enum id="Popup" value="3" />
+	    <enum id="Tip" value="4" />
+	    <enum id="System" value="5" />
+	    <enum id="Whisper" value="6" />
+	    <enum id="Announcement" value="7" />
+	  </enums>
 
-		<field name="Type" type="byte" />
-	  <field name="Unknown0" type="bool" />
+	  <field name="Type" type="byte" />
 	</pdu>
 
 	<pdu id="0x0a" online="false" client="false" server="true" name="MCPE_SET_TIME">
@@ -194,33 +191,41 @@
 	</pdu>
 
 	<pdu id="0x0b" online="false" client="false" server="true" name="MCPE_START_GAME">
-		<field name="Entity ID Self" type="SignedVarLong" />
-		<field name="Runtime Entity ID" type="UnsignedVarLong" />
-		<field name="Player Gamemode" type="SignedVarInt" />
-		<field name="Spawn" type="Vector3" />
-		<field name="Unknown 1" type="Vector2" />
-		<!-- Level Settings -->
-		<field name="Seed" type="SignedVarInt" />
-		<field name="Dimension" type="SignedVarInt" />
-		<field name="Generator" type="SignedVarInt" />
-		<field name="Gamemode" type="SignedVarInt" />
-		<field name="Difficulty" type="SignedVarInt" />
-		<field name="X" type="SignedVarInt" />
-		<field name="Y" type="SignedVarInt" />
-		<field name="Z" type="SignedVarInt" />
-		<field name="Has achievements disabled" type="bool" />
-		<field name="Day cycle stop time" type="SignedVarInt" />
-		<field name="EDU mode" type="bool" />
-		<field name="Rain level" type="float" />
-		<field name="Lightnig level" type="float" />
-		<field name="Enable commands" type="bool" />
-		<field name="Is texturepacks required" type="bool" />
-		<field name="GameRules" type="GameRules" />
-		<field name="Level ID" type="string" />
-		<field name="World name" type="string" />
-		<field name="Premium World Template Id" type="string" />
-		<field name="Unknown0" type="bool" />
-		<field name="Current Tick" type="long" />
+	  <field name="Entity ID Self" type="SignedVarLong" />
+	  <field name="Runtime Entity ID" type="UnsignedVarLong" />
+	  <field name="Player Gamemode" type="SignedVarInt" />
+	  <field name="Spawn" type="Vector3" />
+	  <field name="Unknown 1" type="Vector2" />
+	  <!-- Level Settings -->
+	  <field name="Seed" type="SignedVarInt" />
+	  <field name="Dimension" type="SignedVarInt" />
+	  <field name="Generator" type="SignedVarInt" />
+	  <field name="Gamemode" type="SignedVarInt" />
+	  <field name="Difficulty" type="SignedVarInt" />
+	  <field name="X" type="SignedVarInt" />
+	  <field name="Y" type="SignedVarInt" />
+	  <field name="Z" type="SignedVarInt" />
+	  <field name="Has achievements disabled" type="bool" />
+	  <field name="Day cycle stop time" type="SignedVarInt" />
+	  <field name="EDU mode" type="bool" />
+	  <field name="Rain level" type="float" />
+	  <field name="Lightnig level" type="float" />
+	  <field name="Enable commands" type="bool" />
+	  <field name="Is Multiplayer" type="byte" />
+	  <field name="Broadcast To LAN" type="byte" />
+	  <field name="Broadcast To XBL" type="byte" />
+	  <field name="Is texturepacks required" type="bool" />
+	  <field name="GameRules" type="GameRules" />
+	  <field name="Bonus Chest" type="byte" />
+	  <field name="Trust Players" type="byte" />
+	  <field name="Permission Level" type="SignedVarInt" />
+	  <field name="Game Publish Setting" type="SignedVarInt" />
+	  <field name="Level ID" type="string" />
+	  <field name="World name" type="string" />
+	  <field name="Premium World Template Id" type="string" />
+	  <field name="Unknown0" type="bool" />
+	  <field name="Current Tick" type="long" />
+    
 	</pdu>
 
 	<pdu id="0x0c" online="false" client="false" server="true" name="MCPE_ADD_PLAYER">
@@ -239,6 +244,12 @@
 		<field name="Yaw" type="float" />
 		<field name="Item" type="Item" />
 		<field name="Metadata" type="MetadataDictionary"/>
+    <field name="Flags" type="VarInt" />
+	  <field name="CommandPermissions" type="VarInt" />
+	  <field name="ActionPermissions" type="VarInt" />
+	  <field name="PermissionLevel" type="VarInt" />
+    <field name="User ID" type="long" />
+    <field name="Links" type="VarInt"  />
 	</pdu>
 
 
@@ -307,6 +318,7 @@
 			<enum id="Normal" value="0" />
 			<enum id="Reset" value="1" />
 			<enum id="Rotation" value="2" />
+		  <enum id="Pitch" value="3" />
 		</enums>
 		
 		<field name="Runtime Entity ID" type="UnsignedVarLong" />
@@ -409,6 +421,16 @@
 			<enum id="Creative" value="3" />
 			<enum id="Crafting" value="99999" />
 		</enums>
+	  <enums id="Normal actions">
+	    <enum id="Put slot" value="3" />
+	    <enum id="Get slot" value="5" />
+	    <enum id="Get result" value="7" />
+	    <enum id="Craft use" value="9" />
+	    <enum id="Enchant item" value="29" />
+	    <enum id="Enchant lapis" value="31" />
+	    <enum id="Enchant result" value="33" />
+	    <enum id="Drop" value="199" />
+	  </enums>
 		<enums id="Item release actions">
 			<enum id="Release" value="0" />
 			<enum id="Use" value="1" />
@@ -531,8 +553,9 @@
 	</pdu>
 
 	<pdu id="0x30" online="false" client="true" server="true" name="MCPE_PLAYER_HOTBAR">
-		<field name="Selected Slot" type="byte" />
+		<field name="Selected Slot" type="VarInt" />
 		<field name="Hotbar Data" type="MetadataInts" />
+	  <field name="Unknown Data" type="MetadataInts" />
 	</pdu>
 
 	<pdu id="0x31" online="false" client="true" server="true" name="MCPE_INVENTORY_CONTENT">
@@ -541,8 +564,8 @@
 	</pdu>
 
 	<pdu id="0x32" online="false" client="true" server="true" name="MCPE_INVENTORY_SLOT">
-		<field name="Inventory Id" type="SignedVarInt" />
-		<field name="Slot" type="SignedVarInt" />
+		<field name="Inventory Id" type="VarInt" />
+		<field name="Slot" type="VarInt" />
 		<field name="Item" type="Item" />
 	</pdu>
 
@@ -578,15 +601,24 @@
 	</pdu>
 
 	<pdu id="0x37" online="false" client="true" server="true" name="MCPE_ADVENTURE_SETTINGS">
-		<enums id="Permissions">
-			<enum id="Normal" value="0" />
-			<enum id="Operator" value="1" />
-			<enum id="Host" value="2" />
-			<enum id="Automation" value="3" />
-			<enum id="Admin" value="4" />
-		</enums>
-		<field name="Flags" type="UnsignedVarInt" />
-		<field name="User Permission" type="UnsignedVarInt" />
+	  <enums id="PermissionsFlags">
+	    <enum id="Prohibit All" value="0" />
+	    <enum id="Build and Mine" value="1" />
+	    <enum id="Doors and Switches" value="2" />
+	    <enum id="Open Containers" value="4" />
+	    <enum id="Attack Players" value="8" />
+	    <enum id="Attack Mobs" value="16" />
+	    <enum id="Op" value="32" />
+	    <enum id="Teleport" value="64" />
+	    <enum id="Default" value="128" />
+	    <enum id="Allow All" value="511" />
+	  </enums>
+
+    <field name="Flags" type="UnsignedVarInt" />
+	  <field name="Unknown" type="UnsignedVarInt" />
+	  <field name="UserFlags" type="UnsignedVarInt" />
+	  <field name="UserPermissions" type="UnsignedVarInt" />
+	  <field name="UserId" type="VarLong" />
 	</pdu>
 
 	<pdu id="0x38" online="false" client="true" server="true" name="MCPE_BLOCK_ENTITY_DATA">
@@ -611,7 +643,7 @@
 		<field name="Enabled" type="bool" />
 	</pdu>
 
-	<pdu id="0x3c" online="false" client="false" server="true" name="MCPE_SET_DIFFICULTY">
+	<pdu id="0x3c" online="false" client="true" server="true" name="MCPE_SET_DIFFICULTY">
 		<field name="Difficulty" type="UnsignedVarInt" />
 	</pdu>
 
@@ -629,8 +661,10 @@
 		<field name="Records" type="PlayerRecords" />
 	</pdu>
 
-	<pdu id="0x40" online="false" client="false" server="true" name="MCPE_SIMPLE_EVENT">
-	</pdu>
+	<pdu id="0x40" online="false" client="true" server="true" name="MCPE_SIMPLE_EVENT">
+	  <field name="Flags" type="byte" />
+    <field name="Value" type="bool" />
+  </pdu>
 
 	<pdu id="0x41" online="false" client="false" server="true" name="MCPE_TELEMETRY_EVENT">
 		<field name="Entity ID Self" type="SignedVarLong" />
@@ -685,13 +719,30 @@
 	</pdu>
 
 	<pdu id="0x4c" online="false" client="false" server="true" name="MCPE_AVAILABLE_COMMANDS">
-		<field name="Commands" type="string"  />
-		<field name="Unknown" type="string"  />
+		<field name="Commands" type="CommandSet"  />
 	</pdu>
 
 	<pdu id="0x4d" online="false" client="true" server="false" name="MCPE_COMMAND_REQUEST">
-		<field name="Command name" type="string"  />
-		<field name="Command overload" type="string"  />
+	  <enums id="Command Request Type">
+	    <enum id="Player" value="0" />
+	    <enum id="Command Block" value="1" />
+	    <enum id="Minecart Command Block" value="2" />
+	    <enum id="Dev Console" value="3" />
+	    <enum id="Automation Player" value="4" />
+	    <enum id="Client Automation" value="5" />
+	    <enum id="Dedicated Server" value="6" />
+	    <enum id="Entity" value="7" />
+	    <enum id="Virtual" value="8" />
+	    <enum id="Game Argument" value="9" />
+	    <enum id="Internal" value="10" />
+	  </enums>
+
+    <field name="Command" type="string"  />
+    <field name="Command type" type="VarInt" />
+    <field name="Request ID" type="string" />
+    
+		
+   <!-- <field name="Command overload" type="string"  />
 		<field name="Unknown 1" type="UnsignedVarInt"  />
 		<field name="Current Step " type="UnsignedVarInt"  />
 		<field name="Is Output" type="bool" />
@@ -700,7 +751,8 @@
 		<field name="Command Output Json" type="string"  />
 		<field name="Unknown 7" type="byte"  />
 		<field name="Unknown 8" type="byte"  />
-		<field name="Entity ID Self" type="SignedVarLong"  />
+		<field name="Entity ID Self" type="SignedVarLong"  /> -->
+    
 	</pdu>
 
 	<pdu id="0x4e" online="false" client="true" server="false" name="MCPE_COMMAND_BLOCK_UPDATE">
@@ -791,6 +843,24 @@
 	<pdu id="0x62" online="false" client="false" server="true" name="MCPE_NPC_REQUEST">
 	</pdu>
 
+  <pdu id="0x66" online="false" client="true" server="false" name="MCPE_SERVER_SETTINGS_REQUEST">
+  </pdu>
+
+  <pdu id="0x64" online="false" client="false" server="true" name="MCPE_MODAL_FORM_REQUEST">
+    <field name="FormId" type="VarInt" />
+    <field name="Data" type="string" />
+  </pdu>
+
+  <pdu id="0x65" online="false" client="true" server="false" name="MCPE_MODAL_FORM_RESPONSE">
+    <field name="FormId" type="VarInt" />
+    <field name="Data" type="string" />
+  </pdu>
+
+  <pdu id="0x67" online="false" client="false" server="true" name="MCPE_SERVER_SETTINGS_RESPONSE">
+    <field name="Form ID" type="VarInt" />
+    <field name="Data" type="string" />
+  </pdu>
+  
 	<pdu namespace="raknet" id="0xfe" online="false" client="false" server="true" name="MCPE_WRAPPER">
 		<field name="Payload" type="byte[]" size="0" />
 	</pdu>

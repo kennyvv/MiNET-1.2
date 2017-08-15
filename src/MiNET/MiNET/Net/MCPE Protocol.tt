@@ -1,3 +1,4 @@
+﻿
 ﻿<#@ template debug="false" hostspecific="true" language="C#" #>
 <#@ output extension=".cs" #>
 <#@ assembly name="System.Xml"#>
@@ -47,6 +48,7 @@ using MiNET.Items;
 using MiNET.Crafting;
 using little = MiNET.Utils.Int24; // friendly name
 using LongString = System.String;
+using MiNET.Plugins;
 
 namespace MiNET.Net
 {
@@ -55,6 +57,7 @@ namespace MiNET.Net
 		void Disconnect(string reason, bool sendDisconnect = true);
 
 <#	
+
 
 foreach (XmlNode pdu in doc.SelectNodes("//pdu[not(@namespace='raknet') and @client='true']"))
 {
@@ -135,6 +138,8 @@ foreach (XmlNode constant in doc.SelectNodes("//constant"))
 	constantsLoopup.Add(attributes["id"].Value, new Tuple<string, string>(attributes["type"].Value, attributes["value"].Value));
 }
 
+PrintConstants(doc.SelectNodes("/protocol/enums"));
+WriteLine("");
 
 foreach (XmlNode pdu in doc.SelectNodes("//pdu"))
 {
@@ -144,7 +149,12 @@ foreach (XmlNode pdu in doc.SelectNodes("//pdu"))
 	{
 <#	
 
-	foreach (XmlNode field in pdu.ChildNodes)
+	PushIndent("\t");
+	PrintConstants(pdu.SelectNodes("enums"));
+	WriteLine("");
+	PopIndent();
+
+	foreach (XmlNode field in pdu.SelectNodes("field"))
 	{
 		if(field.NodeType != XmlNodeType.Element) continue;
 
@@ -212,7 +222,7 @@ foreach (XmlNode pdu in doc.SelectNodes("//pdu"))
 			BeforeEncode();
 
 <#	
-	foreach (XmlNode field in pdu.ChildNodes)
+	foreach (XmlNode field in pdu.SelectNodes("field"))
 	{
 		if(field.NodeType != XmlNodeType.Element) continue;
 
@@ -280,7 +290,7 @@ foreach (XmlNode pdu in doc.SelectNodes("//pdu"))
 			BeforeDecode();
 
 <#	
-	foreach (XmlNode field in pdu.ChildNodes)
+	foreach (XmlNode field in pdu.SelectNodes("field"))
 	{
 		if(field.NodeType != XmlNodeType.Element) continue;
 
@@ -325,6 +335,7 @@ foreach (XmlNode pdu in doc.SelectNodes("//pdu"))
 
 
 	} // foreach
+
 #>
 
 			AfterDecode();
@@ -463,4 +474,29 @@ public string SafeToString(XmlNode node)
 
 	return node.Value;
 }
+
+private void PrintConstants(XmlNodeList nodes)
+{
+	PushIndent("\t");
+
+	foreach (XmlNode constants in nodes)
+	{
+		WriteLine($"public enum {CodeTypeName(constants.Attributes["id"]?.Value)}");
+		WriteLine($"{{");
+		PushIndent("\t");
+
+		foreach (XmlNode constant in constants.ChildNodes)
+		{
+			var attributes = constant.Attributes;
+			WriteLine($"{CodeTypeName(attributes["id"]?.Value)} = {attributes["value"].Value},");
+		}
+
+		PopIndent();
+		WriteLine($"}}");
+	}
+
+	PopIndent();
+
+}
+
 #>

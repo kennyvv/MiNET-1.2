@@ -144,8 +144,8 @@ namespace MiNET.Plugins
 
 		private void DebugPrintCommands()
 		{
-			return;
-			if (!Log.IsDebugEnabled) return;
+			//return;
+			//if (!Log.IsDebugEnabled) return;
 
 			var settings = new JsonSerializerSettings();
 			settings.NullValueHandling = NullValueHandling.Ignore;
@@ -156,7 +156,7 @@ namespace MiNET.Plugins
 
 			var content = JsonConvert.SerializeObject(Commands, settings);
 
-			Log.Debug($"Commmands\n{content}");
+			Log.Info($"Commmands\n{content}");
 		}
 
 		public void LoadCommands(Type type)
@@ -522,7 +522,7 @@ namespace MiNET.Plugins
 			}
 		}
 
-		public object HandleCommand(Player player, string commandName, string commandOverload, dynamic commandInputJson)
+		public object HandleCommand(Player player, string commandName, string[] commandOverload)
 		{
 			Log.Debug($"HandleCommand {commandName}");
 
@@ -540,7 +540,7 @@ namespace MiNET.Plugins
 
 				if (command == null) return null;
 
-				Overload overload = command.Versions.First().Overloads[commandOverload];
+				Overload overload = command.Versions.First().Overloads.FirstOrDefault().Value;
 
 				UserPermission requiredPermission = (UserPermission) Enum.Parse(typeof (UserPermission), command.Versions.First().Permission, true);
 				if (player.PermissionLevel < requiredPermission)
@@ -551,7 +551,7 @@ namespace MiNET.Plugins
 
 				MethodInfo method = overload.Method;
 
-				List<string> strings = new List<string>();
+				/*List<string> strings = new List<string>();
 				if (commandInputJson != null)
 				{
 					foreach (ParameterInfo parameter in method.GetParameters())
@@ -564,9 +564,9 @@ namespace MiNET.Plugins
 							strings.Add(commandInputJson[ToCamelCase(parameter.Name)].ToString());
 						}
 					}
-				}
+				}*/
 
-				return ExecuteCommand(method, player, strings.ToArray());
+				return ExecuteCommand(method, player, commandOverload);
 			}
 			catch (Exception e)
 			{

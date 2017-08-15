@@ -140,18 +140,18 @@ namespace MiNET.Worlds
 				Log.InfoFormat("World pre-cache {0} chunks completed in {1}ms", i, chunkLoading.ElapsedMilliseconds);
 			}
 
-			//if (Dimension == Dimension.Overworld)
-			//{
-			//	if (Config.GetProperty("CheckForSafeSpawn", false))
-			//	{
-			//		var height = GetHeight((BlockCoordinates) SpawnPoint);
-			//		if (height > SpawnPoint.Y) SpawnPoint.Y = height;
-			//		Log.Debug("Checking for safe spawn");
-			//	}
+			if (Dimension == Dimension.Overworld)
+			{
+				if (Config.GetProperty("CheckForSafeSpawn", false))
+				{
+					var height = GetHeight((BlockCoordinates) SpawnPoint);
+					if (height > SpawnPoint.Y) SpawnPoint.Y = height;
+					//Log.Debug("Checking for safe spawn");
+				}
 
-			//	NetherLevel = LevelManager.GetDimension(this, Dimension.Nether);
-			//	TheEndLevel = LevelManager.GetDimension(this, Dimension.TheEnd);
-			//}
+				NetherLevel = LevelManager.GetDimension(this, Dimension.Nether);
+				TheEndLevel = LevelManager.GetDimension(this, Dimension.TheEnd);
+			}
 
 			StartTimeInTicks = DateTime.UtcNow.Ticks;
 
@@ -598,7 +598,7 @@ namespace MiNET.Worlds
 						McpeMovePlayer move = McpeMovePlayer.CreateObject();
 						move.runtimeEntityId = player.EntityId;
 						move.x = knownPosition.X;
-						move.y = knownPosition.Y + 1.62f;
+						move.y = knownPosition.Y;
 						move.z = knownPosition.Z;
 						move.yaw = knownPosition.Yaw;
 						move.pitch = knownPosition.Pitch;
@@ -961,11 +961,22 @@ namespace MiNET.Worlds
 
 			if (!broadcast) return;
 
-			//var message = McpeUpdateBlock.CreateObject();
-			//message.blockId = block.Id;
-			//message.coordinates = block.Coordinates;
-			//message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
-			//RelayBroadcast(message);
+			BroadcastMessage("Sending MCPEUpdateBlock for: " + block.Coordinates);
+
+			var message = McpeUpdateBlock.CreateObject();
+			message.records = new BlockUpdateRecords()
+			{
+				new BlockUpdateRecord()
+				{
+					BlockId = block.Id,
+					BlockMetadata = block.Metadata,
+					Coordinates = block.Coordinates
+				}
+			};
+		//	message.blockId = block.Id;
+		//	message.coordinates = block.Coordinates;
+		//	message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
+			RelayBroadcast(message);
 		}
 
 		private void CalculateSkyLight(int x, int y, int z)
@@ -1159,13 +1170,11 @@ namespace MiNET.Worlds
 			if (!canBreak || !AllowBreak || player.GameMode == GameMode.Spectator || !OnBlockBreak(new BlockBreakEventArgs(player, this, block, null)))
 			{
 				// Revert
-
 			    RevertBlockAction(player, block, blockEntity);
 			}
 			else
 			{
 				BreakBlock(block, blockEntity, inHand);
-
 				player.HungerManager.IncreaseExhaustion(0.025f);
 				player.AddExperience(block.GetExperiencePoints());
 			}
@@ -1174,9 +1183,13 @@ namespace MiNET.Worlds
 	    private static void RevertBlockAction(Player player, Block block, BlockEntity blockEntity)
 	    {
 	        var message = McpeUpdateBlock.CreateObject();
-	        message.blockId = block.Id;
-	        message.coordinates = block.Coordinates;
-	        message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
+			message.records = new BlockUpdateRecords
+			{
+				new BlockUpdateRecord()
+			};
+	        message.records[0].BlockId = block.Id;
+	        message.records[0].Coordinates = block.Coordinates;
+	        message.records[0].BlockMetadata = (byte) (0xb << 4 | (block.Metadata & 0xf));
 	        player.SendPackage(message);
 
 			// Revert block entity if exists

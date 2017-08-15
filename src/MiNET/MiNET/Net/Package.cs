@@ -24,6 +24,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -36,6 +37,8 @@ using fNbt;
 using log4net;
 using MiNET.Crafting;
 using MiNET.Items;
+using MiNET.Plugins;
+using MiNET.Plugins.Attributes;
 using MiNET.Utils;
 using Newtonsoft.Json;
 
@@ -437,20 +440,28 @@ namespace MiNET.Net
 		{
 			if (records is PlayerAddRecords)
 			{
-				Write((byte) 0);
-				WriteUnsignedVarInt((uint) records.Count);
+				Write((byte)0);
+				WriteUnsignedVarInt((uint)records.Count);
 				foreach (var record in records)
 				{
 					Write(record.ClientUuid);
 					WriteSignedVarLong(record.EntityId);
 					Write(record.DisplayName ?? record.Username);
 					Write(record.Skin);
+					if (record.CertificateData?.ExtraData?.Xuid != null)
+					{
+						Write(record.CertificateData.ExtraData.Xuid);
+					}
+					else
+					{
+						Write(Guid.NewGuid().ToString() /*"00000000-0000-0000-0000-000000000000"*/);
+					}
 				}
 			}
 			else if (records is PlayerRemoveRecords)
 			{
-				Write((byte) 1);
-				WriteUnsignedVarInt((uint) records.Count);
+				Write((byte)1);
+				WriteUnsignedVarInt((uint)records.Count);
 				foreach (var record in records)
 				{
 					Write(record.ClientUuid);
@@ -478,6 +489,12 @@ namespace MiNET.Net
 							player.EntityId = ReadSignedVarLong();
 							player.DisplayName = ReadString();
 							player.Skin = ReadSkin();
+							var xuid = ReadString();
+							if (player.CertificateData == null)
+							{
+								player.CertificateData = new CertificateData();
+							}
+							player.CertificateData.ExtraData.Xuid = xuid;
 							records.Add(player);
 							//Log.Error($"Reading {player.ClientUuid}, {player.EntityId}, '{player.DisplayName}'");
 						}
@@ -504,10 +521,12 @@ namespace MiNET.Net
 
 		public void Write(BlockUpdateRecords records)
 		{
-			WriteUnsignedVarInt((uint) records.Count);
+			//WriteUnsignedVarInt((uint) records.Count);
 			foreach (var coord in records)
 			{
-				//Write(coord);
+				Write(coord.Coordinates);
+				WriteUnsignedVarInt((uint)coord.BlockId);
+				WriteUnsignedVarInt((uint)((0xb << 4) | coord.BlockMetadata));
 			}
 		}
 
@@ -837,9 +856,11 @@ namespace MiNET.Net
 
 		public Transaction ReadTransaction()
 		{
-			var trans = new Transaction();
+			var trans = new Transaction
+			{
+				TransactionType = ReadVarInt()
+			};
 
-			trans.TransactionType = ReadVarInt();
 
 			var count = ReadVarInt();
 			for (int i = 0; i < count; i++)
@@ -1324,6 +1345,9 @@ namespace MiNET.Net
 				Write(skinType);
 				WriteUnsignedVarInt((uint) skin.Texture.Length);
 				Write(skin.Texture);
+				Write(skin.CapeData ?? "");
+				Write(skin.GeometryType);
+				Write(skin.GeometryData);
 			}
 		}
 
@@ -1534,6 +1558,74 @@ namespace MiNET.Net
 			ReadByte(); // Clean (1) or update (0)
 
 			return recipes;
+		}
+
+		public CommandSet ReadCommandSet()
+		{
+			return null;
+		}
+
+		public void Write(CommandSet commands)
+		{
+			WriteVarInt(0); //Enum values count
+
+			WriteVarInt(0); //Unknown
+			WriteVarInt(0); //Enums count
+			/*foreach (var enu in enums)
+			{
+				Write(enu.name);
+				WriteVarInt(enu.data.Length);
+				for (int i = 0; i < enu.data.Length; i++)
+				{
+					if (enumValues.Count < 256)
+					{
+						Write((byte) enu.data[i]);
+					}else if (enumValues.Count < 65536)
+					{
+						Write((short) enu.data[i]);
+					}
+					else
+					{
+						Write(enu.data[i]);
+					}
+				}
+			}*/
+
+			WriteVarInt(commands.Count);
+			foreach (var command in commands)
+			{
+				var cmd = command.Value;
+				
+				var c0 = cmd.Versions[0];
+
+				AuthorizeAttribute authorizeAttribute =
+					Attribute.GetCustomAttribute(c0.Overloads.First().Value.Method, typeof(AuthorizeAttribute),
+						false) as AuthorizeAttribute ?? new AuthorizeAttribute();
+
+				Write(cmd.Name);
+				Write(c0.Description);
+				Write((byte)0); //Flags
+				Write((byte)authorizeAttribute.Permission);
+				Write((int) -1);
+
+				WriteVarInt(c0.Overloads.Count);
+				foreach (var overloadsValue in c0.Overloads.Values)
+				{
+					var para = overloadsValue.Input.Parameters;
+					if (para == null)
+					{
+						WriteVarInt(0);
+						continue;
+					}
+					WriteVarInt(para.Length);
+					foreach (var param in para)
+					{
+						Write(param.Name);
+						Write(0);
+						Write(param.Optional);
+					}
+				}
+			}
 		}
 
 		const int BITFLAG_TEXTURE_UPDATE = 0x02;

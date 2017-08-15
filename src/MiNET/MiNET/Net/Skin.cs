@@ -9,7 +9,9 @@ namespace MiNET.Net
 		public byte[] Texture { get; set; }
 		public byte Alpha { get; set; }
 		public string SkinType { get; set; }
-
+		public string GeometryType { get; set; }
+		public string GeometryData { get; set; }
+		public string CapeData { get; internal set; }
 
 		public static byte[] GetTextureFromFile(string filename)
 		{

@@ -142,7 +142,7 @@ namespace MiNET
 
 			PluginManager pm = new PluginManager();
 			pm.Commands = commandSet;
-			pm.HandleCommand(null, "tp", "default", commandJson);
+			pm.HandleCommand(null, "tp", commandJson);
 
 			var settings = new JsonSerializerSettings();
 			settings.NullValueHandling = NullValueHandling.Ignore;

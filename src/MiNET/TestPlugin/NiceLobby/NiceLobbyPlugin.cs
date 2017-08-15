@@ -51,6 +51,7 @@ using MiNET.Sounds;
 using MiNET.Utils;
 using MiNET.Worlds;
 using TestPlugin.Annotations;
+using TestPlugin.UI;
 
 namespace TestPlugin.NiceLobby
 {
@@ -317,8 +318,31 @@ namespace TestPlugin.NiceLobby
 			Player player = eventArgs.Player;
 			if (player == null) throw new ArgumentNullException(nameof(eventArgs.Player));
 
+			if (player.CertificateData?.ExtraData?.Xuid == null) throw new ArgumentNullException();
 
-			int idx = 4;
+			if (_players.TryAdd(player.CertificateData.ExtraData.Xuid, player))
+			{
+				ThreadPool.QueueUserWorkItem(state =>
+				{
+					while (!player.IsSpawned)
+					{
+						if (!player.IsConnected)
+						{
+							return;
+						}
+						Thread.SpinWait(1);
+					}
+					player.SendMessage($"{ChatColors.Green} Spawned!");
+					//var gAuth = new GAuthForm();
+					//player.OpenForm(gAuth);
+				});
+			}
+			else
+			{
+				player.Disconnect($"{ChatColors.Red}This user is already online!");
+			}
+
+			/*int idx = 4;
 			//player.Inventory.Slots[idx++] = new ItemBlock(new Block(212), 0) {Count = 64};
 			//player.Inventory.Slots[idx++] = new ItemBlock(new Block(210), 0) {Count = 64};
 			//player.Inventory.Slots[idx++] = new ItemBlock(new Block(211), 0) {Count = 64};
@@ -348,7 +372,7 @@ namespace TestPlugin.NiceLobby
 				player.SendTitle(null, TitleType.AnimationTimes, 6, 6, 20*10);
 				player.SendTitle($"{ChatColors.White}This is gurun's MiNET test server", TitleType.SubTitle);
 				player.SendTitle($"{ChatColors.Gold}Welcome {player.Username}!", TitleType.Title);
-			});
+			});*/
 		}
 
 		private void OnPlayerLeave(object o, PlayerEventArgs eventArgs)
@@ -359,12 +383,21 @@ namespace TestPlugin.NiceLobby
 			Player player = eventArgs.Player;
 			if (player == null) throw new ArgumentNullException(nameof(eventArgs.Player));
 
+			if (player.CertificateData?.ExtraData?.Xuid == null) throw new ArgumentNullException();
+
 			Player trash;
-			_players.TryRemove(player.Username, out trash);
+			_players.TryRemove(player.CertificateData.ExtraData.Xuid, out trash);
 
 			level.BroadcastMessage($"{ChatColors.Gold}[{ChatColors.Red}-{ChatColors.Gold}]{ChatFormatting.Reset} {player.Username}");
 			var leaveSound = new AnvilBreakSound(level.SpawnPoint.ToVector3());
 			leaveSound.Spawn(level);
+		}
+
+		[Command]
+		public void PlayerMan(Player player)
+		{
+			PlayerSelectorForm selectorForm = new PlayerSelectorForm(_players.Values.ToArray());
+			player.OpenForm(selectorForm);
 		}
 
 		private void LevelOnBlockBreak(object sender, BlockBreakEventArgs e)

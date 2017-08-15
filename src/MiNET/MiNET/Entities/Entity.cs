@@ -98,12 +98,12 @@ namespace MiNET.Entities
 		public virtual MetadataDictionary GetMetadata()
 		{
 			MetadataDictionary metadata = new MetadataDictionary();
-			metadata[(int) MetadataFlags.EntityFlags] = new MetadataLong(GetDataValue());
+			metadata[(int)MetadataFlags.EntityFlags] = new MetadataLong(GetDataValue());
 			metadata[1] = new MetadataInt(1);
 			metadata[2] = new MetadataInt(0);
-			metadata[(int) MetadataFlags.HideNameTag] = new MetadataByte(!HideNameTag);
-			metadata[(int) MetadataFlags.NameTag] = new MetadataString(NameTag ?? string.Empty);
-			metadata[(int) MetadataFlags.AvailableAir] = new MetadataShort(HealthManager.Air);
+			metadata[(int)MetadataFlags.HideNameTag] = new MetadataByte(HideNameTag);
+			metadata[(int)MetadataFlags.NameTag] = new MetadataString(NameTag ?? string.Empty);
+			metadata[(int)MetadataFlags.AvailableAir] = new MetadataShort(HealthManager.Air);
 			//metadata[4] = new MetadataByte(Silent);
 			//metadata[7] = new MetadataInt(0); // Potion Color
 			//metadata[8] = new MetadataByte(0); // Potion Ambient
@@ -114,10 +114,10 @@ namespace MiNET.Entities
 			//metadata[23] = new MetadataLong(-1); // Leads EID (target or holder?)
 			//metadata[24] = new MetadataByte(0); // Leads on/off
 			//metadata[(int)MetadataFlags.MaybeAge] = new MetadataInt(0); // Scale
-			metadata[(int) MetadataFlags.Scale] = new MetadataFloat(Scale); // Scale
-			metadata[(int) MetadataFlags.MaxAir] = new MetadataShort(HealthManager.MaxAir);
-			metadata[(int) MetadataFlags.CollisionBoxHeight] = new MetadataFloat(Height); // Collision box width
-			metadata[(int) MetadataFlags.CollisionBoxWidth] = new MetadataFloat(Width); // Collision box height
+			metadata[(int)MetadataFlags.Scale] = new MetadataFloat(Scale); // Scale
+			metadata[(int)MetadataFlags.MaxAir] = new MetadataShort(HealthManager.MaxAir);
+			metadata[(int)MetadataFlags.CollisionBoxHeight] = new MetadataFloat(Height); // Collision box width
+			metadata[(int)MetadataFlags.CollisionBoxWidth] = new MetadataFloat(Width); // Collision box height
 			return metadata;
 		}
 
@@ -215,48 +215,46 @@ namespace MiNET.Entities
 			Chested,
 
 			Stackable,
-
-			AffectedByGravity = 46
 		}
 
 		protected virtual BitArray GetFlags()
 		{
 			BitArray bits = new BitArray(64);
-			bits[(int) DataFlags.OnFire] = HealthManager.IsOnFire;
-			bits[(int) DataFlags.Sneaking] = IsSneaking;
-			bits[(int) DataFlags.Riding] = IsRiding;
-			bits[(int) DataFlags.Sprinting] = IsSprinting;
-			bits[(int) DataFlags.UsingItem] = IsUsingItem;
-			bits[(int) DataFlags.Invisible] = IsInvisible;
-			bits[(int) DataFlags.Tempted] = IsTempted;
-			bits[(int) DataFlags.InLove] = IsInLove;
-			bits[(int) DataFlags.Saddled] = IsSaddled;
-			bits[(int) DataFlags.Powered] = IsPowered;
-			bits[(int) DataFlags.Ignited] = IsIgnited;
-			bits[(int) DataFlags.Baby] = IsBaby;
-			bits[(int) DataFlags.Converting] = IsConverting;
-			bits[(int) DataFlags.Critcal] = IsCritical;
-			bits[(int) DataFlags.ShowName] = IsShowName;
-			bits[(int) DataFlags.AlwaysShowName] = IsAlwaysShowName;
-			bits[(int) DataFlags.NoAi] = IsNoAi;
-			bits[(int) DataFlags.Silent] = IsSilent;
-			bits[(int) DataFlags.WallClimbing] = IsWallClimbing;
-			bits[(int) DataFlags.CanClimb] = CanClimb;
-			bits[(int) DataFlags.Resting] = IsResting;
-			bits[(int) DataFlags.Sitting] = IsSitting;
-			bits[(int) DataFlags.Angry] = IsAngry;
-			bits[(int) DataFlags.Interested] = IsInterested;
-			bits[(int) DataFlags.Charged] = IsCharged;
-			bits[(int) DataFlags.Tamed] = IsTamed;
-			bits[(int) DataFlags.Leashed] = IsLeashed;
-			bits[(int) DataFlags.Sheared] = IsSheared;
-			bits[(int) DataFlags.FlagAllFlying] = IsGliding;
-			bits[(int) DataFlags.Elder] = IsElder;
-			bits[(int) DataFlags.Moving] = IsMoving;
-			bits[(int) DataFlags.Breathing] = IsBreathing;
-			bits[(int) DataFlags.Chested] = IsChested;
-			bits[(int) DataFlags.Stackable] = IsStackable;
-			bits[(int) DataFlags.AffectedByGravity] = true;
+			bits[(int)DataFlags.OnFire] = HealthManager.IsOnFire;
+			bits[(int)DataFlags.Sneaking] = IsSneaking;
+			bits[(int)DataFlags.Riding] = IsRiding;
+			bits[(int)DataFlags.Sprinting] = IsSprinting;
+			bits[(int)DataFlags.UsingItem] = IsUsingItem;
+			bits[(int)DataFlags.Invisible] = IsInvisible;
+			bits[(int)DataFlags.Tempted] = IsTempted;
+			bits[(int)DataFlags.InLove] = IsInLove;
+			bits[(int)DataFlags.Saddled] = IsSaddled;
+			bits[(int)DataFlags.Powered] = IsPowered;
+			bits[(int)DataFlags.Ignited] = IsIgnited;
+			bits[(int)DataFlags.Baby] = IsBaby;
+			bits[(int)DataFlags.Converting] = IsConverting;
+			bits[(int)DataFlags.Critcal] = IsCritical;
+			bits[(int)DataFlags.ShowName] = IsShowName;
+			bits[(int)DataFlags.AlwaysShowName] = IsAlwaysShowName;
+			bits[(int)DataFlags.NoAi] = IsNoAi;
+			bits[(int)DataFlags.Silent] = IsSilent;
+			bits[(int)DataFlags.WallClimbing] = IsWallClimbing;
+			bits[(int)DataFlags.CanClimb] = CanClimb;
+			bits[(int)DataFlags.Resting] = IsResting;
+			bits[(int)DataFlags.Sitting] = IsSitting;
+			bits[(int)DataFlags.Angry] = IsAngry;
+			bits[(int)DataFlags.Interested] = IsInterested;
+			bits[(int)DataFlags.Charged] = IsCharged;
+			bits[(int)DataFlags.Tamed] = IsTamed;
+			bits[(int)DataFlags.Leashed] = IsLeashed;
+			bits[(int)DataFlags.Sheared] = IsSheared;
+			bits[(int)DataFlags.FlagAllFlying] = IsGliding;
+			bits[(int)DataFlags.Elder] = IsElder;
+			bits[(int)DataFlags.Moving] = IsMoving;
+			bits[(int)DataFlags.Breathing] = IsBreathing;
+			bits[(int)DataFlags.Chested] = IsChested;
+			bits[(int)DataFlags.Stackable] = IsStackable;
+			bits[(int)46] = true;
 
 			return bits;
 		}

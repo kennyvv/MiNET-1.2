@@ -36,6 +36,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -48,6 +49,7 @@ using log4net.Config;
 using MiNET.Blocks;
 using MiNET.Crafting;
 using MiNET.Entities;
+using MiNET.Entities.Behaviors;
 using MiNET.Items;
 using MiNET.Net;
 using MiNET.Utils;
@@ -65,6 +67,53 @@ namespace MiNET.Client
 {
 	public class MiNetClient
 	{
+		class IPAddressConverter : JsonConverter
+		{
+			public override bool CanConvert(Type objectType)
+			{
+				return (objectType == typeof(IPAddress));
+			}
+
+			public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+			{
+				IPAddress ip = (IPAddress)value;
+				writer.WriteValue(ip.ToString());
+			}
+
+			public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+			{
+				JToken token = JToken.Load(reader);
+				return IPAddress.Parse(token.Value<string>());
+			}
+		}
+
+		class IPEndPointConverter : JsonConverter
+		{
+			public override bool CanConvert(Type objectType)
+			{
+				return (objectType == typeof(IPEndPoint));
+			}
+
+			public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+			{
+				IPEndPoint ep = (IPEndPoint)value;
+				writer.WriteStartObject();
+				writer.WritePropertyName("Address");
+				serializer.Serialize(writer, ep.Address);
+				writer.WritePropertyName("Port");
+				writer.WriteValue(ep.Port);
+				writer.WriteEndObject();
+			}
+
+			public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+			{
+				JObject jo = JObject.Load(reader);
+				IPAddress address = jo["Address"].ToObject<IPAddress>(serializer);
+				int port = jo["Port"].Value<int>();
+				return new IPEndPoint(address, port);
+			}
+		}
+
 		private static readonly ILog Log = LogManager.GetLogger(typeof (MiNetClient));
 
 		private IPEndPoint _clientEndpoint;
@@ -87,7 +136,7 @@ namespace MiNET.Client
 		public bool HaveServer = false;
 		public PlayerLocation CurrentLocation { get; set; }
 
-		public bool IsEmulator { get; set; }
+		public bool IsEmulator { get; set; } = false;
 
 		public UdpClient UdpClient { get; private set; }
 
@@ -122,11 +171,11 @@ namespace MiNET.Client
 			//var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("192.168.0.5"), 19132), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
 			//var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("192.168.0.3"), 19132), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
 			//var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("173.208.195.250"), 19132), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
-			//var client = new MiNetClient(new IPEndPoint(Dns.GetHostEntry("true-games.org").AddressList[0], 2222), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
-			var client = new MiNetClient(new IPEndPoint(Dns.GetHostEntry("play.inpvp.net").AddressList[0], 19132), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
+			//var client = new MiNetClient(new IPEndPoint(Dns.GetHostEntry("beta.inpvp.net").AddressList[0], 19132), "HiMyNameIs", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
+			var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("10.0.1.80"), 19132), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
 			//var client = new MiNetClient(new IPEndPoint(IPAddress.Loopback, 19132), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
 
-			//var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("54.229.52.56"), 27212), "TheGrey", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
+			//var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("54.197.14.251"), 19132), "Hello", new DedicatedThreadPool(new DedicatedThreadPoolSettings(Environment.ProcessorCount)));
 
 			// 157.7.202.57:29473
 			//var client = new MiNetClient(new IPEndPoint(IPAddress.Parse("157.7.202.57"), 19132), "TheGrey");
@@ -181,11 +230,63 @@ namespace MiNET.Client
 
 			Action<Task, PlayerLocation> doMoveTo = BotHelpers.DoMoveTo(client);
 			Action<Task, string> doSendCommand = BotHelpers.DoSendCommand(client);
+			Action doWaitForSpawn = BotHelpers.DoWaitForSpawn(client);
 
 			//.ContinueWith(t => doMovePlayer(t, client.CurrentLocation + new Vector3(0, 1.62f, 0)))
 			//.ContinueWith(t => doMoveTo(t, client.CurrentLocation + new Vector3(10, 1.62f, 10)))
 
-			Task.Run(BotHelpers.DoWaitForSpawn(client))
+			const float maxDistance = 5f;
+			Random random = new Random();
+			Task.Run(BotHelpers.DoWaitForSpawn(client)).ContinueWith(t =>
+			{
+				while (true)
+				{
+					int minWait = 50;
+					int maxWait = 4500;
+					PlayerLocation newLoc = null;
+
+					if (client.Entities.Count > 0 && random.NextDouble() < 0.5)
+					{
+						var useable = client.Entities.Values.Where(x => !x.IsInWater && x.IsSpawned && x.KnownPosition.DistanceTo(client.CurrentLocation) < maxDistance)
+							.ToArray();
+
+						if (useable.Length > 0)
+						{
+							var res = useable[random.Next(0, useable.Length)];
+							newLoc = res.KnownPosition + res.KnownPosition.GetHeadDirection();
+						}
+					}
+
+					if (newLoc == null)
+					{
+						var distance = Math.Abs(client.CurrentLocation.DistanceTo(new PlayerLocation(client._spawn)));
+						if (distance >= 30)
+						{
+							var targetPos = new PlayerLocation(0, client.CurrentLocation.Y, 0);
+							if (client.CurrentLocation.X > client._spawn.X)
+							{
+								targetPos.X = GetRandom(random, client._spawn.X, client.CurrentLocation.X);
+							}
+							if (client.CurrentLocation.Z > client._spawn.Z)
+							{
+								targetPos.Z = GetRandom(random, client._spawn.Z, client.CurrentLocation.Z);
+							}
+
+							newLoc = targetPos;
+						}
+						else
+						{
+							newLoc = new PlayerLocation(client.CurrentLocation.X + (GetRandom(random, -maxDistance, maxDistance)),
+								client.CurrentLocation.Y, client.CurrentLocation.Z + (GetRandom(random, -maxDistance, maxDistance)));
+						}
+					}
+
+					Thread.Sleep(random.Next(minWait, maxWait));
+					doMoveTo(t, newLoc);
+				}
+			});
+
+			/*Task.Run(BotHelpers.DoWaitForSpawn(client))
 				.ContinueWith(t => BotHelpers.DoMobEquipment(client)(t, new ItemBlock(new Cobblestone(), 0) {Count = 64}, 0))
 				//.ContinueWith(t => BotHelpers.DoMoveTo(client)(t, new PlayerLocation(client.CurrentLocation.ToVector3() - new Vector3(0, 1, 0), 180, 180, 180)))
 				//.ContinueWith(t => doMoveTo(t, new PlayerLocation(40, 5.62f, -20, 180, 180, 180)))
@@ -193,7 +294,7 @@ namespace MiNET.Client
 				//.ContinueWith(t => doMoveTo(t, new PlayerLocation(22, 5.62, 40, 180 + 45, 180 + 45, 180)))
 				//.ContinueWith(t => doMoveTo(t, new PlayerLocation(50, 5.62f, 17, 180, 180, 180)))
 				.ContinueWith(t => doSendCommand(t, "/test"))
-				.ContinueWith(t => Task.Delay(5000).Wait())
+				.ContinueWith(t => Task.Delay(5000).Wait())*/
 				//.ContinueWith(t =>
 				//{
 				//	Random rnd = new Random();
@@ -204,13 +305,17 @@ namespace MiNET.Client
 				//		doMoveTo(t, new PlayerLocation(rnd.Next(40, 50), 5.62f, rnd.Next(0, 20), 180, 180, 180));
 				//	}
 				//})
-				;
+			//	;
 
 			Console.WriteLine("<Enter> to exit!");
 			Console.ReadLine();
 			client.StopClient();
 		}
 
+		private static float GetRandom(Random rnd, float min, float max)
+		{
+			return (float) (rnd.NextDouble() * (max - min) + min);
+		}
 
 		public void StartClient()
 		{
@@ -1048,6 +1153,10 @@ namespace MiNET.Client
 			{
 				OnMcpeChangeDimension((McpeChangeDimension) message);
 			}
+			else if (typeof (DisconnectionNotification) == message.GetType())
+			{
+				OnDisconnectionNotification((DisconnectionNotification) message);
+			}
 
 			else if (typeof (UnknownPackage) == message.GetType())
 			{
@@ -1059,6 +1168,12 @@ namespace MiNET.Client
 			{
 				if (Log.IsDebugEnabled) Log.Warn($"Unhandled package 0x{message.Id:X2} {message.GetType().Name}\n{Package.HexDump(message.Bytes)}");
 			}
+		}
+
+		private void OnDisconnectionNotification(DisconnectionNotification message)
+		{
+			Log.Warn("Stopping client for unknown reason! Got DisconnectionNotification...");
+			StopClient();
 		}
 
 		private void OnMcpeChangeDimension(McpeChangeDimension message)
@@ -1092,10 +1207,15 @@ namespace MiNET.Client
 			//}
 		}
 
-
 		private void OnMcpeRespawn(McpeRespawn message)
 		{
 			CurrentLocation = new PlayerLocation(message.x, message.y, message.z);
+
+			McpeRespawn respawn = McpeRespawn.CreateObject();
+			respawn.x = CurrentLocation.X;
+			respawn.y = CurrentLocation.Y;
+			respawn.z = CurrentLocation.Z;
+			SendPackage(respawn);
 		}
 
 		private void OnMcpeGameRulesChanged(McpeGameRulesChanged message)
@@ -1250,7 +1370,8 @@ namespace MiNET.Client
 
 		private void OnMcpeAvailableCommands(McpeAvailableCommands message)
 		{
-			{
+
+		/*	{
 				dynamic json = JObject.Parse(message.commands);
 
 				//if (Log.IsDebugEnabled) Log.Debug($"Command JSON:\n{json}");
@@ -1259,10 +1380,10 @@ namespace MiNET.Client
 				File.WriteAllText(fileName, message.commands);
 			}
 			{
-				dynamic json = JObject.Parse(message.unknown);
+				//dynamic json = JObject.Parse(message.unknown);
 
 				//if (Log.IsDebugEnabled) Log.Debug($"Command (unknown) JSON:\n{json}");
-			}
+			}*/
 		}
 
 		private void OnMcpeSetTime(McpeSetTime message)
@@ -1310,12 +1431,23 @@ namespace MiNET.Client
 
 		private void OnMcpeServerToClientHandshake(McpeServerToClientHandshake message)
 		{
-			string serverKey = message.serverPublicKey;
-			byte[] randomKeyToken = message.token;
+		//	File.WriteAllText("payloadServer", message.token);
+			Console.WriteLine(JWT.Payload(message.token));
+			//byte[] randomKeyToken = message.token;
 
 			// Initiate encryption
-
-			InitiateEncryption(serverKey, randomKeyToken);
+			McpeClientToServerHandshake magic = new McpeClientToServerHandshake();
+			//byte[] encodedMagic = magic.Encode();
+			//McpeBatch batch = BatchUtils.CreateBatchPacket(encodedMagic, 0, encodedMagic.Length, CompressionLevel.Fastest, true);
+			//batch.Encode();
+			var headers = JWT.Headers(message.token);
+			foreach (var h in headers)
+			{
+				Console.WriteLine(h.Key + " -> " + h.Value);
+			}
+			magic.Write(message.token);
+			Thread.Sleep(1250);
+			SendPackage(magic);
 		}
 
 		private void InitiateEncryption(string serverKey, byte[] randomKeyToken)
@@ -1401,9 +1533,9 @@ namespace MiNET.Client
 			Log.Debug($@"
 Adventure settings 
 	flags: 0x{message.flags:X2} - {Convert.ToString(message.flags, 2)}
-	flags: 0x{message.userPermission:X2} - {Convert.ToString(message.userPermission, 2)}
+	flags: 0x{message.userpermissions:X2} - {Convert.ToString((byte) message.userpermissions, 2)}
 ");
-			UserPermission = (UserPermission) message.userPermission;
+			UserPermission = (UserPermission) message.userpermissions;
 		}
 
 		private void OnMcpeInteract(McpeInteract message)
@@ -1795,10 +1927,10 @@ Adventure settings
 		{
 			if (message.runtimeEntityId != EntityId) return;
 
-			CurrentLocation = new PlayerLocation(message.x, message.y, message.z);
-			Level.SpawnX = (int) message.x;
-			Level.SpawnY = (int) message.y;
-			Level.SpawnZ = (int) message.z;
+			CurrentLocation = new PlayerLocation(message.x, message.y, message.z, message.headYaw, message.yaw, message.pitch);
+		//	Level.SpawnX = (int) message.x;
+		//	Level.SpawnY = (int) message.y;
+		//	Level.SpawnZ = (int) message.z;
 			SendMcpeMovePlayer();
 		}
 
@@ -1902,8 +2034,7 @@ Adventure settings
 				if (bits[(int) val]) flags.Add((Entity.DataFlags) val);
 			}
 
-			StringBuilder sb = new StringBuilder();
-			return sb.Append(string.Join(", ", flags)).ToString();
+			return string.Join(", ", flags);
 		}
 
 		private void OnMcpeAddPlayer(Package message)
@@ -2017,31 +2148,12 @@ Adventure settings
 		{
 			EntityId = message.runtimeEntityId;
 			NetworkEntityId = message.entityIdSelf;
-			_spawn = new Vector3(message.x, message.y, message.z);
-			CurrentLocation = new PlayerLocation(_spawn);
-			Log.Debug($@"
-StartGame:
-	entityId: {message.entityIdSelf}	
-	runtimeEntityId: {message.runtimeEntityId}	
-	spawn: {message.spawn}	
-	unknown1: {message.unknown1}	
-	dimension: {message.dimension}	
-	generator: {message.generator}	
-	gamemode: {message.gamemode}	
-	difficulty: {message.difficulty}	
-	hasAchievementsDisabled: {message.hasAchievementsDisabled}	
-	dayCycleStopTime: {message.dayCycleStopTime}	
-	eduMode: {message.eduMode}	
-	rainLevel: {message.rainLevel}	
-	lightnigLevel: {message.lightnigLevel}	
-	enableCommands: {message.enableCommands}	
-	isTexturepacksRequired: {message.isTexturepacksRequired}	
-	secret: {message.levelId}	
-	worldName: {message.worldName}	
-");
+			_spawn = new Vector3(message.spawn.X, message.spawn.Y, message.spawn.Z);
+			CurrentLocation = new PlayerLocation(message.x, message.y, message.z);
+		//	Log.Info($@"Startgame: {JsonConvert.SerializeObject(message, Formatting.Indented)}");
 
 			Level.LevelName = "Default";
-			Level.Version = 19133;
+			Level.Version = 1;
 			Level.GameType = message.gamemode;
 
 			//ClientUtils.SaveLevel(_level);
@@ -2059,9 +2171,9 @@ StartGame:
 		{
 			McpeSetSpawnPosition msg = (McpeSetSpawnPosition) message;
 			_spawn = new Vector3(msg.coordinates.X, msg.coordinates.Y, msg.coordinates.Z);
-			Level.SpawnX = (int) _spawn.X;
-			Level.SpawnY = (int) _spawn.Y;
-			Level.SpawnZ = (int) _spawn.Z;
+			Level.SpawnX = msg.coordinates.X;
+			Level.SpawnY = msg.coordinates.Y;
+			Level.SpawnZ = msg.coordinates.Z;
 			Log.Info($"Spawn position: {msg.coordinates}");
 			if (Log.IsDebugEnabled) Log.Debug($"\n{Package.HexDump(message.Bytes)}");
 		}
@@ -2094,13 +2206,13 @@ StartGame:
 					{
 						chunk.x = msg.chunkX;
 						chunk.z = msg.chunkZ;
-						Log.DebugFormat("Chunk X={0}, Z={1}", chunk.x, chunk.z);
-						foreach (KeyValuePair<BlockCoordinates, NbtCompound> blockEntity in chunk.BlockEntities)
+						//Log.DebugFormat("Chunk X={0}, Z={1}", chunk.x, chunk.z);
+					/*	foreach (KeyValuePair<BlockCoordinates, NbtCompound> blockEntity in chunk.BlockEntities)
 						{
 							Log.Debug($"Blockentity: {blockEntity.Value}");
-						}
+						}*/
 
-						//ClientUtils.SaveChunkToAnvil(chunk);
+					//	ClientUtils.SaveChunkToAnvil(chunk);
 					}
 				}
 				catch (Exception e)
@@ -2232,9 +2344,30 @@ StartGame:
 
 		private void TraceReceive(Package message)
 		{
+			var messageType = message.GetType();
+			if (messageType == typeof (McpeFullChunkData)) return;
 			if (!Log.IsDebugEnabled) return;
-
-			string typeName = message.GetType().Name;
+			string typeName = messageType.Name;
+			try
+			{
+				
+				string fn = $"packets\\toClient\\0x{message.Id:X2}-{typeName}.txt";
+				if ((DateTime.UtcNow.Subtract(File.GetLastWriteTimeUtc(fn)) > TimeSpan.FromMilliseconds(50)))
+				{
+					var fs = new FileStream(fn, FileMode.Append, FileAccess.Write);
+					using (StreamWriter outputFile = new StreamWriter(fs))
+					{
+						outputFile.WriteLine($"--= 0x{message.Id:X2} Created on {DateTime.UtcNow} =--");
+						outputFile.WriteLine(JsonConvert.SerializeObject(message, Formatting.Indented, new IPAddressConverter(),
+							new IPEndPointConverter(), new NbtIntConverter(), new NbtStringConverter()));
+						outputFile.WriteLine("===- Data -===");
+						outputFile.Write(Package.HexDump(message.Bytes));
+						outputFile.WriteLine($"\n");
+					}
+				}
+			}
+			catch { }
+			return;
 
 			string includePattern = Config.GetProperty("TracePackets.Include", ".*");
 			string excludePattern = Config.GetProperty("TracePackets.Exclude", null);
@@ -2278,8 +2411,23 @@ StartGame:
 		private void TraceSend(Package message)
 		{
 			if (!Log.IsDebugEnabled) return;
-
 			string typeName = message.GetType().Name;
+			string fn = $"packets\\toServer\\0x{message.Id:X2}-{typeName}.txt";
+			if (!File.Exists(fn)
+			    || (DateTime.UtcNow.Subtract(File.GetLastWriteTimeUtc(fn)) > TimeSpan.FromSeconds(30))
+			)
+			{
+				var fs = new FileStream(fn, FileMode.Append, FileAccess.Write);
+				using (StreamWriter outputFile = new StreamWriter(fs))
+				{
+					outputFile.WriteLine($"--= 0x{message.Id:X2} Created on {DateTime.UtcNow} =--");
+					outputFile.Write(JsonConvert.SerializeObject(message, Formatting.Indented, new IPAddressConverter(),
+						new IPEndPointConverter()));
+					outputFile.WriteLine($"\n");
+				}
+			}
+			return;
+			//string typeName = message.GetType().Name;
 
 			string includePattern = Config.GetProperty("TracePackets.Include", ".*");
 			string excludePattern = Config.GetProperty("TracePackets.Exclude", "");
@@ -2303,7 +2451,7 @@ StartGame:
 		{
 			var packet = new UnconnectedPing
 			{
-				pingId = Stopwatch.GetTimestamp() /*incoming.pingId*/,
+				pingId = DateTime.UtcNow.Ticks/*incoming.pingId*/,
 			};
 
 			var data = packet.Encode();
@@ -2400,8 +2548,8 @@ StartGame:
 			Random rand = new Random();
 			var packet = NewIncomingConnection.CreateObject();
 			packet.clientendpoint = _serverEndpoint;
-			packet.systemAddresses = new IPEndPoint[20];
-			for (int i = 0; i < 20; i++)
+			packet.systemAddresses = new IPEndPoint[10];
+			for (int i = 0; i < 10; i++)
 			{
 				packet.systemAddresses[i] = new IPEndPoint(IPAddress.Any, 0);
 			}
@@ -2426,11 +2574,11 @@ StartGame:
 			McpeMovePlayer movePlayerPacket = McpeMovePlayer.CreateObject();
 			movePlayerPacket.runtimeEntityId = EntityId;
 			movePlayerPacket.x = CurrentLocation.X;
-			movePlayerPacket.y = CurrentLocation.Y;
+			movePlayerPacket.y = CurrentLocation.Y - 1.65f;
 			movePlayerPacket.z = CurrentLocation.Z;
-			movePlayerPacket.yaw = 91;
-			movePlayerPacket.pitch = 28;
-			movePlayerPacket.headYaw = 91;
+			movePlayerPacket.yaw = CurrentLocation.Yaw;
+			movePlayerPacket.pitch = CurrentLocation.Pitch;
+			movePlayerPacket.headYaw = CurrentLocation.HeadYaw;
 
 			SendPackage(movePlayerPacket);
 		}

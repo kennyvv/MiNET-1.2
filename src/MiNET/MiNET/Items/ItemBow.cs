@@ -23,7 +23,7 @@ namespace MiNET.Items
 			haveArrows = haveArrows || this.GetEnchantingLevel(EnchantingType.Infinity) > 0;
 			if (!haveArrows)
 			{
-				for (byte i = 0; i < inventory.Slots.Count; i++)
+				for (byte i = 0; i < inventory.Slots.Length; i++)
 				{
 					var itemStack = inventory.Slots[i];
 					if (itemStack.Id == 262)

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using MiNET.BlockEntities;
 using MiNET.Blocks;
 using MiNET.Utils;
@@ -27,7 +28,7 @@ namespace MiNET.Items
 				if (itemStackInHand.Count <= 0)
 				{
 					// set empty
-					player.Inventory.Slots[player.Inventory.Slots.IndexOf(itemStackInHand)] = new ItemAir();
+					player.Inventory.Slots[Array.IndexOf(player.Inventory.Slots, itemStackInHand)] = new ItemAir();
 				}
 			}
 
