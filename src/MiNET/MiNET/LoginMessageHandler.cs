@@ -29,6 +29,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Xml.Xsl;
 using fNbt;
 using Jose;
 using log4net;
@@ -376,11 +377,6 @@ namespace MiNET
 			}
 		}
 
-		public static string PrintSignature(string input)
-		{
-			return Encoding.UTF8.GetString(Base64Url.Decode(input));
-		}
-
 		public void HandleMcpeClientToServerHandshake(McpeClientToServerHandshake message)
 		{
 			IServerManager serverManager = _session.Server.ServerManager;
@@ -463,17 +459,27 @@ namespace MiNET
 		{
 		}
 
+	//	public void HandleMcpeDropItem(McpeDropItem message)
+	//	{
+	//	}
+
 		public void HandleMcpeContainerClose(McpeContainerClose message)
 		{
 		}
 
 		public void HandleMcpePlayerHotbar(McpePlayerHotbar message)
 		{
+			
 		}
 
 		public void HandleMcpeInventoryContent(McpeInventoryContent message)
 		{
+			
 		}
+
+		//	public void HandleMcpeContainerSetSlot(McpeContainerSetSlot message)
+	//	{
+	//	}
 
 		public void HandleMcpeInventorySlot(McpeInventorySlot message)
 		{ 

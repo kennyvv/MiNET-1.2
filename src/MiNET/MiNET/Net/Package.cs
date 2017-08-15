@@ -1825,7 +1825,6 @@ namespace MiNET.Net
 		public virtual void Reset()
 		{
 			ResetPackage();
-
 			DatagramSequenceNumber = -1;
 
 			Reliability = Reliability.Unreliable;
@@ -1846,6 +1845,7 @@ namespace MiNET.Net
 
 		protected virtual void ResetPackage()
 		{
+
 		}
 
 
