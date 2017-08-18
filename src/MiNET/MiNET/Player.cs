@@ -232,13 +232,13 @@ namespace MiNET
 			{
 				case 1:
 					if (PermissionLevel != UserPermission.Operator
-					    || !Permissions.HasFlag(McpeAdventureSettings.Permissionsflags.Op)) return;
+					    || !ActionPermissions.HasFlag(McpeAdventureSettings.Actionpermissions.Op)) return;
 					EnableCommands = true;
 					SendSetCommandsEnabled();
 					break;
 				case 2:
 					if (PermissionLevel != UserPermission.Operator
-					    || !Permissions.HasFlag(McpeAdventureSettings.Permissionsflags.Op)) return;
+					    || !ActionPermissions.HasFlag(McpeAdventureSettings.Actionpermissions.Op)) return;
 					EnableCommands = message.value;
 					SendSetCommandsEnabled();
 					break;
@@ -590,8 +590,8 @@ namespace MiNET
 			IsAutoJump = (flags & 0x20) == 0x20;
 			IsFlying = (flags & 0x200) == 0x200;
 
-			var previewPermissions =  (McpeAdventureSettings.Permissionsflags)message.userflags;
-			var previewPermissionLevel = (UserPermission) message.userpermissions;
+			var previewPermissions =  (McpeAdventureSettings.Actionpermissions)message.actionPermissions;
+			var previewPermissionLevel = (UserPermission) message.permissionLevel;
 
 			UpdateFlags(previewPermissionLevel, previewPermissions);
 
@@ -602,7 +602,7 @@ namespace MiNET
 		{
 			McpeAdventureSettings mcpeAdventureSettings = McpeAdventureSettings.CreateObject();
 
-			uint flags = 0;
+			int flags = 0;
 
 			if (IsWorldImmutable || GameMode == GameMode.Adventure) flags |= 0x01; // Immutable World (Remove hit markers client-side).
 			if (IsNoPvp || IsSpectator || GameMode == GameMode.Spectator) flags |= 0x02; // No PvP (Remove hit markers client-side).
@@ -621,21 +621,22 @@ namespace MiNET
 			if (IsMuted) flags |= 0x400; // Mute
 
 			mcpeAdventureSettings.flags = flags;
-			mcpeAdventureSettings.userpermissions = (uint)PermissionLevel;
+			mcpeAdventureSettings.permissionLevel= (int) PermissionLevel;
 			mcpeAdventureSettings.userid = EntityId;
-			mcpeAdventureSettings.userflags = (uint) Permissions;
+			mcpeAdventureSettings.actionPermissions = (int)ActionPermissions;
+			mcpeAdventureSettings.customStoredPermissions = 0;
 
 			SendPackage(mcpeAdventureSettings);
 		}
 
-		private void UpdateFlags(UserPermission rank, McpeAdventureSettings.Permissionsflags permissions)
+		private void UpdateFlags(UserPermission rank, McpeAdventureSettings.Actionpermissions permissions)
 		{
 			if (rank < PermissionLevel)
 			{
 				PermissionLevel = rank;
 			}
 
-			if (permissions == McpeAdventureSettings.Permissionsflags.AllowAll)
+			if (permissions == McpeAdventureSettings.Actionpermissions.AllowAll)
 			{
 				IsNoPvp = false;
 				IsNoPvm = false;
@@ -644,7 +645,7 @@ namespace MiNET
 				
 				IsWorldBuilder = true;
 			}
-			else if (permissions == McpeAdventureSettings.Permissionsflags.ProhibitAll)
+			else if (permissions == McpeAdventureSettings.Actionpermissions.ProhibitAll)
 			{
 				IsNoPvp = true;
 				IsNoPvm = true;
@@ -653,23 +654,23 @@ namespace MiNET
 
 				IsWorldBuilder = false;
 			}
-			else if (permissions == McpeAdventureSettings.Permissionsflags.Default)
+			else if (permissions == McpeAdventureSettings.Actionpermissions.Default)
 			{
 				Log.Warn("!!! Default Permission Flags !!!");
 			}
 			else
 			{
-				IsNoPvm = !permissions.HasFlag(McpeAdventureSettings.Permissionsflags.AttackMobs);
-				IsNoPvp = !permissions.HasFlag(McpeAdventureSettings.Permissionsflags.AttackPlayers);
-				IsWorldBuilder = permissions.HasFlag(McpeAdventureSettings.Permissionsflags.BuildAndMine);
-				IsNoPvm = !permissions.HasFlag(McpeAdventureSettings.Permissionsflags.Default);
+				IsNoPvm = !permissions.HasFlag(McpeAdventureSettings.Actionpermissions.AttackMobs);
+				IsNoPvp = !permissions.HasFlag(McpeAdventureSettings.Actionpermissions.AttackPlayers);
+				IsWorldBuilder = permissions.HasFlag(McpeAdventureSettings.Actionpermissions.BuildAndMine);
+				IsNoPvm = !permissions.HasFlag(McpeAdventureSettings.Actionpermissions.Default);
 			}
 
 			SendAdventureSettings();
 		}
 
 		public UserPermission PermissionLevel { get; set; } = UserPermission.Operator;
-		public McpeAdventureSettings.Permissionsflags Permissions { get; set; } = McpeAdventureSettings.Permissionsflags.AllowAll;
+		public McpeAdventureSettings.Actionpermissions ActionPermissions { get; set; } = McpeAdventureSettings.Actionpermissions.AllowAll;
 
 		public bool IsSpectator { get; set; }
 
@@ -952,7 +953,10 @@ namespace MiNET
 			package.yaw = position.Yaw;
 			package.headYaw = position.HeadYaw;
 			package.pitch = position.Pitch;
-			package.mode = (byte) (teleport ? 1 : 0);
+			package.mode = (byte) (teleport ? 2 : 0);
+			package.otherRuntimeEntityId = 0;
+			package.Cause= McpeMovePlayer.TeleportCause.Unknown;
+			package.onGround = IsOnGround;
 
 			SendPackage(package);
 		}
@@ -1954,8 +1958,7 @@ namespace MiNET
 					HandleItemUseOnEntity(transaction);
 					break;
 				case McpeInventoryTransaction.TransactionTypes.InventoryMismatch:
-					//SendPlayerInventory();
-					Log.Warn("Inventory Mismatch!");
+					SendPlayerInventory();
 					break;
 				case McpeInventoryTransaction.TransactionTypes.ItemRelease:
 					HandleItemRelease(transaction);
@@ -2003,16 +2006,19 @@ namespace MiNET
 			switch ((McpeInventoryTransaction.ItemUseOnEntityAction)transaction.ActionType)
 			{
 				case McpeInventoryTransaction.ItemUseOnEntityAction.Interact:
-					entity.DoInteraction(0, this);
+					DoInteraction((byte) transaction.ActionType, this);
+					entity.DoInteraction((byte) transaction.ActionType, this);
 					break;
 				case McpeInventoryTransaction.ItemUseOnEntityAction.Attack:
 					entity.HealthManager.TakeHit(this, this.Inventory.GetItemInHand(), CalculateDamage(entity), DamageCause.EntityAttack);
 					break;
-				case McpeInventoryTransaction.ItemUseOnEntityAction.ItemInteract:
-					Log.Warn("ItemUseOnEntity unknown action: ItemInteract");
+				case McpeInventoryTransaction.ItemUseOnEntityAction.Hoverover:
+					DoMouseOverInteraction((byte)transaction.ActionType, this);
+					entity.DoMouseOverInteraction((byte) transaction.ActionType, this);
 					break;
 				default:
-					throw new ArgumentOutOfRangeException();
+					Log.Warn("Unknown ItemUseOnEntity: " + transaction.ActionType);
+					break;
 			}
 		}
 
@@ -2130,6 +2136,8 @@ namespace MiNET
 				}
 				else if (trans is WorldInteractionTransactionRecord interact)
 				{
+					Inventory.UpdateInventorySlot(Inventory.InHandSlot, interact.OldItem);
+
 					ItemEntity itemEntity = new ItemEntity(Level, interact.NewItem)
 					{
 						Velocity = KnownPosition.GetDirection() * 0.7f,
@@ -2142,6 +2150,7 @@ namespace MiNET
 					};
 
 					itemEntity.SpawnEntity();
+					
 					continue;
 				}
 				else if (trans is GlobalTransactionRecord i)
@@ -2160,17 +2169,6 @@ namespace MiNET
 				}
 				else if (inventoryId == 0) //Survival
 				{
-					if (trans.Slot >= 0 && trans.Slot <= 8)
-					{
-						trans.Slot = 36 + trans.Slot;
-					}
-					else if (trans.Slot >= 9 && trans.Slot <= 17)
-					{
-						trans.Slot = 36 - trans.Slot;
-					}
-					//	var s = trans.Slot;
-
-					//Inventory.SetInventorySlot(trans.Slot, trans.NewItem);
 					Inventory.UpdateInventorySlot(trans.Slot, trans.NewItem);
 					Inventory.CursorItem = trans.OldItem;
 					Inventory.Cursor = trans.Slot;
@@ -2258,100 +2256,9 @@ namespace MiNET
 						}
 					}
 				}
-
-				//Inventory.SetInventorySlot(trans.Slot, signed);
 			}
 		}
 
-		/// <summary>
-		///     Handles the container set slot.
-		/// </summary>
-		/// <param name="message">The message.</param>
-		//public virtual void HandleMcpeContainerSetSlot(McpeContainerSetSlot message)
-		//{
-		//	Log.Debug($"Handle slot hotbarslot={message.hotbarslot}, selectedSlot={message.selectedSlot}");
-		//	lock (Inventory)
-		//	{
-		//		if (HealthManager.IsDead) return;
-
-		//		Item itemStack = message.item;
-
-		//		if (GameMode != GameMode.Creative)
-		//		{
-		//			if (!VerifyItemStack(itemStack))
-		//			{
-		//				Log.Error($"Kicked {Username} for inventory hacking.");
-		//				Disconnect("Error #324. Please report this error.");
-		//				return;
-		//			}
-		//		}
-
-		//		if (Log.IsDebugEnabled)
-		//			Log.Debug($"Player {Username} set inventory item on window 0x{message.windowId:X2} with slot: {message.slot} HOTBAR: {message.hotbarslot} and item: {itemStack}");
-
-		//		if (_openInventory != null)
-		//		{
-		//			if (_openInventory.WindowsId == message.windowId)
-		//			{
-		//				if (_openInventory.Type == 3)
-		//				{
-		//					Recipes recipes = new Recipes();
-		//					recipes.Add(new EnchantingRecipe());
-		//					McpeCraftingData crafting = McpeCraftingData.CreateObject();
-		//					crafting.recipes = recipes;
-		//					SendPackage(crafting);
-		//				}
-
-		//				// block inventories of various kinds (chests, furnace, etc)
-		//				_openInventory.SetSlot(this, (byte) message.slot, itemStack);
-		//				return;
-		//			}
-		//		}
-
-		//		switch (message.windowId)
-		//		{
-		//			case 0:
-		//				Inventory.UpdateInventorySlot(message.slot, itemStack);
-		//				//Inventory.Slots[message.slot] = itemStack;
-		//				break;
-		//			case 0x79:
-		//				Inventory.UpdateInventorySlot(message.slot, itemStack);
-		//				//Inventory.Slots[message.slot] = itemStack;
-		//				break;
-		//			case 0x78:
-
-		//				var armorItem = itemStack;
-		//				switch (message.slot)
-		//				{
-		//					case 0:
-		//						Inventory.Helmet = armorItem;
-		//						break;
-		//					case 1:
-		//						Inventory.Chest = armorItem;
-		//						break;
-		//					case 2:
-		//						Inventory.Leggings = armorItem;
-		//						break;
-		//					case 3:
-		//						Inventory.Boots = armorItem;
-		//						break;
-		//				}
-
-		//				McpeMobArmorEquipment armorEquipment = McpeMobArmorEquipment.CreateObject();
-		//				armorEquipment.runtimeEntityId = EntityId;
-		//				armorEquipment.helmet = Inventory.Helmet;
-		//				armorEquipment.chestplate = Inventory.Chest;
-		//				armorEquipment.leggings = Inventory.Leggings;
-		//				armorEquipment.boots = Inventory.Boots;
-		//				Level.RelayBroadcast(this, armorEquipment);
-
-		//				break;
-		//			case 0x7A:
-		//				//Inventory.ItemHotbar[message.unknown] = message.slot/* + PlayerInventory.HotbarSize*/;
-		//				break;
-		//		}
-		//	}
-		//}
 		public virtual bool VerifyItemStack(Item itemStack)
 		{
 			if (ItemSigner.DefaultItemSigner == null) return true;
@@ -2399,22 +2306,6 @@ namespace MiNET
 		public void HandleMcpeInventoryContent(McpeInventoryContent message)
 		{
 			Log.Warn($"InventoryContent: InventoryID: {message.inventoryId} | Data: {message.input}");
-		/*	if (message.input != null)
-			{
-				Log.Warn("InventoryContent data: " + message.input.Count);
-			}
-			else
-			{
-				return;
-			}
-
-			if (message.inventoryId == 0x00)
-			{
-				foreach (var i in message.input)
-				{
-					
-				}	
-			}*/
 		}
 
 		/// <summary>
@@ -2643,13 +2534,22 @@ namespace MiNET
 			mcpeStartGame.eduMode = PlayerInfo.Edition == 1;
 			mcpeStartGame.rainLevel = 0;
 			mcpeStartGame.lightnigLevel = 0;
-		//	mcpeStartGame.broadcastLan = false;
-		//	mcpeStartGame.broadcastToXboxlive = false;
+			mcpeStartGame.broadcastToXbl = false;
+			mcpeStartGame.broadcastToLan = false;
 			mcpeStartGame.enableCommands = EnableCommands;
 			mcpeStartGame.isTexturepacksRequired = false;
 			mcpeStartGame.gamerules = GetGameRules();
-			mcpeStartGame.levelId = "1m0AAMIFIgA=";
-			mcpeStartGame.worldName = "yrdy";
+			mcpeStartGame.levelId = Guid.NewGuid().ToString();
+			mcpeStartGame.worldName = Level.LevelName;
+			mcpeStartGame.gamePublishSetting = 4;
+			mcpeStartGame.permissionLevel = (int) PermissionLevel;
+			mcpeStartGame.bonusChest = false;
+			mcpeStartGame.isTrial = false;
+			mcpeStartGame.currentLevelTime = Level.CurrentWorldTime;
+			mcpeStartGame.enchantmentSeed = 0;
+			mcpeStartGame.isMultiplayer = true;
+			mcpeStartGame.premiumWorldTemplateId = "";
+			mcpeStartGame.startWithMap = false;
 
 			SendPackage(mcpeStartGame);
 		}
@@ -2986,7 +2886,10 @@ namespace MiNET
 			package.yaw = KnownPosition.Yaw;
 			package.headYaw = KnownPosition.HeadYaw;
 			package.pitch = KnownPosition.Pitch;
-			package.mode = (byte) (teleport ? 1 : 0);
+			package.mode = (byte)(teleport ? 2 : 0);
+			package.otherRuntimeEntityId = 0;
+			package.Cause = McpeMovePlayer.TeleportCause.Unknown;
+			package.onGround = IsOnGround;
 
 			SendPackage(package);
 		}
@@ -3372,8 +3275,9 @@ namespace MiNET
 			mcpeAddPlayer.pitch = KnownPosition.Pitch;
 			mcpeAddPlayer.metadata = GetMetadata();
 			mcpeAddPlayer.permissionlevel = (int) PermissionLevel;
-			mcpeAddPlayer.actionpermissions = (int) Permissions;
-			mcpeAddPlayer.commandpermissions = 1;
+			mcpeAddPlayer.actionpermissions = (int) ActionPermissions;
+			mcpeAddPlayer.commandpermissions = (byte)(EnableCommands ? 1 : 0);
+			mcpeAddPlayer.storedCustomPermissions = 0;
 			mcpeAddPlayer.links = 0;
 			Level.RelayBroadcast(this, players, mcpeAddPlayer);
 

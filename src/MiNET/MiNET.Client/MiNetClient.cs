@@ -1533,9 +1533,9 @@ namespace MiNET.Client
 			Log.Debug($@"
 Adventure settings 
 	flags: 0x{message.flags:X2} - {Convert.ToString(message.flags, 2)}
-	flags: 0x{message.userpermissions:X2} - {Convert.ToString((byte) message.userpermissions, 2)}
+	flags: 0x{message.permissionLevel:X2} - {Convert.ToString((byte) message.permissionLevel, 2)}
 ");
-			UserPermission = (UserPermission) message.userpermissions;
+			UserPermission = (UserPermission) message.permissionLevel;
 		}
 
 		private void OnMcpeInteract(McpeInteract message)

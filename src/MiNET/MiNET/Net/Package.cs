@@ -927,6 +927,10 @@ namespace MiNET.Net
 					trans.Slot = ReadSignedVarInt();
 					trans.Item = ReadItem();
 					trans.FromPosition = ReadVector3();
+					if (trans.ActionType == ItemUseOnEntityActionInteract || trans.ActionType == ItemUseOnEntityActionAttack)
+					{
+						trans.ClickPosition = ReadVector3();
+					}
 					break;
 				case TransactionTypeItemRelease:
 					trans.ActionType = ReadVarInt();

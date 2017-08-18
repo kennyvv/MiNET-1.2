@@ -15,7 +15,7 @@ namespace MiNET.Net
 		partial void AfterDecode()
 		{
 			//Log.Warn("Read VarInt: " + ReadVarInt());
-			Log.Warn($"Size: {Bytes.Length} | UserID: {userid} | PermissonLevel: {userpermissions} | Flags: {flags} | Userflags: {userflags}");
+			Log.Warn($"Size: {Bytes.Length} | UserID: {userid} | PermissonLevel: {permissionLevel} | Flags: {flags} | Action Permissions: {actionPermissions} | Custom stored permissions: {customStoredPermissions}");
 		 } 
 	}
 }

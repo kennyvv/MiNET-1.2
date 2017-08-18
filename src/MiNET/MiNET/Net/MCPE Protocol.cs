@@ -1868,10 +1868,11 @@ namespace MiNET.Net
 			Chat = 1,
 			Translation = 2,
 			Popup = 3,
-			Tip = 4,
-			System = 5,
-			Whisper = 6,
-			Announcement = 7,
+			JukeboxPopup = 4,
+			Tip = 5,
+			System = 6,
+			Whisper = 7,
+			Announcement = 8,
 		}
 
 		public byte type; // = null;
@@ -1988,21 +1989,23 @@ namespace MiNET.Net
 		public bool eduMode; // = null;
 		public float rainLevel; // = null;
 		public float lightnigLevel; // = null;
+		public bool isMultiplayer; // = null;
+		public bool broadcastToLan; // = null;
+		public bool broadcastToXbl; // = null;
 		public bool enableCommands; // = null;
-		public byte isMultiplayer; // = null;
-		public byte broadcastToLan; // = null;
-		public byte broadcastToXbl; // = null;
 		public bool isTexturepacksRequired; // = null;
 		public GameRules gamerules; // = null;
-		public byte bonusChest; // = null;
-		public byte trustPlayers; // = null;
+		public bool bonusChest; // = null;
+		public bool startWithMap; // = null;
+		public bool trustPlayers; // = null;
 		public int permissionLevel; // = null;
 		public int gamePublishSetting; // = null;
 		public string levelId; // = null;
 		public string worldName; // = null;
 		public string premiumWorldTemplateId; // = null;
-		public bool unknown0; // = null;
-		public long currentTick; // = null;
+		public bool isTrial; // = null;
+		public long currentLevelTime; // = null;
+		public int enchantmentSeed; // = null;
 
 		public McpeStartGame()
 		{
@@ -2034,21 +2037,23 @@ namespace MiNET.Net
 			Write(eduMode);
 			Write(rainLevel);
 			Write(lightnigLevel);
-			Write(enableCommands);
 			Write(isMultiplayer);
 			Write(broadcastToLan);
 			Write(broadcastToXbl);
+			Write(enableCommands);
 			Write(isTexturepacksRequired);
 			Write(gamerules);
 			Write(bonusChest);
+			Write(startWithMap);
 			Write(trustPlayers);
 			WriteSignedVarInt(permissionLevel);
 			WriteSignedVarInt(gamePublishSetting);
 			Write(levelId);
 			Write(worldName);
 			Write(premiumWorldTemplateId);
-			Write(unknown0);
-			Write(currentTick);
+			Write(isTrial);
+			Write(currentLevelTime);
+			WriteSignedVarInt(enchantmentSeed);
 
 			AfterEncode();
 		}
@@ -2080,21 +2085,23 @@ namespace MiNET.Net
 			eduMode = ReadBool();
 			rainLevel = ReadFloat();
 			lightnigLevel = ReadFloat();
+			isMultiplayer = ReadBool();
+			broadcastToLan = ReadBool();
+			broadcastToXbl = ReadBool();
 			enableCommands = ReadBool();
-			isMultiplayer = ReadByte();
-			broadcastToLan = ReadByte();
-			broadcastToXbl = ReadByte();
 			isTexturepacksRequired = ReadBool();
 			gamerules = ReadGameRules();
-			bonusChest = ReadByte();
-			trustPlayers = ReadByte();
+			bonusChest = ReadBool();
+			startWithMap = ReadBool();
+			trustPlayers = ReadBool();
 			permissionLevel = ReadSignedVarInt();
 			gamePublishSetting = ReadSignedVarInt();
 			levelId = ReadString();
 			worldName = ReadString();
 			premiumWorldTemplateId = ReadString();
-			unknown0 = ReadBool();
-			currentTick = ReadLong();
+			isTrial = ReadBool();
+			currentLevelTime = ReadLong();
+			enchantmentSeed = ReadSignedVarInt();
 
 			AfterDecode();
 		}
@@ -2124,21 +2131,23 @@ namespace MiNET.Net
 			eduMode=default(bool);
 			rainLevel=default(float);
 			lightnigLevel=default(float);
+			isMultiplayer=default(bool);
+			broadcastToLan=default(bool);
+			broadcastToXbl=default(bool);
 			enableCommands=default(bool);
-			isMultiplayer=default(byte);
-			broadcastToLan=default(byte);
-			broadcastToXbl=default(byte);
 			isTexturepacksRequired=default(bool);
 			gamerules=default(GameRules);
-			bonusChest=default(byte);
-			trustPlayers=default(byte);
+			bonusChest=default(bool);
+			startWithMap=default(bool);
+			trustPlayers=default(bool);
 			permissionLevel=default(int);
 			gamePublishSetting=default(int);
 			levelId=default(string);
 			worldName=default(string);
 			premiumWorldTemplateId=default(string);
-			unknown0=default(bool);
-			currentTick=default(long);
+			isTrial=default(bool);
+			currentLevelTime=default(long);
+			enchantmentSeed=default(int);
 		}
 
 	}
@@ -2165,6 +2174,7 @@ namespace MiNET.Net
 		public int commandpermissions; // = null;
 		public int actionpermissions; // = null;
 		public int permissionlevel; // = null;
+		public int storedCustomPermissions; // = null;
 		public long userId; // = null;
 		public int links; // = null;
 
@@ -2199,7 +2209,8 @@ namespace MiNET.Net
 			WriteVarInt(commandpermissions);
 			WriteVarInt(actionpermissions);
 			WriteVarInt(permissionlevel);
-			Write(userId);
+			WriteVarInt(storedCustomPermissions);
+			WriteSignedVarLong(userId);
 			WriteVarInt(links);
 
 			AfterEncode();
@@ -2233,7 +2244,8 @@ namespace MiNET.Net
 			commandpermissions = ReadVarInt();
 			actionpermissions = ReadVarInt();
 			permissionlevel = ReadVarInt();
-			userId = ReadLong();
+			storedCustomPermissions = ReadVarInt();
+			userId = ReadSignedVarLong();
 			links = ReadVarInt();
 
 			AfterDecode();
@@ -2265,6 +2277,7 @@ namespace MiNET.Net
 			commandpermissions=default(int);
 			actionpermissions=default(int);
 			permissionlevel=default(int);
+			storedCustomPermissions=default(int);
 			userId=default(long);
 			links=default(int);
 		}
@@ -2621,8 +2634,17 @@ namespace MiNET.Net
 		{
 			Normal = 0,
 			Reset = 1,
-			Rotation = 2,
-			Pitch = 3,
+			Teleport = 2,
+			Rotation = 3,
+		}
+		public enum TeleportCause
+		{
+			Unknown = 0,
+			Projectile = 1,
+			ChorusFruit = 2,
+			Command = 3,
+			Behavior = 4,
+			Count = 5,
 		}
 
 		public long runtimeEntityId; // = null;
@@ -3333,6 +3355,8 @@ namespace MiNET.Net
 			Interact = 0,
 			Attack = 1,
 			ItemInteract = 2,
+			Unknown = 3,
+			Hoverover = 4,
 		}
 
 		public Transaction transaction; // = null;
@@ -3520,6 +3544,9 @@ namespace MiNET.Net
 
 		public byte actionId; // = null;
 		public long targetRuntimeEntityId; // = null;
+		public float x; // = null;
+		public float y; // = null;
+		public float z; // = null;
 
 		public McpeInteract()
 		{
@@ -3535,6 +3562,9 @@ namespace MiNET.Net
 
 			Write(actionId);
 			WriteUnsignedVarLong(targetRuntimeEntityId);
+			Write(x);
+			Write(y);
+			Write(z);
 
 			AfterEncode();
 		}
@@ -3550,6 +3580,9 @@ namespace MiNET.Net
 
 			actionId = ReadByte();
 			targetRuntimeEntityId = ReadUnsignedVarLong();
+			x = ReadFloat();
+			y = ReadFloat();
+			z = ReadFloat();
 
 			AfterDecode();
 		}
@@ -3563,6 +3596,9 @@ namespace MiNET.Net
 
 			actionId=default(byte);
 			targetRuntimeEntityId=default(long);
+			x=default(float);
+			y=default(float);
+			z=default(float);
 		}
 
 	}
@@ -4702,7 +4738,7 @@ namespace MiNET.Net
 
 	public partial class McpeAdventureSettings : Package<McpeAdventureSettings>
 	{
-		public enum Permissionsflags
+		public enum Actionpermissions
 		{
 			ProhibitAll = 0,
 			BuildAndMine = 1,
@@ -4716,10 +4752,11 @@ namespace MiNET.Net
 			AllowAll = 511,
 		}
 
-		public uint flags; // = null;
-		public uint unknown; // = null;
-		public uint userflags; // = null;
-		public uint userpermissions; // = null;
+		public int flags; // = null;
+		public int unknown; // = null;
+		public int actionPermissions; // = null;
+		public int permissionLevel; // = null;
+		public int customStoredPermissions; // = null;
 		public long userid; // = null;
 
 		public McpeAdventureSettings()
@@ -4734,11 +4771,12 @@ namespace MiNET.Net
 
 			BeforeEncode();
 
-			WriteUnsignedVarInt(flags);
-			WriteUnsignedVarInt(unknown);
-			WriteUnsignedVarInt(userflags);
-			WriteUnsignedVarInt(userpermissions);
-			WriteVarLong(userid);
+			WriteVarInt(flags);
+			WriteVarInt(unknown);
+			WriteVarInt(actionPermissions);
+			WriteVarInt(permissionLevel);
+			WriteVarInt(customStoredPermissions);
+			WriteUnsignedVarLong(userid);
 
 			AfterEncode();
 		}
@@ -4752,11 +4790,12 @@ namespace MiNET.Net
 
 			BeforeDecode();
 
-			flags = ReadUnsignedVarInt();
-			unknown = ReadUnsignedVarInt();
-			userflags = ReadUnsignedVarInt();
-			userpermissions = ReadUnsignedVarInt();
-			userid = ReadVarLong();
+			flags = ReadVarInt();
+			unknown = ReadVarInt();
+			actionPermissions = ReadVarInt();
+			permissionLevel = ReadVarInt();
+			customStoredPermissions = ReadVarInt();
+			userid = ReadUnsignedVarLong();
 
 			AfterDecode();
 		}
@@ -4768,10 +4807,11 @@ namespace MiNET.Net
 		{
 			base.ResetPackage();
 
-			flags=default(uint);
-			unknown=default(uint);
-			userflags=default(uint);
-			userpermissions=default(uint);
+			flags=default(int);
+			unknown=default(int);
+			actionPermissions=default(int);
+			permissionLevel=default(int);
+			customStoredPermissions=default(int);
 			userid=default(long);
 		}
 

@@ -155,7 +155,6 @@ Read more about packets and this specification on the [Protocol Wiki](https://gi
 | ushort [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-ushort) |
 | UUID [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-UUID) |
 | VarInt [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-VarInt) |
-| VarLong [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-VarLong) |
 | Vector2 [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-Vector2) |
 | Vector3 [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-Vector3) |
 
@@ -329,10 +328,11 @@ Wiki: [Text](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Text)
 |Chat | 1 |
 |Translation | 2 |
 |Popup | 3 |
-|Tip | 4 |
-|System | 5 |
-|Whisper | 6 |
-|Announcement | 7 |
+|Jukebox Popup | 4 |
+|Tip | 5 |
+|System | 6 |
+|Whisper | 7 |
+|Announcement | 8 |
 
 
 #### Fields
@@ -387,21 +387,23 @@ Wiki: [Start Game](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-StartG
 |EDU mode | bool |  |
 |Rain level | float |  |
 |Lightnig level | float |  |
+|Is Multiplayer | bool |  |
+|Broadcast To LAN | bool |  |
+|Broadcast To XBL | bool |  |
 |Enable commands | bool |  |
-|Is Multiplayer | byte |  |
-|Broadcast To LAN | byte |  |
-|Broadcast To XBL | byte |  |
 |Is texturepacks required | bool |  |
 |GameRules | GameRules |  |
-|Bonus Chest | byte |  |
-|Trust Players | byte |  |
+|Bonus Chest | bool |  |
+|Start With Map | bool |  |
+|Trust Players | bool |  |
 |Permission Level | SignedVarInt |  |
 |Game Publish Setting | SignedVarInt |  |
 |Level ID | string |  |
 |World name | string |  |
 |Premium World Template Id | string |  |
-|Unknown0 | bool |  |
-|Current Tick | long |  |
+|Is Trial | bool |  |
+|Current Level Time | long |  |
+|Enchantment Seed | SignedVarInt |  |
 -----------------------------------------------------------------------
 ### Add Player (0x0c)
 Wiki: [Add Player](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-AddPlayer)
@@ -435,7 +437,8 @@ Wiki: [Add Player](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-AddPla
 |CommandPermissions | VarInt |  |
 |ActionPermissions | VarInt |  |
 |PermissionLevel | VarInt |  |
-|User ID | long |  |
+|Stored Custom Permissions | VarInt |  |
+|User ID | SignedVarLong |  |
 |Links | VarInt |  |
 -----------------------------------------------------------------------
 ### Add Entity (0x0d)
@@ -565,8 +568,19 @@ Wiki: [Move Player](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-MoveP
 |:-----|:-----|
 |Normal | 0 |
 |Reset | 1 |
-|Rotation | 2 |
-|Pitch | 3 |
+|Teleport | 2 |
+|Rotation | 3 |
+
+#### Teleport Cause constants
+
+| Name | Value |
+|:-----|:-----|
+|Unknown | 0 |
+|Projectile | 1 |
+|Chorus Fruit | 2 |
+|Command | 3 |
+|Behavior | 4 |
+|Count | 5 |
 
 
 #### Fields
@@ -832,6 +846,8 @@ Wiki: [Inventory Transaction](https://github.com/NiclasOlofsson/MiNET/wiki//Prot
 |Interact | 0 |
 |Attack | 1 |
 |Item Interact | 2 |
+|Unknown | 3 |
+|Hoverover | 4 |
 
 
 #### Fields
@@ -902,6 +918,9 @@ Wiki: [Interact](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Interact
 |:-----|:-----|:-----|
 |Action ID | byte |  |
 |Target Runtime Entity ID | UnsignedVarLong |  |
+|X | float |  |
+|Y | float |  |
+|Z | float |  |
 -----------------------------------------------------------------------
 ### Block Pick Request (0x22)
 Wiki: [Block Pick Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-BlockPickRequest)
@@ -1266,7 +1285,7 @@ Wiki: [Adventure Settings](https://github.com/NiclasOlofsson/MiNET/wiki//Protoco
 
 
 
-#### Permissionsflags constants
+#### Actionpermissions constants
 
 | Name | Value |
 |:-----|:-----|
@@ -1286,11 +1305,12 @@ Wiki: [Adventure Settings](https://github.com/NiclasOlofsson/MiNET/wiki//Protoco
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
-|Flags | UnsignedVarInt |  |
-|Unknown | UnsignedVarInt |  |
-|UserFlags | UnsignedVarInt |  |
-|UserPermissions | UnsignedVarInt |  |
-|UserId | VarLong |  |
+|Flags | VarInt |  |
+|Unknown | VarInt |  |
+|Action Permissions | VarInt |  |
+|Permission Level | VarInt |  |
+|Custom Stored Permissions | VarInt |  |
+|UserId | UnsignedVarLong |  |
 -----------------------------------------------------------------------
 ### Block Entity Data (0x38)
 Wiki: [Block Entity Data](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-BlockEntityData)

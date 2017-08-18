@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using log4net;
 using MiNET.Net;
@@ -550,6 +551,10 @@ namespace MiNET.Plugins
 				}
 
 				MethodInfo method = overload.Method;
+				if (commandOverload.Length < method.GetParameters().Length - 1)
+				{
+					return null;
+				}
 
 				/*List<string> strings = new List<string>();
 				if (commandInputJson != null)

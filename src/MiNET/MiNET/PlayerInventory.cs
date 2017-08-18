@@ -28,6 +28,7 @@ namespace MiNET
 		public Item Leggings { get; set; }
 		public Item Chest { get; set; }
 		public Item Helmet { get; set; }
+		public Item OffHand { get; set; }
 
 		public PlayerInventory(Player player)
 		{
@@ -35,7 +36,7 @@ namespace MiNET
 
 			int idx = 0;
 			Slots = Enumerable.Repeat((Item) new ItemAir(), InventorySize).ToArray();
-			Slots[idx++] = new ItemCompass(); // test with y=-1
+		//	Slots[idx++] = new ItemCompass(); // test with y=-1
 		//	Slots[idx++] = new ItemSpawnEgg(EntityType.Wither);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Wolf);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Pig);
@@ -44,18 +45,19 @@ namespace MiNET
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Npc);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.Zombie);
 			//Slots[idx++] = new ItemSpawnEgg(EntityType.IronGolem);
-			Slots[idx++] = new ItemSnowball();
-			Slots[idx++] = new ItemBow();
-			Slots[idx++] = new ItemArrow() {Count = 64};
+		//	Slots[idx++] = new ItemSnowball();
+		//	Slots[idx++] = new ItemBow();
+		//	Slots[idx++] = new ItemArrow() {Count = 64};
 
-			Slots[35] = new ItemApple();
-			Slots[9] = new ItemDiamond();
+		//	Slots[35] = new ItemApple();
+		//	Slots[9] = new ItemDiamond();
 
-			Boots = new ItemDiamondBoots();
-			Leggings = new ItemDiamondLeggings();
-			Chest = new ItemDiamondChestplate();
-			Helmet = new ItemDiamondHelmet();
+			Boots = new ItemAir();
+			Leggings = new ItemAir();
+			Chest = new ItemAir();
+			Helmet = new ItemAir();
 			CursorItem = new ItemAir();
+			OffHand = new ItemAir();
 		}
 
 		public virtual Item GetItemInHand()
@@ -123,7 +125,7 @@ namespace MiNET
 			}
 			else
 			{
-				for (int si = 9; si < Slots.Length; si++)
+				for (int si = 0; si < Slots.Length; si++)
 				{
 					if (FirstEmptySlot(item, update, si)) return true;
 				}
@@ -158,10 +160,6 @@ namespace MiNET
 		{
 			SelectedHotbarSlot = selectedHotbarSlot;
 			InHandSlot = selectedHotbarSlot;
-			if (selectedHotbarSlot >= 0 && selectedHotbarSlot <= 8)
-			{
-				InHandSlot = 36 + selectedHotbarSlot;
-			}
 
 			if (sendToPlayer)
 			{
@@ -170,6 +168,7 @@ namespace MiNET
 				order.item = GetItemInHand();
 				order.selectedSlot = (byte) selectedHotbarSlot;
 				order.slot = (byte) InHandSlot; //(byte) ItemHotbar[InHandSlot];
+				order.windowsId = 0;
 				Player.SendPackage(order);
 			}
 
@@ -223,14 +222,32 @@ namespace MiNET
 
 		public void SendSetSlot(int slot)
 		{
-			Log.Warn("!!! Send set slot: " + slot);
-			McpeInventorySlot ssendSlot = McpeInventorySlot.CreateObject();
-			ssendSlot.inventoryId = 0;
-			ssendSlot.slot = slot;
-			ssendSlot.item = Slots[slot];
-			Player.SendPackage(ssendSlot);
+			/*if (slot >= 36 && slot <= 45)
+			{
+				Log.Warn("!!! MEQ Send set slot: " + slot);
+
+				McpeMobEquipment order = McpeMobEquipment.CreateObject();
+				order.windowsId = 0;
+				order.runtimeEntityId = EntityManager.EntityIdSelf;
+				order.item = Slots[slot];
+				order.slot = (byte) slot;
+				order.selectedSlot = (byte) SelectedHotbarSlot; // Selected hotbar slot
+				Player.SendPackage(order);
+			}
+			else
+			{*/
+				Log.Warn("!!! MIS Send set slot: " + slot);
+
+				McpeInventorySlot ssendSlot = McpeInventorySlot.CreateObject();
+				ssendSlot.inventoryId = 0;
+				ssendSlot.slot = slot;
+				ssendSlot.item = Slots[slot];
+				
+				Player.SendPackage(ssendSlot);
+			//}
+
 			return;
-			if (slot < HotbarSize || (slot >= 36 && slot <= 45)/* && (ItemHotbar[slot] == -1 || ItemHotbar[slot] == slot)*/)
+			if (slot < HotbarSize/* && (ItemHotbar[slot] == -1 || ItemHotbar[slot] == slot)*/)
 			{
 			//	ItemHotbar[slot] = slot;
 				//Player.SendPlayerInventory();
