@@ -442,34 +442,46 @@ namespace MiNET
 					}
 					break;
 				case PlayerAction.AbortBreak:
-				case PlayerAction.StopBreak:
+
 					break;
-				//case PlayerAction.ReleaseItem:
-				//	if (_itemUseTimer <= 0) return;
+				case PlayerAction.StopBreak:
 
-				//	Item itemInHand = Inventory.GetItemInHand();
+					break;
+				case PlayerAction.Breaking:
+					
+					break;
 
-				//	if (itemInHand == null) return; // Cheat(?)
+				case PlayerAction.DropItem:
+					if (_itemUseTimer <= 0) return;
 
-				//	itemInHand.Release(Level, this, new BlockCoordinates(message.coordinates.X, message.coordinates.Y, message.coordinates.Z), Level.TickTime - _itemUseTimer);
+					Item itemInHand = Inventory.GetItemInHand();
 
-				//	_itemUseTimer = 0;
+					if (itemInHand == null) return; // Cheat(?)
 
-				//	break;
+					itemInHand.Release(Level, this, new BlockCoordinates(message.coordinates.X, message.coordinates.Y, message.coordinates.Z), Level.TickTime - _itemUseTimer);
+
+					_itemUseTimer = 0;
+					break;
+
+				case PlayerAction.StartSleeping:
+					break;
 				case PlayerAction.StopSleeping:
 					break;
+
 				case PlayerAction.Respawn:
 					MiNetServer.FastThreadPool.QueueUserWorkItem(HandleMcpeRespawn);
 					break;
 				case PlayerAction.Jump:
 					HungerManager.IncreaseExhaustion(IsSprinting ? 0.8f : 0.2f);
 					break;
+
 				case PlayerAction.StartSprint:
 					SetSprinting(true);
 					break;
 				case PlayerAction.StopSprint:
 					SetSprinting(false);
 					break;
+
 				case PlayerAction.StartSneak:
 					SetSprinting(false);
 					IsSneaking = true;
@@ -478,6 +490,7 @@ namespace MiNET
 					SetSprinting(false);
 					IsSneaking = false;
 					break;
+
 				case PlayerAction.DimensionChange:
 					break;
 				case PlayerAction.DimensionChangeAck:
@@ -487,8 +500,7 @@ namespace MiNET
 						_dimensionFunc = null;
 					}
 					break;
-				case PlayerAction.WorldImmutable:
-					break;
+
 				case PlayerAction.StartGlide:
 					IsGliding = true;
 					Height = 0.6;
@@ -502,9 +514,9 @@ namespace MiNET
 					IsGliding = false;
 					Height = 1.8;
 					break;
-				case PlayerAction.Breaking:
 
-					break;
+				//case PlayerAction.DenyDestroyBlock:
+				//	break;
 				default:
 					Log.Warn($"Unhandled action ID={message.actionId}");
 					throw new ArgumentOutOfRangeException(nameof(message.actionId));
@@ -2530,12 +2542,12 @@ namespace MiNET
 			mcpeStartGame.z = (int) SpawnPosition.Z;
 			//mcpeStartGame.hasAchievementsDisabled = GameMode == GameMode.Creative || EnableCommands;
 			mcpeStartGame.hasAchievementsDisabled = true;
-			mcpeStartGame.dayCycleStopTime = (int) Level.CurrentWorldTime;
+			mcpeStartGame.dayCycleStopTime = (int)Level.CurrentWorldTime;
 			mcpeStartGame.eduMode = PlayerInfo.Edition == 1;
 			mcpeStartGame.rainLevel = 0;
 			mcpeStartGame.lightnigLevel = 0;
-			mcpeStartGame.broadcastToXbl = false;
-			mcpeStartGame.broadcastToLan = false;
+			mcpeStartGame.broadcastToXbl = true;
+			mcpeStartGame.broadcastToLan = true;
 			mcpeStartGame.enableCommands = EnableCommands;
 			mcpeStartGame.isTexturepacksRequired = false;
 			mcpeStartGame.gamerules = GetGameRules();
