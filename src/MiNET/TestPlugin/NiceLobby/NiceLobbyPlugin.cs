@@ -212,80 +212,7 @@ namespace TestPlugin.NiceLobby
 
 		private int _image = 0;
 
-		private void SkinTick(object state)
-		{
-			if (!Monitor.TryEnter(_skinSynk)) return;
-
-			try
-			{
-				foreach (var player in _players.Values)
-				{
-					{
-						if (!player.Username.Equals("gurun")) continue;
-
-						if (_image >= 9) _image = 0;
-
-						_image++;
-
-						Level level = player.Level;
-						//if (level.TickTime%3 != 0) return;
-						//player.SetNameTag(player.Username + " " + level.TickTime + " testing");
-						//player.SetDisplayName(player.Username + " " + level.TickTime + " testing");
-
-						Skin skin = player.Skin;
-						var texture = skin.Texture;
-						byte[] smiley = GetTextureFromFile(@"D:\Temp\Smiley\big_smile0" + _image + ".png");
-						if (smiley.Length != 8*8*4) return;
-						int s = 0;
-						int br = 8;
-						int bc = 8;
-						for (int r = 0; r < 8; r++)
-						{
-							for (int c = 0; c < 8; c++)
-							{
-								int i = ((c + bc)*4) + ((r + br)*64*4);
-								int j = ((c)*4) + ((r)*8*4);
-
-								texture[(i) + 0] = smiley[j + 0];
-								texture[(i) + 1] = smiley[j + 1];
-								texture[(i) + 2] = smiley[j + 2];
-								texture[(i) + 3] = smiley[j + 3];
-							}
-						}
-
-						{
-							player.SpawnPosition = player.KnownPosition;
-
-							//level.DespawnFromAll(player);
-							//level.SpawnToAll(player);
-
-							var players = level.GetSpawnedPlayers();
-
-							McpePlayerList playerList = McpePlayerList.CreateObject();
-							playerList.records = new PlayerAddRecords {player};
-							level.RelayBroadcast(player, players, CreateMcpeBatch(playerList.Encode()));
-							playerList.records = null;
-							playerList.PutPool();
-
-							//player.IsInvisible = true;
-							player.HideNameTag = true;
-							//player.BroadcastSetEntityData();
-
-							player.SpawnToPlayers(players);
-
-							//Thread.Sleep(100);
-							//player.HideNameTag = false;
-							//player.IsInvisible = false;
-							//player.BroadcastSetEntityData();
-						}
-					}
-				}
-			}
-			finally
-			{
-				Monitor.Exit(_skinSynk);
-			}
-		}
+	
 
 		public static byte[] GetTextureFromFile(string filename)
 		{
@@ -799,7 +726,7 @@ namespace TestPlugin.NiceLobby
 
 			PlayerMob fake = new PlayerMob("§6§lBot: " + name + "", player.Level)
 			{
-				Skin = new Skin {Slim = false, Texture = bytes},
+				Skin = new Skin {Slim = false, SkinData = bytes},
 				KnownPosition = player.KnownPosition,
 				ItemInHand = new ItemDiamondSword(),
 				Helmet = 302,

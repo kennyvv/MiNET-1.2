@@ -95,6 +95,8 @@ Read more about packets and this specification on the [Protocol Wiki](https://gi
 | Set Title | 0x58 | 88 |   
 | Add Behavior Tree | 0x59 | 89 |   
 | Structure Block Update | 0x5a | 90 |   
+| Show Store Offer | 0x5b | 91 |   
+| Purchase Receipt | 0x5c | 92 |   
 | Player Skin | 0x5d | 93 |   
 | Sub Client Login | 0x5e | 94 |   
 | Initiate Web Socket Connection | 0x5f | 95 |   
@@ -433,13 +435,13 @@ Wiki: [Add Player](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-AddPla
 |Yaw | float |  |
 |Item | Item |  |
 |Metadata | MetadataDictionary |  |
-|Flags | VarInt |  |
-|CommandPermissions | VarInt |  |
-|ActionPermissions | VarInt |  |
-|PermissionLevel | VarInt |  |
-|Stored Custom Permissions | VarInt |  |
-|User ID | SignedVarLong |  |
-|Links | VarInt |  |
+|Flags | UnsignedVarInt |  |
+|User Permission | UnsignedVarInt |  |
+|Action Permissions | UnsignedVarInt |  |
+|Permission Level | UnsignedVarInt |  |
+|Unknown | UnsignedVarInt |  |
+|User Id | long |  |
+|Links | Links |  |
 -----------------------------------------------------------------------
 ### Add Entity (0x0d)
 Wiki: [Add Entity](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-AddEntity)
@@ -1164,9 +1166,9 @@ Wiki: [Player Hotbar](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Pla
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
-|Selected Slot | VarInt |  |
+|Selected Slot | UnsignedVarInt |  |
+|Window ID | byte |  |
 |Hotbar Data | MetadataInts |  |
-|Unknown Data | MetadataInts |  |
 -----------------------------------------------------------------------
 ### Inventory Content (0x31)
 Wiki: [Inventory Content](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-InventoryContent)
@@ -1285,32 +1287,17 @@ Wiki: [Adventure Settings](https://github.com/NiclasOlofsson/MiNET/wiki//Protoco
 
 
 
-#### Actionpermissions constants
-
-| Name | Value |
-|:-----|:-----|
-|Prohibit All | 0 |
-|Build And Mine | 1 |
-|Doors And Switches | 2 |
-|Open Containers | 4 |
-|Attack Players | 8 |
-|Attack Mobs | 16 |
-|Op | 32 |
-|Teleport | 64 |
-|Default | 128 |
-|Allow All | 511 |
-
 
 #### Fields
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
-|Flags | VarInt |  |
-|Unknown | VarInt |  |
-|Action Permissions | VarInt |  |
-|Permission Level | VarInt |  |
-|Custom Stored Permissions | VarInt |  |
-|UserId | UnsignedVarLong |  |
+|Flags | UnsignedVarInt |  |
+|Command permission | UnsignedVarInt |  |
+|Action permissions | UnsignedVarInt |  |
+|Permission level | UnsignedVarInt |  |
+|Custom stored permissions | UnsignedVarInt |  |
+|User Id | long |  |
 -----------------------------------------------------------------------
 ### Block Entity Data (0x38)
 Wiki: [Block Entity Data](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-BlockEntityData)
@@ -1700,6 +1687,15 @@ Wiki: [Update Trade](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Upda
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
+|Window ID | byte |  |
+|Window Type | byte |  |
+|Unknown0 | VarInt |  |
+|Unknown1 | VarInt |  |
+|Is Willing | bool |  |
+|Trader Entity ID | SignedVarLong |  |
+|Player Entity ID | SignedVarLong |  |
+|Display Name | string |  |
+|NamedTag | Nbt |  |
 -----------------------------------------------------------------------
 ### Update Equipment (0x51)
 Wiki: [Update Equipment](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-UpdateEquipment)
@@ -1751,7 +1747,7 @@ Wiki: [Resource Pack Chunk Data](https://github.com/NiclasOlofsson/MiNET/wiki//P
 |Chunk Index | uint |  |
 |Progress | ulong |  |
 |Length | uint |  |
-|Payload | byte[] | 0 |
+|Payload | byte[] | (int) length |
 -----------------------------------------------------------------------
 ### Resource Pack Chunk Request (0x54)
 Wiki: [Resource Pack Chunk Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ResourcePackChunkRequest)
@@ -1851,12 +1847,43 @@ Wiki: [Add Behavior Tree](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
+|BehaviorTree | string |  |
 -----------------------------------------------------------------------
 ### Structure Block Update (0x5a)
 Wiki: [Structure Block Update](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-StructureBlockUpdate)
 
 **Sent from server:** true  
 **Sent from client:** false
+
+
+
+
+#### Fields
+
+| Name | Type | Size |
+|:-----|:-----|:-----|
+-----------------------------------------------------------------------
+### Show Store Offer (0x5b)
+Wiki: [Show Store Offer](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ShowStoreOffer)
+
+**Sent from server:** true  
+**Sent from client:** false
+
+
+
+
+#### Fields
+
+| Name | Type | Size |
+|:-----|:-----|:-----|
+|Unknown0 | string |  |
+|Unknown1 | bool |  |
+-----------------------------------------------------------------------
+### Purchase Receipt (0x5c)
+Wiki: [Purchase Receipt](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-PurchaseReceipt)
+
+**Sent from server:** false  
+**Sent from client:** true
 
 
 
@@ -1879,6 +1906,14 @@ Wiki: [Player Skin](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Playe
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
+|UUID | UUID |  |
+|Skin ID | string |  |
+|Skin Name | string |  |
+|Serialize Name | string |  |
+|Skin Data | ByteArray |  |
+|Cape Data | ByteArray |  |
+|Geometry Model | string |  |
+|Geometry Data | ByteArray |  |
 -----------------------------------------------------------------------
 ### Sub Client Login (0x5e)
 Wiki: [Sub Client Login](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-SubClientLogin)
@@ -1907,6 +1942,7 @@ Wiki: [Initiate Web Socket Connection](https://github.com/NiclasOlofsson/MiNET/w
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
+|Server | string |  |
 -----------------------------------------------------------------------
 ### Set Last Hurt By (0x60)
 Wiki: [Set Last Hurt By](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-SetLastHurtBy)
@@ -1921,6 +1957,7 @@ Wiki: [Set Last Hurt By](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
+|Unknown | VarInt |  |
 -----------------------------------------------------------------------
 ### Book Edit (0x61)
 Wiki: [Book Edit](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-BookEdit)
@@ -1949,20 +1986,10 @@ Wiki: [Npc Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-NpcRe
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
------------------------------------------------------------------------
-### Server Settings Request (0x66)
-Wiki: [Server Settings Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ServerSettingsRequest)
-
-**Sent from server:** false  
-**Sent from client:** true
-
-
-
-
-#### Fields
-
-| Name | Type | Size |
-|:-----|:-----|:-----|
+|Runtime Entity ID | UnsignedVarLong |  |
+|Unknown0 | byte |  |
+|Unknown1 | string |  |
+|Unknown2 | byte |  |
 -----------------------------------------------------------------------
 ### Modal Form Request (0x64)
 Wiki: [Modal Form Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ModalFormRequest)
@@ -1995,6 +2022,20 @@ Wiki: [Modal Form Response](https://github.com/NiclasOlofsson/MiNET/wiki//Protoc
 |:-----|:-----|:-----|
 |FormId | VarInt |  |
 |Data | string |  |
+-----------------------------------------------------------------------
+### Server Settings Request (0x66)
+Wiki: [Server Settings Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ServerSettingsRequest)
+
+**Sent from server:** false  
+**Sent from client:** true
+
+
+
+
+#### Fields
+
+| Name | Type | Size |
+|:-----|:-----|:-----|
 -----------------------------------------------------------------------
 ### Server Settings Response (0x67)
 Wiki: [Server Settings Response](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ServerSettingsResponse)

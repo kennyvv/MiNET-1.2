@@ -24,7 +24,7 @@ namespace TestPlugin.UI
 			Displayname = new Input(player.Username, "Displayname");
 
 			GamemodeDropdown = new PlayerEnumDropdown<GameMode>(player, "GameMode", (int)player.GameMode, SetAsChanged);
-			DifficultyDropdown = new PlayerEnumDropdown<McpeAdventureSettings.Actionpermissions>(player, "Permissions", (int)player.ActionPermissions, SetAsChanged);
+			DifficultyDropdown = new PlayerEnumDropdown<Actionpermissions>(player, "Permissions", (int)player.ActionPermissions, SetAsChanged);
 			PermissionLevelDropdown = new PlayerEnumDropdown<UserPermission>(player, "PermissionLevel", (int)player.PermissionLevel, SetAsChanged);
 
 			MuteToggle = new Toggle("Mute", player.IsMuted);

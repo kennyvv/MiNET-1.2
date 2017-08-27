@@ -865,6 +865,7 @@ namespace MiNET.Client
 
 		public int PlayerStatus { get; set; }
 
+		public EventHandler<Package> OnPackage;
 
 		private void HandlePackage(Package message)
 		{
@@ -875,6 +876,8 @@ namespace MiNET.Client
 				OnBatch(message);
 				return;
 			}
+
+			OnPackage?.Invoke(this, message);
 
 			//Log.Debug($"Handle package 0x{message.Id:X2} {message.GetType().Name}");
 
@@ -2189,36 +2192,29 @@ Adventure settings
 
 		private int _numberOfChunks = 0;
 
-		private ConcurrentDictionary<Tuple<int, int>, bool> _chunks = new ConcurrentDictionary<Tuple<int, int>, bool>();
+		public ConcurrentDictionary<ChunkCoordinates, ChunkColumn> _chunks = new ConcurrentDictionary<ChunkCoordinates, ChunkColumn>();
+		public EventHandler<ChunkColumn> OnChunkReceived;
 
 		private void OnFullChunkData(McpeFullChunkData msg)
 		{
 			if (IsEmulator) return;
 
-			if (_chunks.TryAdd(new Tuple<int, int>(msg.chunkX, msg.chunkZ), true))
+			ChunkColumn chunk;
+			try
 			{
-				//Log.Debug($"Chunk X={msg.chunkX}, Z={msg.chunkZ}, size={msg.chunkData.Length}, Count={++_numberOfChunks}");
-
-				try
+				chunk = ClientUtils.DecocedChunkColumn(msg.chunkData);
+				if (chunk != null)
 				{
-					ChunkColumn chunk = ClientUtils.DecocedChunkColumn(msg.chunkData);
-					if (chunk != null)
-					{
-						chunk.x = msg.chunkX;
-						chunk.z = msg.chunkZ;
-						//Log.DebugFormat("Chunk X={0}, Z={1}", chunk.x, chunk.z);
-					/*	foreach (KeyValuePair<BlockCoordinates, NbtCompound> blockEntity in chunk.BlockEntities)
-						{
-							Log.Debug($"Blockentity: {blockEntity.Value}");
-						}*/
+					chunk.x = msg.chunkX;
+					chunk.z = msg.chunkZ;
+					_chunks.AddOrUpdate(new ChunkCoordinates(msg.chunkX, msg.chunkZ), chunk, (coordinates, column) => chunk);
 
-					//	ClientUtils.SaveChunkToAnvil(chunk);
-					}
+					OnChunkReceived?.Invoke(this, chunk);
 				}
-				catch (Exception e)
-				{
-					Log.Error("Reading chunk", e);
-				}
+			}
+			catch (Exception e)
+			{
+				Log.Error("Reading chunk", e);
 			}
 		}
 
@@ -2548,8 +2544,8 @@ Adventure settings
 			Random rand = new Random();
 			var packet = NewIncomingConnection.CreateObject();
 			packet.clientendpoint = _serverEndpoint;
-			packet.systemAddresses = new IPEndPoint[10];
-			for (int i = 0; i < 10; i++)
+			packet.systemAddresses = new IPEndPoint[20];
+			for (int i = 0; i < 20; i++)
 			{
 				packet.systemAddresses[i] = new IPEndPoint(IPAddress.Any, 0);
 			}

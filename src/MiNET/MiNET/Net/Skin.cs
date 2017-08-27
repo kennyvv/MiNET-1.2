@@ -6,12 +6,14 @@ namespace MiNET.Net
 	public class Skin
 	{
 		public bool Slim { get; set; }
-		public byte[] Texture { get; set; }
 		public byte Alpha { get; set; }
-		public string SkinType { get; set; }
-		public string GeometryType { get; set; }
-		public string GeometryData { get; set; }
-		public string CapeData { get; internal set; }
+
+		public byte[] CapeData { get; set; }
+		public string SkinId { get; set; }
+		public byte[] SkinData { get; set; }
+		public string SkinGeometryName { get; set; }
+		public byte[] SkinGeometry { get; set; }
+
 
 		public static byte[] GetTextureFromFile(string filename)
 		{
@@ -19,7 +21,7 @@ namespace MiNET.Net
 			if (bitmap.Width != 64) return null;
 			if (bitmap.Height != 32 && bitmap.Height != 64) return null;
 
-			byte[] bytes = new byte[bitmap.Height*bitmap.Width*4];
+			byte[] bytes = new byte[bitmap.Height * bitmap.Width * 4];
 
 			int i = 0;
 			for (int y = 0; y < bitmap.Height; y++)
@@ -40,7 +42,7 @@ namespace MiNET.Net
 		public static void SaveTextureToFile(string filename, byte[] bytes)
 		{
 			int width = 64;
-			var height = bytes.Length == 64*32*4 ? 32 : 64;
+			var height = bytes.Length == 64 * 32 * 4 ? 32 : 64;
 
 			Bitmap bitmap = new Bitmap(width, height);
 

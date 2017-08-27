@@ -40,7 +40,7 @@ namespace MiNET.Utils
 {
 	public static class CryptoUtils
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (CryptoUtils));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(CryptoUtils));
 
 		public static byte[] GetDerEncoded(this ECDiffieHellmanPublicKey key)
 		{
@@ -64,16 +64,16 @@ namespace MiNET.Utils
 
 		private static byte[] FixPublicKey(byte[] publicKeyBlob)
 		{
-			var keyType = new byte[] {0x45, 0x43, 0x4b, 0x33};
-			var keyLength = new byte[] {0x30, 0x00, 0x00, 0x00};
+			var keyType = new byte[] { 0x45, 0x43, 0x4b, 0x33 };
+			var keyLength = new byte[] { 0x30, 0x00, 0x00, 0x00 };
 
 			return keyType.Concat(keyLength).Concat(publicKeyBlob.Skip(1)).ToArray();
 		}
 
 		public static ECDiffieHellmanPublicKey ImportEccPublicKeyFromCertificate(X509Certificate2 cert)
 		{
-			var keyType = new byte[] {0x45, 0x43, 0x4b, 0x33};
-			var keyLength = new byte[] {0x30, 0x00, 0x00, 0x00};
+			var keyType = new byte[] { 0x45, 0x43, 0x4b, 0x33 };
+			var keyLength = new byte[] { 0x30, 0x00, 0x00, 0x00 };
 			var key = cert.PublicKey.EncodedKeyValue.RawData.Skip(1);
 			var keyImport = keyType.Concat(keyLength).Concat(key).ToArray();
 
@@ -92,8 +92,8 @@ namespace MiNET.Utils
 			byte[] clientPublicKeyBlob = Base64Url.Decode(clientPubKeyString);
 			byte[] key = clientPublicKeyBlob.Skip(23).ToArray();
 
-			var keyType = new byte[] {0x45, 0x43, 0x53, 0x33};
-			var keyLength = new byte[] {0x30, 0x00, 0x00, 0x00};
+			var keyType = new byte[] { 0x45, 0x43, 0x53, 0x33 };
+			var keyLength = new byte[] { 0x30, 0x00, 0x00, 0x00 };
 
 			var keyImport = keyType.Concat(keyLength).Concat(key.Skip(1)).ToArray();
 
@@ -167,7 +167,7 @@ namespace MiNET.Utils
 				//if (Log.IsDebugEnabled)
 				//	Log.Debug($"Full content\n{Package.HexDump(fullResult)}");
 
-				clearBytes = (byte[]) fullResult.Take(fullResult.Length - 8).ToArray();
+				clearBytes = (byte[])fullResult.Take(fullResult.Length - 8).ToArray();
 				checksum = fullResult.Skip(fullResult.Length - 8).ToArray();
 			}
 
@@ -179,7 +179,7 @@ namespace MiNET.Utils
 
 		public static CngKey GenerateClientKey()
 		{
-			CngKey newKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP384, null, new CngKeyCreationParameters() {ExportPolicy = CngExportPolicies.AllowPlaintextExport, KeyUsage = CngKeyUsages.AllUsages});
+			CngKey newKey = CngKey.Create(CngAlgorithm.ECDiffieHellmanP384, null, new CngKeyCreationParameters() { ExportPolicy = CngExportPolicies.AllowPlaintextExport, KeyUsage = CngKeyUsages.AllUsages });
 			return newKey;
 		}
 
@@ -203,7 +203,7 @@ namespace MiNET.Utils
 				ExtraData = new ExtraData
 				{
 					DisplayName = username,
-					Identity = isEmulator? Guid.NewGuid().ToString():"85e4febd-3d33-4008-b044-1ad9fb85b26c",
+					Identity = isEmulator ? Guid.NewGuid().ToString() : "85e4febd-3d33-4008-b044-1ad9fb85b26c",
 				},
 				Iss = "self",
 				IdentityPublicKey = b64Key,
@@ -222,7 +222,7 @@ namespace MiNET.Utils
 			//	""nbf"": 1467508448
 			//}}";
 
-			string val = JWT.Encode(certificateData, tk, JwsAlgorithm.ES384, new Dictionary<string, object> {{"x5u", b64Key}});
+			string val = JWT.Encode(certificateData, tk, JwsAlgorithm.ES384, new Dictionary<string, object> { { "x5u", b64Key } });
 
 			Log.Warn(JWT.Payload(val));
 
@@ -248,11 +248,11 @@ namespace MiNET.Utils
 			Skin skin = new Skin
 			{
 				Slim = false,
-				Texture = Encoding.Default.GetBytes(new string('Z', 8192)),
-				SkinType = "Standard_Custom"
+				SkinData = Encoding.Default.GetBytes(new string('Z', 8192)),
+				SkinId = "Standard_Custom"
 			};
 
-			string skin64 = Convert.ToBase64String(skin.Texture);
+			string skin64 = Convert.ToBase64String(skin.SkinData);
 
 
 			//{
@@ -280,17 +280,17 @@ namespace MiNET.Utils
 	""DefaultInputMode"": 1,
 	""DeviceModel"": ""MINET CLIENT"",
 	""DeviceOS"": 7,
-	""GameVersion"": ""1.1.0.4"",
+	""GameVersion"": ""1.2.0.15"",
 	""GuiScale"": 0,
 	""LanguageCode"": ""en_US"",
 	""ServerAddress"": ""yodamine.com:19132"",
 	""SkinData"": ""{skin64}"",
-	""SkinId"": ""{skin.SkinType}"",
+	""SkinId"": ""{skin.SkinId}"",
 	""TenantId"": ""75a3f792-a259-4428-9a8d-4e832fb960e4"",
 	""UIProfile"": 0
 }}";
 
-			string val = JWT.Encode(skinData, tk, JwsAlgorithm.ES384, new Dictionary<string, object> {{"x5u", b64Key}});
+			string val = JWT.Encode(skinData, tk, JwsAlgorithm.ES384, new Dictionary<string, object> { { "x5u", b64Key } });
 
 			return Encoding.UTF8.GetBytes(val);
 		}

@@ -74,7 +74,7 @@
 		<field name="Server GUID" type="long" exampleData="0x00000000372cdc9e" />
 		<field name="Client Endpoint" type="IPEndPoint" />
 		<field name="MTU Size" type="short" endianess="BE" />
-		<field name="Do security and handshake" type="byte[]" size="0" note="Ignored" />
+		<field name="Do security and handshake" type="byte[]" size="0, true" note="Ignored" />
 	</pdu>
 
 	<pdu namespace="raknet" id="0x09" online="false" client="false" server="true" name="ID_CONNECTION_REQUEST" size="33">
@@ -224,43 +224,46 @@
 	  <field name="Is texturepacks required" type="bool" />
     
 	  <field name="GameRules" type="GameRules" />
+   <!-- <field name="GameRules" type="VarInt" /> -->
 	  <field name="Bonus Chest" type="bool" />
 	  <field name="Start With Map" type="bool" /> 
 	  <field name="Trust Players" type="bool" />
 	  <field name="Permission Level" type="SignedVarInt" />
 	  <field name="Game Publish Setting" type="SignedVarInt" />
+    
 	  <field name="Level ID" type="string" />
 	  <field name="World name" type="string" />
 	  <field name="Premium World Template Id" type="string" />
 	  <field name="Is Trial" type="bool" />
 	  <field name="Current Level Time" type="long" />
     <field name="Enchantment Seed" type ="SignedVarInt" />
-    
+    <!--<field name="UUID" type="string" /> -->
 	</pdu>
 
 	<pdu id="0x0c" online="false" client="false" server="true" name="MCPE_ADD_PLAYER">
-		<field name="UUID" type="UUID" />
-		<field name="Username" type="string" />
-		<field name="Entity ID Self" type="SignedVarLong" />
-		<field name="Runtime Entity ID" type="UnsignedVarLong" />
-		<field name="X" type="float" />
-		<field name="Y" type="float" />
-		<field name="Z" type="float" />
-		<field name="Speed X" type="float" />
-		<field name="Speed Y" type="float" />
-		<field name="Speed Z" type="float" />
-		<field name="Pitch" type="float" />
-		<field name="Head Yaw" type="float" />
-		<field name="Yaw" type="float" />
-		<field name="Item" type="Item" />
-		<field name="Metadata" type="MetadataDictionary"/>
-    <field name="Flags" type="VarInt" />
-	  <field name="CommandPermissions" type="VarInt" />
-	  <field name="ActionPermissions" type="VarInt" />
-	  <field name="PermissionLevel" type="VarInt" />
-	  <field name="Stored Custom Permissions" type="VarInt" />
-    <field name="User ID" type="SignedVarLong" />
-    <field name="Links" type="VarInt"  />
+	  <field name="UUID" type="UUID" />
+	  <field name="Username" type="string" />
+	  <field name="Entity ID Self" type="SignedVarLong" />
+	  <field name="Runtime Entity ID" type="UnsignedVarLong" />
+	  <field name="X" type="float" />
+	  <field name="Y" type="float" />
+	  <field name="Z" type="float" />
+	  <field name="Speed X" type="float" />
+	  <field name="Speed Y" type="float" />
+	  <field name="Speed Z" type="float" />
+	  <field name="Pitch" type="float" />
+	  <field name="Head Yaw" type="float" />
+	  <field name="Yaw" type="float" />
+	  <field name="Item" type="Item" />
+	  <field name="Metadata" type="MetadataDictionary"/>
+
+	  <field name="Flags" type="UnsignedVarInt" />
+	  <field name="User Permission" type="UnsignedVarInt" />
+	  <field name="Action Permissions" type="UnsignedVarInt" />
+	  <field name="Permission Level" type="UnsignedVarInt" />
+	  <field name="Unknown" type="UnsignedVarInt" />
+	  <field name="User Id" type="long" />
+	  <field name="Links" type="Links" />
 	</pdu>
 
 
@@ -579,9 +582,9 @@
 	</pdu>
 
 	<pdu id="0x30" online="false" client="true" server="true" name="MCPE_PLAYER_HOTBAR">
-		<field name="Selected Slot" type="VarInt" />
-		<field name="Hotbar Data" type="MetadataInts" />
-	  <field name="Unknown Data" type="MetadataInts" />
+	  <field name="Selected Slot" type="UnsignedVarInt" />
+	  <field name="Window ID" type="byte" />
+	  <field name="Hotbar Data" type="MetadataInts" />
 	</pdu>
 
 	<pdu id="0x31" online="false" client="true" server="true" name="MCPE_INVENTORY_CONTENT">
@@ -626,26 +629,49 @@
 
 	</pdu>
 
-	<pdu id="0x37" online="false" client="true" server="true" name="MCPE_ADVENTURE_SETTINGS">
-	  <enums id="ActionPermissions">
-	    <enum id="Prohibit All" value="0" />
-	    <enum id="Build and Mine" value="1" />
-	    <enum id="Doors and Switches" value="2" />
-	    <enum id="Open Containers" value="4" />
-	    <enum id="Attack Players" value="8" />
-	    <enum id="Attack Mobs" value="16" />
-	    <enum id="Op" value="32" />
-	    <enum id="Teleport" value="64" />
-	    <enum id="Default" value="128" />
-	    <enum id="Allow All" value="511" />
-	  </enums>
+  <enums id="AdventureFlags">
+    <enum id="MayFly" value="0x40" />
+    <enum id="NoClip" value="0x80" />
+    <enum id="WorldBuilder" value="0x100" />
+    <enum id="Flying" value="0x200" />
+    <enum id="Muted" value="0x400" />
+  </enums>
 
-    <field name="Flags" type="VarInt" />
-	  <field name="Unknown" type="VarInt" />
-	  <field name="Action Permissions" type="VarInt" />
-	  <field name="Permission Level" type="VarInt" />
-    <field name="Custom Stored Permissions" type="VarInt" />
-	  <field name="UserId" type="UnsignedVarLong" />
+  <enums id="CommandPermission">
+    <enum id="Normal" value="0" />
+    <enum id="Operator" value="1" />
+    <enum id="Host" value="2" />
+    <enum id="Automation" value="3" />
+    <enum id="Admin" value="4" />
+  </enums>
+
+  <enums id="PermissionLevel">
+    <enum id="Visitor" value="0" />
+    <enum id="Member" value="1" />
+    <enum id="Operator" value="2" />
+    <enum id="Custom" value="3" />
+  </enums>
+
+  <enums id="ActionPermissions">
+    <enum id="Build And Mine" value="0x1" />
+    <enum id="Doors And Switches" value="0x2" />
+    <enum id="Open Containers" value="0x4" />
+    <enum id="Attack Players" value="0x8" />
+    <enum id="Attack Mobs" value="0x10" />
+    <enum id="Operator" value="0x20" />
+    <enum id="Teleport" value="0x80" />
+
+    <enum id="Default" value="(BuildAndMine | DoorsAndSwitches | OpenContainers | AttackPlayers | AttackMobs )" />
+    <enum id="All" value="(BuildAndMine | DoorsAndSwitches | OpenContainers | AttackPlayers | AttackMobs | Operator | Teleport)" />
+  </enums>
+
+  <pdu id="0x37" online="false" client="true" server="true" name="MCPE_ADVENTURE_SETTINGS">
+	  <field name="Flags" type="UnsignedVarInt" />
+	  <field name="Command permission" type="UnsignedVarInt" />
+	  <field name="Action permissions" type="UnsignedVarInt" />
+	  <field name="Permission level" type="UnsignedVarInt" />
+	  <field name="Custom stored permissions" type="UnsignedVarInt" />
+	  <field name="User Id" type="long" />
 	</pdu>
 
 	<pdu id="0x38" online="false" client="true" server="true" name="MCPE_BLOCK_ENTITY_DATA">
@@ -786,6 +812,15 @@
 	</pdu>
 
 	<pdu id="0x50" online="false" client="false" server="true" name="MCPE_UPDATE_TRADE">
+	  <field name="Window ID" type="byte" />
+	  <field name="Window Type" type="byte" />
+	  <field name="Unknown0" type="VarInt" />
+	  <field name="Unknown1" type="VarInt" />
+	  <field name="Is Willing" type="bool" />
+	  <field name="Trader Entity ID" type="SignedVarLong" />
+	  <field name="Player Entity ID" type="SignedVarLong" />
+	  <field name="Display Name" type="string" />
+	  <field name="NamedTag" type="Nbt" />
 	</pdu>
 
 	<pdu id="0x51" online="false" client="false" server="true" name="MCPE_UPDATE_EQUIPMENT">
@@ -805,7 +840,7 @@
 		<field name="Chunk Index" type="uint"  />
 		<field name="Progress" type="ulong"  />
 		<field name="Length" type="uint"  />
-		<field name="Payload" type="byte[]" size="0" />
+		<field name="Payload" type="byte[]" size="(int) length" />
 	</pdu>
 
 	<pdu id="0x54" online="false" client="true" server="false" name="MCPE_RESOURCE_PACK_CHUNK_REQUEST">
@@ -847,31 +882,51 @@
 	</pdu>
 
 	<pdu id="0x59" online="false" client="false" server="true" name="MCPE_ADD_BEHAVIOR_TREE">
+	  <field name="BehaviorTree" type="string" />
 	</pdu>
 
 	<pdu id="0x5a" online="false" client="false" server="true" name="MCPE_STRUCTURE_BLOCK_UPDATE">
 	</pdu>
 
+  <pdu id="0x5b" online="false" client="false" server="true" name="MCPE_SHOW_STORE_OFFER">
+    <field name="Unknown0" type="string" />
+    <field name="Unknown1" type="bool" />
+  </pdu>
+
+  <pdu id="0x5c" online="false" client="true" server="false" name="MCPE_PURCHASE_RECEIPT">
+  </pdu>
+
 	<pdu id="0x5d" online="false" client="false" server="true" name="MCPE_PLAYER_SKIN">
+	  <field name="UUID" type="UUID" />
+	  <field name="Skin ID" type="string" />
+	  <field name="Skin Name" type="string" />
+	  <field name="Serialize Name" type="string" />
+	  <field name="Skin Data" type="ByteArray" />
+	  <field name="Cape Data" type="ByteArray" />
+	  <field name="Geometry Model" type="string" />
+	  <field name="Geometry Data" type="ByteArray" />
 	</pdu>
 
 	<pdu id="0x5e" online="false" client="false" server="true" name="MCPE_SUB_CLIENT_LOGIN">
 	</pdu>
 
 	<pdu id="0x5f" online="false" client="false" server="true" name="MCPE_INITIATE_WEB_SOCKET_CONNECTION">
+    <field name="Server" type="string" />
 	</pdu>
 
 	<pdu id="0x60" online="false" client="false" server="true" name="MCPE_SET_LAST_HURT_BY">
+	  <field name="Unknown" type="VarInt" />
 	</pdu>
 
 	<pdu id="0x61" online="false" client="false" server="true" name="MCPE_BOOK_EDIT">
 	</pdu>
 
 	<pdu id="0x62" online="false" client="false" server="true" name="MCPE_NPC_REQUEST">
+	  <field name="Runtime Entity ID" type="UnsignedVarLong" />
+	  <field name="Unknown0" type="byte" />
+	  <field name="Unknown1" type="string" />
+	  <field name="Unknown2" type="byte" />
 	</pdu>
-
-  <pdu id="0x66" online="false" client="true" server="false" name="MCPE_SERVER_SETTINGS_REQUEST">
-  </pdu>
 
   <pdu id="0x64" online="false" client="false" server="true" name="MCPE_MODAL_FORM_REQUEST">
     <field name="FormId" type="VarInt" />
@@ -883,13 +938,16 @@
     <field name="Data" type="string" />
   </pdu>
 
+  <pdu id="0x66" online="false" client="true" server="false" name="MCPE_SERVER_SETTINGS_REQUEST">
+  </pdu>
+
   <pdu id="0x67" online="false" client="false" server="true" name="MCPE_SERVER_SETTINGS_RESPONSE">
     <field name="Form ID" type="VarInt" />
     <field name="Data" type="string" />
   </pdu>
   
 	<pdu namespace="raknet" id="0xfe" online="false" client="false" server="true" name="MCPE_WRAPPER">
-		<field name="Payload" type="byte[]" size="0" />
+		<field name="Payload" type="byte[]" size="0, true" />
 	</pdu>
 
 	<pdu namespace="ftl" id="0x01" online="false" client="false" server="true" name="FTL_CREATE_PLAYER">

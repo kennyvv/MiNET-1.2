@@ -35,7 +35,7 @@ namespace MiNET.Client
 {
 	public class ClientUtils
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (ClientUtils));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(ClientUtils));
 
 		private static int _waterOffsetY = 0;
 		private static string _basePath = @"D:\Temp\MCPEWorldStore";
@@ -70,18 +70,18 @@ namespace MiNET.Client
 						Log.Debug($"New section {s}, index={idx}");
 						Chunk chunk = chunkColumn.chunks[s];
 
-						int chunkSize = 16*16*16;
+						int chunkSize = 16 * 16 * 16;
 						defStream.Read(chunk.blocks, 0, chunkSize);
 						//Log.Debug($"Blocks1:\n{Package.HexDump(chunk.blocks)}");
 
-						if (defStream.Read(chunk.metadata.Data, 0, chunkSize/2) != chunkSize/2) Log.Error($"Out of data: metadata");
+						if (defStream.Read(chunk.metadata.Data, 0, chunkSize / 2) != chunkSize / 2) Log.Error($"Out of data: metadata");
 
 						//Log.Debug($"metadata:\n{Package.HexDump(chunk.metadata.Data)}");
 
-					//	if (defStream.Read(chunk.skylight.Data, 0, chunkSize/2) != chunkSize/2) Log.Error($"Out of data: skylight");
+						//if (defStream.Read(chunk.skylight.Data, 0, chunkSize/2) != chunkSize/2) Log.Error($"Out of data: skylight");
 						//Log.Debug($"skylight:\n{Package.HexDump(chunk.skylight.Data)}");
 
-					//	if (defStream.Read(chunk.blocklight.Data, 0, chunkSize/2) != chunkSize/2) Log.Error($"Out of data: blocklight");
+						//if (defStream.Read(chunk.blocklight.Data, 0, chunkSize/2) != chunkSize/2) Log.Error($"Out of data: blocklight");
 						//Log.Debug($"blocklight:\n{Package.HexDump(chunk.blocklight.Data)}");
 
 						//Log.Debug($"skylight.Data:\n{Package.HexDump(chunk.skylight.Data, 64)}");
@@ -112,7 +112,7 @@ namespace MiNET.Client
 
 
 					byte[] ba = new byte[512];
-					if (defStream.Read(ba, 0, 256*2) != 256*2) Log.Error($"Out of data height");
+					if (defStream.Read(ba, 0, 256 * 2) != 256 * 2) Log.Error($"Out of data height");
 
 					Buffer.BlockCopy(ba, 0, chunkColumn.height, 0, 512);
 					//Log.Debug($"Heights:\n{Package.HexDump(ba)}");
@@ -158,7 +158,7 @@ namespace MiNET.Client
 
 						while (stream.Position < stream.Length)
 						{
-							NbtFile file = new NbtFile() {BigEndian = false, UseVarInt = true};
+							NbtFile file = new NbtFile() { BigEndian = false, UseVarInt = true };
 
 							file.LoadFromStream(stream, NbtCompression.None);
 
@@ -167,7 +167,7 @@ namespace MiNET.Client
 					}
 					if (stream.Position < stream.Length - 1)
 					{
-						Log.Warn($"Still have data to read\n{Package.HexDump(defStream.ReadBytes((int) (stream.Length - stream.Position)))}");
+						Log.Warn($"Still have data to read\n{Package.HexDump(defStream.ReadBytes((int)(stream.Length - stream.Position)))}");
 					}
 
 					return chunkColumn;
@@ -237,13 +237,13 @@ namespace MiNET.Client
 
 		private static void SetNibble4(byte[] arr, int index, byte value)
 		{
-			if (index%2 == 0)
+			if (index % 2 == 0)
 			{
-				arr[index/2] = (byte) ((value & 0x0F) | arr[index/2]);
+				arr[index / 2] = (byte)((value & 0x0F) | arr[index / 2]);
 			}
 			else
 			{
-				arr[index/2] = (byte) (((value << 4) & 0xF0) | arr[index/2]);
+				arr[index / 2] = (byte)(((value << 4) & 0xF0) | arr[index / 2]);
 			}
 		}
 
@@ -284,8 +284,8 @@ namespace MiNET.Client
 			{
 				NbtCompound sectionTag = new NbtCompound();
 				sectionsTag.Add(sectionTag);
-				sectionTag.Add(new NbtByte("Y", (byte) i));
-				int sy = i*16;
+				sectionTag.Add(new NbtByte("Y", (byte)i));
+				int sy = i * 16;
 
 				byte[] blocks = new byte[4096];
 				byte[] data = new byte[2048];
@@ -301,7 +301,7 @@ namespace MiNET.Client
 							int yi = sy + y;
 							if (yi < 0 || yi >= 256) continue; // ?
 
-							int anvilIndex = (y + _waterOffsetY)*16*16 + z*16 + x;
+							int anvilIndex = (y + _waterOffsetY) * 16 * 16 + z * 16 + x;
 							byte blockId = chunk.GetBlock(x, yi, z);
 
 							// PE to Anvil friendly converstion

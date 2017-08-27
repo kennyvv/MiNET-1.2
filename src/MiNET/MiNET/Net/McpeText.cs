@@ -2,33 +2,29 @@ namespace MiNET.Net
 {
 	public partial class McpeText : Package<McpeText>
 	{
-		public const byte TypeRaw = 0;
-		public const byte TypeChat = 1;
-		public const byte TypeTranslation = 2;
-		public const byte TypePopup = 3;
-		public const byte TypeTip = 4;
-
 		public string source; // = null;
 		public string message; // = null;
 
 		partial void AfterEncode()
 		{
-			Write((byte)0);
-			switch (type)
+			Write(false);
+			ChatTypes chatType = (ChatTypes)type;
+			switch (chatType)
 			{
-				case TypeChat:
+				case ChatTypes.Chat:
+				case ChatTypes.Whisper:
+				case ChatTypes.Announcement:
 					Write(source);
 					Write(message);
 					break;
-				case TypeRaw:
+				case ChatTypes.Raw:
+				case ChatTypes.Tip:
+				case ChatTypes.System:
 					Write(message);
 					break;
-				case TypePopup:
-				case TypeTip:
-					Write(message);
-					break;
-
-				case TypeTranslation:
+				case ChatTypes.Popup:
+				case ChatTypes.Translation:
+				case ChatTypes.JukeboxPopup:
 					Write(message);
 					// More stuff
 					break;
@@ -46,20 +42,26 @@ namespace MiNET.Net
 
 		partial void AfterDecode()
 		{
-			ReadByte();
-			switch (type)
+			ReadBool(); // localization
+
+			ChatTypes chatType = (ChatTypes)type;
+			switch (chatType)
 			{
-				case TypeChat:
+				case ChatTypes.Chat:
+				case ChatTypes.Whisper:
+				case ChatTypes.Announcement:
 					source = ReadString();
 					message = ReadString();
 					break;
-				case TypeRaw:
-				case TypePopup:
-				case TypeTip:
+				case ChatTypes.Raw:
+				case ChatTypes.Tip:
+				case ChatTypes.System:
 					message = ReadString();
 					break;
 
-				case TypeTranslation:
+				case ChatTypes.Popup:
+				case ChatTypes.Translation:
+				case ChatTypes.JukeboxPopup:
 					message = ReadString();
 					// More stuff
 					break;

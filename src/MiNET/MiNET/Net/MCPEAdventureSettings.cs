@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using log4net;
+using MiNET.Utils;
 
 namespace MiNET.Net
 {
@@ -14,8 +15,9 @@ namespace MiNET.Net
 		
 		partial void AfterDecode()
 		{
+			userId = Endian.SwapInt64(userId);
 			//Log.Warn("Read VarInt: " + ReadVarInt());
-			Log.Warn($"Size: {Bytes.Length} | UserID: {userid} | PermissonLevel: {permissionLevel} | Flags: {flags} | Action Permissions: {actionPermissions} | Custom stored permissions: {customStoredPermissions}");
+			Log.Warn($"Size: {Bytes.Length} | UserID: {userId} | PermissonLevel: {permissionLevel} | Flags: {flags} | Action Permissions: {actionPermissions} | Custom stored permissions: {customStoredPermissions}");
 		 } 
 	}
 }

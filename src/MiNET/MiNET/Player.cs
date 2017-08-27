@@ -123,6 +123,8 @@ namespace MiNET
 			HideNameTag = false;
 			IsAlwaysShowName = true;
 			CanClimb = true;
+			HasCollision = true;
+			IsAffectedByGravity = true;
 		}
 
 		public void HandleMcpeClientToServerHandshake(McpeClientToServerHandshake message)
@@ -164,6 +166,11 @@ namespace MiNET
 			chunkData.length = (uint) content.Length;
 			chunkData.payload = content;
 			SendPackage(chunkData);
+		}
+
+		public void HandleMcpePurchaseReceipt(McpePurchaseReceipt message)
+		{
+			Log.Warn("TODO: Purchase receipt");
 		}
 
 		public void HandleMcpeServerSettingsRequest(McpeServerSettingsRequest message)
@@ -232,13 +239,13 @@ namespace MiNET
 			{
 				case 1:
 					if (PermissionLevel != UserPermission.Operator
-					    || !ActionPermissions.HasFlag(McpeAdventureSettings.Actionpermissions.Op)) return;
+					    || !ActionPermissions.HasFlag(Actionpermissions.Operator)) return;
 					EnableCommands = true;
 					SendSetCommandsEnabled();
 					break;
 				case 2:
 					if (PermissionLevel != UserPermission.Operator
-					    || !ActionPermissions.HasFlag(McpeAdventureSettings.Actionpermissions.Op)) return;
+					    || !ActionPermissions.HasFlag(Actionpermissions.Operator)) return;
 					EnableCommands = message.value;
 					SendSetCommandsEnabled();
 					break;
@@ -593,7 +600,7 @@ namespace MiNET
 
 		public virtual void HandleMcpeAdventureSettings(McpeAdventureSettings message)
 		{
-			if (message.userid != EntityId)
+			if (message.userId != EntityId)
 			{
 				return;
 			}
@@ -602,7 +609,7 @@ namespace MiNET
 			IsAutoJump = (flags & 0x20) == 0x20;
 			IsFlying = (flags & 0x200) == 0x200;
 
-			var previewPermissions =  (McpeAdventureSettings.Actionpermissions)message.actionPermissions;
+			var previewPermissions =  (Actionpermissions)message.actionPermissions;
 			var previewPermissionLevel = (UserPermission) message.permissionLevel;
 
 			UpdateFlags(previewPermissionLevel, previewPermissions);
@@ -610,11 +617,9 @@ namespace MiNET
 			SendAdventureSettings();
 		}
 
-		public virtual void SendAdventureSettings()
+		private uint GetUintFlags()
 		{
-			McpeAdventureSettings mcpeAdventureSettings = McpeAdventureSettings.CreateObject();
-
-			int flags = 0;
+			uint flags = 0;
 
 			if (IsWorldImmutable || GameMode == GameMode.Adventure) flags |= 0x01; // Immutable World (Remove hit markers client-side).
 			if (IsNoPvp || IsSpectator || GameMode == GameMode.Spectator) flags |= 0x02; // No PvP (Remove hit markers client-side).
@@ -632,23 +637,31 @@ namespace MiNET
 			if (IsFlying) flags |= 0x200;
 			if (IsMuted) flags |= 0x400; // Mute
 
-			mcpeAdventureSettings.flags = flags;
-			mcpeAdventureSettings.permissionLevel= (int) PermissionLevel;
-			mcpeAdventureSettings.userid = EntityId;
-			mcpeAdventureSettings.actionPermissions = (int)ActionPermissions;
+			return flags;
+		}
+
+		public virtual void SendAdventureSettings()
+		{
+			McpeAdventureSettings mcpeAdventureSettings = McpeAdventureSettings.CreateObject();
+
+			mcpeAdventureSettings.flags = GetUintFlags();
+			mcpeAdventureSettings.commandPermission = (uint) CommandPermission;
+			mcpeAdventureSettings.actionPermissions = (uint) ActionPermissions;
+			mcpeAdventureSettings.permissionLevel= (uint) PermissionLevel;
+			mcpeAdventureSettings.userId = Endian.SwapInt64(EntityId);
 			mcpeAdventureSettings.customStoredPermissions = 0;
 
 			SendPackage(mcpeAdventureSettings);
 		}
 
-		private void UpdateFlags(UserPermission rank, McpeAdventureSettings.Actionpermissions permissions)
+		private void UpdateFlags(UserPermission rank, Actionpermissions permissions)
 		{
 			if (rank < PermissionLevel)
 			{
 				PermissionLevel = rank;
 			}
 
-			if (permissions == McpeAdventureSettings.Actionpermissions.AllowAll)
+			if (permissions == Actionpermissions.All)
 			{
 				IsNoPvp = false;
 				IsNoPvm = false;
@@ -657,7 +670,7 @@ namespace MiNET
 				
 				IsWorldBuilder = true;
 			}
-			else if (permissions == McpeAdventureSettings.Actionpermissions.ProhibitAll)
+			else if (permissions == Actionpermissions.Default)
 			{
 				IsNoPvp = true;
 				IsNoPvm = true;
@@ -666,24 +679,24 @@ namespace MiNET
 
 				IsWorldBuilder = false;
 			}
-			else if (permissions == McpeAdventureSettings.Actionpermissions.Default)
+			else if (permissions == Actionpermissions.Default)
 			{
 				Log.Warn("!!! Default Permission Flags !!!");
 			}
 			else
 			{
-				IsNoPvm = !permissions.HasFlag(McpeAdventureSettings.Actionpermissions.AttackMobs);
-				IsNoPvp = !permissions.HasFlag(McpeAdventureSettings.Actionpermissions.AttackPlayers);
-				IsWorldBuilder = permissions.HasFlag(McpeAdventureSettings.Actionpermissions.BuildAndMine);
-				IsNoPvm = !permissions.HasFlag(McpeAdventureSettings.Actionpermissions.Default);
+				IsNoPvm = !permissions.HasFlag(Actionpermissions.AttackMobs);
+				IsNoPvp = !permissions.HasFlag(Actionpermissions.AttackPlayers);
+				IsWorldBuilder = permissions.HasFlag(Actionpermissions.BuildAndMine);
+				IsNoPvm = !permissions.HasFlag(Actionpermissions.Default);
 			}
 
 			SendAdventureSettings();
 		}
 
 		public UserPermission PermissionLevel { get; set; } = UserPermission.Operator;
-		public McpeAdventureSettings.Actionpermissions ActionPermissions { get; set; } = McpeAdventureSettings.Actionpermissions.AllowAll;
-
+		public Commandpermission CommandPermission { get; set; } = Commandpermission.Operator;
+		public Actionpermissions ActionPermissions { get; set; } = Actionpermissions.All;
 		public bool IsSpectator { get; set; }
 
 		[Wired]
@@ -2311,7 +2324,7 @@ namespace MiNET
 			Log.Warn($"PlayerHotbar:\n\tSelected slot: {message.selectedSlot}\n\t{message.hotbarData.ToString()}");
 			if (message.selectedSlot != Inventory.InHandSlot)
 			{
-				Inventory.InHandSlot = 36 + message.selectedSlot;
+				Inventory.InHandSlot = (int) (36 + message.selectedSlot);
 			}
 		}
 
@@ -2561,7 +2574,10 @@ namespace MiNET
 			mcpeStartGame.enchantmentSeed = 0;
 			mcpeStartGame.isMultiplayer = true;
 			mcpeStartGame.premiumWorldTemplateId = "";
+			//mcpeStartGame.uuid = ClientUuid.ToString();
+
 			mcpeStartGame.startWithMap = false;
+			mcpeStartGame.trustPlayers = true;//PermissionLevel == UserPermission.Operator;
 
 			SendPackage(mcpeStartGame);
 		}
@@ -3182,7 +3198,7 @@ namespace MiNET
 		public virtual void BroadcastDeathMessage(Player player, DamageCause lastDamageCause)
 		{
 			string deathMessage = string.Format(HealthManager.GetDescription(lastDamageCause), Username, player == null ? "" : player.Username);
-			Level.BroadcastMessage(deathMessage, type: McpeText.TypeRaw);
+			Level.BroadcastMessage(deathMessage, type: MessageType.Raw);
 			Log.Debug(deathMessage);
 		}
 
@@ -3286,11 +3302,11 @@ namespace MiNET
 			mcpeAddPlayer.headYaw = KnownPosition.HeadYaw;
 			mcpeAddPlayer.pitch = KnownPosition.Pitch;
 			mcpeAddPlayer.metadata = GetMetadata();
-			mcpeAddPlayer.permissionlevel = (int) PermissionLevel;
-			mcpeAddPlayer.actionpermissions = (int) ActionPermissions;
-			mcpeAddPlayer.commandpermissions = (byte)(EnableCommands ? 1 : 0);
-			mcpeAddPlayer.storedCustomPermissions = 0;
-			mcpeAddPlayer.links = 0;
+			mcpeAddPlayer.permissionLevel = (uint) PermissionLevel;
+			mcpeAddPlayer.actionPermissions = (uint) ActionPermissions;
+			mcpeAddPlayer.flags = GetUintFlags();
+			mcpeAddPlayer.userId = Endian.SwapInt64(EntityId);
+
 			Level.RelayBroadcast(this, players, mcpeAddPlayer);
 
 			SendEquipmentForPlayer(players);
