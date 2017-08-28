@@ -43,9 +43,10 @@ namespace MiNET.UI.Forms
 			return j.ToString(Newtonsoft.Json.Formatting.None);
 		}
 
-		public void Process(Player player, JArray response)
+		public void Process(Player player, string r)
 		{
-			for(var i = 0; i < response.Count; i++)
+			var response = JArray.Parse(r);
+			for (var i = 0; i < response.Count; i++)
 			{
 				Elements[i].Process(player, response[i]);
 			}

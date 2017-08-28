@@ -6,7 +6,7 @@ namespace MiNET.UI.Forms
 	{
 		string Title { get; set; }
 		string GetData();
-		void Process(Player player, JArray response);
+		void Process(Player player, string response);
 		void OnClose(Player player);
 		void OnShow(Player player);
 	}

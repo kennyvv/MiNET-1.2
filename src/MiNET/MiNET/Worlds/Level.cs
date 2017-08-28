@@ -961,7 +961,7 @@ namespace MiNET.Worlds
 
 			if (!broadcast) return;
 
-			BroadcastMessage("Sending MCPEUpdateBlock for: " + block.Coordinates);
+			//BroadcastMessage("Sending MCPEUpdateBlock for: " + block.Coordinates);
 
 			var message = McpeUpdateBlock.CreateObject();
 			message.records = new BlockUpdateRecords()

@@ -181,45 +181,93 @@ namespace MiNET
 		public void HandleMcpeModalFormResponse(McpeModalFormResponse message)
 		{
 			var id = message.formid;
-			if (FormsOpened.TryRemove(id, out IForm form))
+			if (string.IsNullOrEmpty(message.data) ||
+			    message.data.StartsWith("null", StringComparison.InvariantCultureIgnoreCase)) //Manually closed.
 			{
-				if (!message.data.StartsWith("null", StringComparison.InvariantCultureIgnoreCase))
-				{
-					try
-					{
-						form.Process(this, JArray.Parse(message.data));
-					}
-					catch (Exception ex)
-					{
-						Log.Error("Handle Form Response Exception", ex);
-						// ¯\_(ツ)_/¯
-					}
-				}
-				else
+				if (FormsOpened.TryRemove(id, out IForm form))
 				{
 					form.OnClose(this);
+				}
+			}
+			else
+			{
+				try
+				{
+					if (FormsOpened.TryRemove(id, out IForm form))
+					{
+						form.Process(this, message.data);
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Error("Handle Form Response Exception", ex);
+					// ¯\_(ツ)_/¯
 				}
 			}
 		}
 
 		public void OpenForm(IForm form, bool settings = false)
 		{
-			FormsOpened.AddOrUpdate(0, form, (id, f) => { return f; });
-			if (settings)
+			int formId = -1;
+			if (FormsOpened.Count > 0)
 			{
-				var pk = McpeServerSettingsResponse.CreateObject();
-				pk.data = form.GetData();
-				pk.formId = 0;
-				SendPackage(pk);
+				for (int i = 0; i < FormsOpened.Count; i++)
+				{
+					if (!FormsOpened.ContainsKey(i))
+					{
+						formId = i;
+						break;
+					}
+				}
+
+				if (formId != -1)
+				{
+					formId = FormsOpened.Max(x => x.Key) + 1;
+				}
 			}
 			else
 			{
-				form.OnShow(this);
+				formId = 0;
+			}
 
-				var pk = McpeModalFormRequest.CreateObject();
-				pk.data = form.GetData();
-				pk.formid = 0;
-				SendPackage(pk);
+			if (FormsOpened.TryAdd(formId, form))
+			{
+				//FormsOpened.AddOrUpdate(0, form, (id, f) => { return f; });
+
+				if (settings)
+				{
+					var pk = McpeServerSettingsResponse.CreateObject();
+					pk.data = form.GetData();
+					pk.formId = formId;
+					SendPackage(pk);
+				}
+				else
+				{
+					form.OnShow(this);
+
+					var pk = McpeModalFormRequest.CreateObject();
+					pk.data = form.GetData();
+					pk.formid = formId;
+					SendPackage(pk);
+				}
+			}
+			else
+			{
+				Log.Warn("Threading issue! Tried to add form, but ID was already taken.");
+			}
+		}
+
+		public void CloseAllForms()
+		{
+			foreach (var form in FormsOpened)
+			{
+				IForm trash;
+				FormsOpened.TryRemove(form.Key, out trash);
+				trash.OnClose(this);
+
+				McpeContainerClose close = McpeContainerClose.CreateObject();
+				close.windowId = (byte) form.Key;
+				SendPackage(close);
 			}
 		}
 
