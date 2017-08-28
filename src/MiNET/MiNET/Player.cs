@@ -265,9 +265,10 @@ namespace MiNET
 				FormsOpened.TryRemove(form.Key, out trash);
 				trash.OnClose(this);
 
-				McpeContainerClose close = McpeContainerClose.CreateObject();
-				close.windowId = (byte) form.Key;
-				SendPackage(close);
+				/*var pk = McpeModalFormRequest.CreateObject();
+				pk.data = null;
+				pk.formid = form.Key;
+				SendPackage(pk);*/
 			}
 		}
 
