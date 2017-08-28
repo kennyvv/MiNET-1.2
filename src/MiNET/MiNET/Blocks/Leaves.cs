@@ -65,6 +65,10 @@ namespace MiNET.Blocks
 
 		public override Item[] GetDrops(Item tool)
 		{
+			if (tool != null && tool.ItemType == ItemType.Shears)
+			{
+				return base.GetDrops(tool);
+			}
 
 			var rnd = new Random((int) DateTime.UtcNow.Ticks);
 			if ((Metadata & 0x03) == 0) // Oak and dark oak drops apple

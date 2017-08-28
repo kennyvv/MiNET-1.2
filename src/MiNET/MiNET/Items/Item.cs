@@ -192,6 +192,7 @@ namespace MiNET.Items
 		Axe,
 		Item,
 		Hoe,
+		Shears,
 
 		//Armor
 		Helmet,

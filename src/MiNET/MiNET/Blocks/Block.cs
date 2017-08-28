@@ -24,6 +24,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Numerics;
 using MiNET.Items;
 using MiNET.Particles;
@@ -135,13 +136,75 @@ namespace MiNET.Blocks
 			return Hardness/5.0F;
 		}
 
-		//public double GetMineTime(Item miningTool)
-		//{
-		//	int multiplier = (int) miningTool.ItemMaterial;
-		//	return Hardness*(1.5*multiplier);
-		//}
+		public double GetBreakTime(Item miningTool)
+		{
+			double secondsForBreak = Hardness;
+			bool isHarvestable = GetDrops(miningTool)?.Length > 0;
+			if (isHarvestable)
+			{
+				secondsForBreak *= 1.5;
+			}
+			else
+			{
+				secondsForBreak *= 5;
+			}
+			if (secondsForBreak == 0D)
+			{
+				secondsForBreak = 0.05;
+			}
 
-		protected BlockCoordinates GetNewCoordinatesFromFace(BlockCoordinates target, BlockFace face)
+			int tierMultiplier = 1;
+			switch (miningTool.ItemMaterial)
+			{
+				case ItemMaterial.Wood:
+					tierMultiplier = 2;
+					break;
+				case ItemMaterial.Stone:
+					tierMultiplier = 4;
+					break;
+				case ItemMaterial.Gold:
+					tierMultiplier = 12;
+					break;
+				case ItemMaterial.Iron:
+					tierMultiplier = 6;
+					break;
+				case ItemMaterial.Diamond:
+					tierMultiplier = 8;
+					break;
+			}
+
+			if (isHarvestable)
+			{
+				switch (miningTool.ItemType)
+				{
+					case ItemType.Shears:
+						if (this is Wool)
+						{
+							return secondsForBreak/5;
+						}
+						else if (this is Leaves || this is AcaciaLeaves || this is Cobweb)
+						{
+							return secondsForBreak/15;
+						}
+						break;
+					case ItemType.Sword:
+						if (this is Cobweb)
+						{
+							return secondsForBreak / 15;
+						}
+						return secondsForBreak / 1.5;
+					case ItemType.Shovel:
+					case ItemType.Axe:
+					case ItemType.PickAxe:
+					case ItemType.Hoe:
+						return secondsForBreak/tierMultiplier;
+				}
+			}
+
+			return secondsForBreak;
+		}
+
+		public static BlockCoordinates GetNewCoordinatesFromFace(BlockCoordinates target, BlockFace face)
 		{
 			switch (face)
 			{

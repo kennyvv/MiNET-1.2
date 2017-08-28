@@ -44,6 +44,7 @@ namespace MiNET
 		ParticleEyeDespawn = 2003,
 		ParticleSpawn = 2004,
 		ParticleGreenThingy = 2005,
+		ParticleCrackBlock = 2014,
 
 		StartRain = 3001,
 		StartThunder = 3002,
@@ -55,6 +56,9 @@ namespace MiNET
 		CauldronDyeArmor = 3502,
 		CauldronFillPotion = 3504,
 		CauldronFillWater = 3506,
+
+		BlockStartCracking = 3600,
+		BlockStopCracking = 3601,
 
 		SetData = 4000,
 

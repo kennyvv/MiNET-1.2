@@ -488,23 +488,40 @@ namespace MiNET
 			switch ((PlayerAction) message.actionId)
 			{
 				case PlayerAction.StartBreak:
-					if (message.face == (int) BlockFace.Up)
+				{
+					var facecCoordinates = Block.GetNewCoordinatesFromFace(message.coordinates, (BlockFace)message.face);
+					Block block = Level.GetBlock(facecCoordinates);
+					if (block is Fire)
 					{
-						Block block = Level.GetBlock(message.coordinates + BlockCoordinates.Up);
-						if (block is Fire)
-						{
-							Level.BreakBlock(this, message.coordinates + BlockCoordinates.Up);
-						}
+						Level.BreakBlock(this, facecCoordinates);
 					}
+
+					if (GameMode != GameMode.Creative)
+					{
+						Block target = Level.GetBlock(message.coordinates);
+						var breakTime = Math.Ceiling(target.GetBreakTime(Inventory.GetItemInHand())*20);
+
+						McpeLevelEvent levelEvent = McpeLevelEvent.CreateObject();
+						levelEvent.position = message.coordinates;
+						levelEvent.eventId = (int) LevelEventType.BlockStartCracking;
+						levelEvent.data = (int) (65535/breakTime);
+						Level.RelayBroadcast(levelEvent);
+					}
+				}
+
 					break;
 				case PlayerAction.AbortBreak:
-
-					break;
 				case PlayerAction.StopBreak:
-
+				{
+					McpeLevelEvent levelEvent = McpeLevelEvent.CreateObject();
+					levelEvent.position = message.coordinates;
+					levelEvent.eventId = (int)LevelEventType.BlockStopCracking;
+					levelEvent.data = 0;
+					Level.RelayBroadcast(levelEvent);
+				}
 					break;
 				case PlayerAction.Breaking:
-					
+				
 					break;
 
 				case PlayerAction.DropItem:
