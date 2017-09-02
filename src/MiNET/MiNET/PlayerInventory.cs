@@ -222,29 +222,14 @@ namespace MiNET
 
 		public void SendSetSlot(int slot)
 		{
-			/*if (slot >= 36 && slot <= 45)
-			{
-				Log.Warn("!!! MEQ Send set slot: " + slot);
+			if (slot < 0 || slot > Slots.Length - 1) return;
 
-				McpeMobEquipment order = McpeMobEquipment.CreateObject();
-				order.windowsId = 0;
-				order.runtimeEntityId = EntityManager.EntityIdSelf;
-				order.item = Slots[slot];
-				order.slot = (byte) slot;
-				order.selectedSlot = (byte) SelectedHotbarSlot; // Selected hotbar slot
-				Player.SendPackage(order);
-			}
-			else
-			{*/
-				Log.Warn("!!! MIS Send set slot: " + slot);
+			McpeInventorySlot ssendSlot = McpeInventorySlot.CreateObject();
+			ssendSlot.inventoryId = 0;
+			ssendSlot.slot = slot;
+			ssendSlot.item = Slots[slot];
 
-				McpeInventorySlot ssendSlot = McpeInventorySlot.CreateObject();
-				ssendSlot.inventoryId = 0;
-				ssendSlot.slot = slot;
-				ssendSlot.item = Slots[slot];
-				
-				Player.SendPackage(ssendSlot);
-			//}
+			Player.SendPackage(ssendSlot);
 
 			return;
 			if (slot < HotbarSize/* && (ItemHotbar[slot] == -1 || ItemHotbar[slot] == slot)*/)

@@ -2113,17 +2113,36 @@ namespace MiNET
 			}
 		}
 
+		private void KickEquipmentHacking()
+		{
+			Log.Error($"Kicked {Username} for equipment hacking.");
+			Disconnect("Error #377. Please report this error.");
+			return;
+		}
+
+		private int _equipmentHackCount = 0;
 		protected virtual void HandleItemUse(Transaction transaction)
 		{
 			var itemInHand = Inventory.GetItemInHand();
 			if (itemInHand == null) return;
-			if (GameMode != GameMode.Creative && !VerifyItemStack(transaction.Item))
+			if (GameMode != GameMode.Creative &&
+				(transaction.Item.Id != itemInHand.Id || itemInHand.Metadata != transaction.Item.Metadata || itemInHand.Count != transaction.Item.Count)) 
+				//If the transaction & item in-hand do not match, re-send inventory. If this happens to often, kick them for item-hacking.
 			{
-				Log.Error($"Kicked {Username} for equipment hacking.");
-				Disconnect("Error #377. Please report this error.");
+				Log.Warn("Possible equipment hacking!");
+				_equipmentHackCount++;
+				if (_equipmentHackCount == 3)
+				{
+					KickEquipmentHacking();
+				}
+				else if (_equipmentHackCount < 3)
+				{
+					SendPlayerInventory();
+				}
 				return;
 			}
 
+			_equipmentHackCount = 0;
 			switch ((McpeInventoryTransaction.ItemUseAction) transaction.ActionType)
 			{
 				case McpeInventoryTransaction.ItemUseAction.Place:
@@ -2227,20 +2246,12 @@ namespace MiNET
 				}
 				else if (trans is WorldInteractionTransactionRecord interact)
 				{
-					Inventory.UpdateInventorySlot(Inventory.InHandSlot, interact.OldItem);
+					Item droppedItem = Inventory.GetItemInHand();
+					droppedItem.Count = interact.NewItem.Count;
 
-					ItemEntity itemEntity = new ItemEntity(Level, interact.NewItem)
-					{
-						Velocity = KnownPosition.GetDirection() * 0.7f,
-						KnownPosition =
-						{
-							X = KnownPosition.X,
-							Y = KnownPosition.Y + 1.62f,
-							Z = KnownPosition.Z
-						},
-					};
-
-					itemEntity.SpawnEntity();
+					//Log.Info("New Item: " + interact.NewItem);
+					//Log.Info("Old Item: " + interact.OldItem);
+					DropItem(droppedItem, interact.OldItem);
 					
 					continue;
 				}
@@ -2348,6 +2359,24 @@ namespace MiNET
 					}
 				}
 			}
+		}
+
+		protected virtual void DropItem(Item droppedItem, Item newInventoryItem)
+		{
+			Inventory.UpdateInventorySlot(Inventory.InHandSlot, newInventoryItem);
+
+			ItemEntity itemEntity = new ItemEntity(Level, droppedItem)
+			{
+				Velocity = KnownPosition.GetDirection() * 0.7f,
+				KnownPosition =
+				{
+					X = KnownPosition.X,
+					Y = KnownPosition.Y + 1.62f,
+					Z = KnownPosition.Z
+				},
+			};
+
+			itemEntity.SpawnEntity();
 		}
 
 		public virtual bool VerifyItemStack(Item itemStack)
@@ -2991,7 +3020,13 @@ namespace MiNET
 		public override void OnTick()
 		{
 			OnTicking(new PlayerEventArgs(this));
-			
+
+			/*if (IsUsingItem && _itemUseTimer + 3 <= Level.TickTime) //3 ticks after item use.
+			{
+				IsUsingItem = false;
+				BroadcastSetEntityData();
+			}*/
+
 			if (DetectInPortal())
 			{
 				if (PortalDetected == Level.TickTime)
@@ -3110,6 +3145,7 @@ namespace MiNET
 		public override MetadataDictionary GetMetadata()
 		{
 			var metadata = base.GetMetadata();
+			metadata[0] = GetDataValue();
 			metadata[4] = new MetadataString(NameTag ?? Username);
 			metadata[40] = new MetadataString(ButtonText ?? string.Empty);
 
