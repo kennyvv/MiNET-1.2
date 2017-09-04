@@ -708,7 +708,7 @@
 		<field name="Unknown" type="bool" />
 	</pdu>
 
-	<pdu id="0x3e" online="false" client="false" server="true" name="MCPE_SET_PLAYER_GAME_TYPE">
+	<pdu id="0x3e" online="false" client="true" server="true" name="MCPE_SET_PLAYER_GAME_TYPE">
 		<field name="Gamemode" type="SignedVarInt" />
 	</pdu>
 
@@ -948,7 +948,15 @@
     <field name="Data" type="string" />
   </pdu>
   
-	<pdu namespace="raknet" id="0xfe" online="false" client="false" server="true" name="MCPE_WRAPPER">
+  <pdu id="0x68" online="false" client="false" server="true" name="MCPE_SHOW_PROFILE">
+    <field name="XUID" type="string" />
+  </pdu>
+  
+  <pdu id="0x69" online="false" client="true" server="false" name="MCPE_SET_DEFAULT_GAMEMODE">
+    <field name="Gamemode" type="SignedVarInt" />
+  </pdu>
+
+  <pdu namespace="raknet" id="0xfe" online="false" client="false" server="true" name="MCPE_WRAPPER">
 		<field name="Payload" type="byte[]" size="0, true" />
 	</pdu>
 

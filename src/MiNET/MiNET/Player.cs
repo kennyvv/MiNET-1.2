@@ -281,12 +281,10 @@ namespace MiNET
 
 		public void HandleMcpeSetDifficulty(McpeSetDifficulty message)
 		{
-			if (PermissionLevel != UserPermission.Operator) return;
-			Level.Difficulty = (Difficulty) message.difficulty;
+			if (PermissionLevel != UserPermission.Operator
+			    || !ActionPermissions.HasFlag(Actionpermissions.Operator)) return;
 
-			var pkg = McpeSetDifficulty.CreateObject();
-			pkg.difficulty = (uint) Level.Difficulty;
-			Level.RelayBroadcast(pkg);
+			Level.SetDifficulty((Difficulty) message.difficulty);
 		}
 
 		public void HandleMcpeSimpleEvent(McpeSimpleEvent message)
@@ -892,6 +890,13 @@ namespace MiNET
 
 			LastUpdatedTime = DateTime.UtcNow;
 			Log.InfoFormat("Login complete by: {0} from {2} in {1}ms", Username, watch.ElapsedMilliseconds, EndPoint);
+
+			OnLoginComplete();
+		}
+
+		protected virtual void OnLoginComplete()
+		{
+			
 		}
 
 		public bool EnableCommands { get; set; } = Config.GetProperty("EnableCommands", false);
@@ -2417,6 +2422,42 @@ namespace MiNET
 					tileEvent.case2 = 0;
 					Level.RelayBroadcast(tileEvent);
 				}
+			}
+		}
+
+		public virtual void HandleMcpeSetPlayerGameType(McpeSetPlayerGameType message)
+		{
+			if (PermissionLevel >= UserPermission.Operator || ActionPermissions.HasFlag(Actionpermissions.Operator)) //If operator, change our gamemode
+			{
+				var newGamemode = (GameMode) message.gamemode;
+
+				if (newGamemode != GameMode)
+				{
+					//Log.Info($"Player {Username}'s gamemode has been updated from {GameMode} to {newGamemode}");
+					SetGameMode(newGamemode);
+				}
+			}
+			else
+			{
+				Log.Warn($"Player {Username} tried changing gamemode without the correct permissions!");
+			}
+		}
+
+		public virtual void HandleMcpeSetDefaultGamemode(McpeSetDefaultGamemode message)
+		{
+			if (PermissionLevel >= UserPermission.Operator || ActionPermissions.HasFlag(Actionpermissions.Operator)) //If operator, change our gamemode
+			{
+				var newGamemode = (GameMode) message.gamemode;
+
+				if (newGamemode != Level.GameMode)
+				{
+					SendMessage("Default gamemode updated to: " + newGamemode);
+					Level.SetDefaultGamemode(newGamemode);
+				}
+			}
+			else
+			{
+				Log.Warn($"Player {Username} tried changing the levels default gamemode without the correct permissions!");
 			}
 		}
 

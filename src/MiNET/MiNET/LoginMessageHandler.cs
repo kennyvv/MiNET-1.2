@@ -524,12 +524,22 @@ namespace MiNET
 			
 		}
 
+		public void HandleMcpeSetPlayerGameType(McpeSetPlayerGameType message)
+		{
+			
+		}
+
 		public void HandleMcpeModalFormResponse(McpeModalFormResponse message)
 		{
 			
 		}
 
 		public void HandleMcpeSetDifficulty(McpeSetDifficulty message)
+		{
+			
+		}
+
+		public void HandleMcpeSetDefaultGamemode(McpeSetDefaultGamemode message)
 		{
 			
 		}

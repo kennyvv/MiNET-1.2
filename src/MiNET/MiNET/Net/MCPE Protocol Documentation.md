@@ -107,6 +107,8 @@ Read more about packets and this specification on the [Protocol Wiki](https://gi
 | Modal Form Response | 0x65 | 101 |   
 | Server Settings Request | 0x66 | 102 |   
 | Server Settings Response | 0x67 | 103 |   
+| Show Profile | 0x68 | 104 |   
+| Set Default Gamemode | 0x69 | 105 |   
 
 
 ## Data types
@@ -1403,7 +1405,7 @@ Wiki: [Change Dimension](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-
 Wiki: [Set Player Game Type](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-SetPlayerGameType)
 
 **Sent from server:** true  
-**Sent from client:** false
+**Sent from client:** true
 
 
 
@@ -2054,6 +2056,36 @@ Wiki: [Server Settings Response](https://github.com/NiclasOlofsson/MiNET/wiki//P
 |:-----|:-----|:-----|
 |Form ID | VarInt |  |
 |Data | string |  |
+-----------------------------------------------------------------------
+### Show Profile (0x68)
+Wiki: [Show Profile](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-ShowProfile)
+
+**Sent from server:** true  
+**Sent from client:** false
+
+
+
+
+#### Fields
+
+| Name | Type | Size |
+|:-----|:-----|:-----|
+|XUID | string |  |
+-----------------------------------------------------------------------
+### Set Default Gamemode (0x69)
+Wiki: [Set Default Gamemode](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-SetDefaultGamemode)
+
+**Sent from server:** false  
+**Sent from client:** true
+
+
+
+
+#### Fields
+
+| Name | Type | Size |
+|:-----|:-----|:-----|
+|Gamemode | SignedVarInt |  |
 -----------------------------------------------------------------------
 
 

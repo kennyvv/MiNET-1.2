@@ -585,6 +585,14 @@ namespace MiNET
 			{
 				handler.HandleMcpeSimpleEvent((McpeSimpleEvent) message);
 			}
+			else if (typeof (McpeSetPlayerGameType) == message.GetType())
+			{
+				handler.HandleMcpeSetPlayerGameType((McpeSetPlayerGameType) message);
+			}
+			else if (typeof (McpeSetDefaultGamemode) == message.GetType())
+			{
+				handler.HandleMcpeSetDefaultGamemode((McpeSetDefaultGamemode) message);
+			}
 			else
 			{
 				Log.Error($"Unhandled package: {message.GetType().Name} 0x{message.Id:X2} for user: {Username}, IP {EndPoint.Address}");

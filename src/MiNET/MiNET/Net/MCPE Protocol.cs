@@ -70,6 +70,7 @@ namespace MiNET.Net
 		void HandleMcpeBlockEntityData(McpeBlockEntityData message);
 		void HandleMcpePlayerInput(McpePlayerInput message);
 		void HandleMcpeSetDifficulty(McpeSetDifficulty message);
+		void HandleMcpeSetPlayerGameType(McpeSetPlayerGameType message);
 		void HandleMcpeSimpleEvent(McpeSimpleEvent message);
 		void HandleMcpeMapInfoRequest(McpeMapInfoRequest message);
 		void HandleMcpeRequestChunkRadius(McpeRequestChunkRadius message);
@@ -80,6 +81,7 @@ namespace MiNET.Net
 		void HandleMcpePurchaseReceipt(McpePurchaseReceipt message);
 		void HandleMcpeModalFormResponse(McpeModalFormResponse message);
 		void HandleMcpeServerSettingsRequest(McpeServerSettingsRequest message);
+		void HandleMcpeSetDefaultGamemode(McpeSetDefaultGamemode message);
 	}
 
 	public class PackageFactory
@@ -571,6 +573,14 @@ namespace MiNET.Net
 						return package;
 					case 0x67:
 						package = McpeServerSettingsResponse.CreateObject();
+						package.Decode(buffer);
+						return package;
+					case 0x68:
+						package = McpeShowProfile.CreateObject();
+						package.Decode(buffer);
+						return package;
+					case 0x69:
+						package = McpeSetDefaultGamemode.CreateObject();
 						package.Decode(buffer);
 						return package;
 				}
@@ -7266,6 +7276,102 @@ namespace MiNET.Net
 
 			formId=default(int);
 			data=default(string);
+		}
+
+	}
+
+	public partial class McpeShowProfile : Package<McpeShowProfile>
+	{
+
+		public string xuid; // = null;
+
+		public McpeShowProfile()
+		{
+			Id = 0x68;
+			IsMcpe = true;
+		}
+
+		protected override void EncodePackage()
+		{
+			base.EncodePackage();
+
+			BeforeEncode();
+
+			Write(xuid);
+
+			AfterEncode();
+		}
+
+		partial void BeforeEncode();
+		partial void AfterEncode();
+
+		protected override void DecodePackage()
+		{
+			base.DecodePackage();
+
+			BeforeDecode();
+
+			xuid = ReadString();
+
+			AfterDecode();
+		}
+
+		partial void BeforeDecode();
+		partial void AfterDecode();
+
+		protected override void ResetPackage()
+		{
+			base.ResetPackage();
+
+			xuid=default(string);
+		}
+
+	}
+
+	public partial class McpeSetDefaultGamemode : Package<McpeSetDefaultGamemode>
+	{
+
+		public int gamemode; // = null;
+
+		public McpeSetDefaultGamemode()
+		{
+			Id = 0x69;
+			IsMcpe = true;
+		}
+
+		protected override void EncodePackage()
+		{
+			base.EncodePackage();
+
+			BeforeEncode();
+
+			WriteSignedVarInt(gamemode);
+
+			AfterEncode();
+		}
+
+		partial void BeforeEncode();
+		partial void AfterEncode();
+
+		protected override void DecodePackage()
+		{
+			base.DecodePackage();
+
+			BeforeDecode();
+
+			gamemode = ReadSignedVarInt();
+
+			AfterDecode();
+		}
+
+		partial void BeforeDecode();
+		partial void AfterDecode();
+
+		protected override void ResetPackage()
+		{
+			base.ResetPackage();
+
+			gamemode=default(int);
 		}
 
 	}

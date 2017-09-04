@@ -1328,6 +1328,24 @@ namespace MiNET.Worlds
 		{
 			sound.Spawn(this);
 		}
+
+		public void SetDifficulty(Difficulty difficulty)
+		{
+			Difficulty = difficulty;
+
+			McpeSetDifficulty package = McpeSetDifficulty.CreateObject();
+			package.difficulty = (uint) difficulty;
+			RelayBroadcast(package);
+		}
+
+		public void SetDefaultGamemode(GameMode gamemode)
+		{
+			GameMode = gamemode;
+
+			McpeSetDefaultGamemode package = McpeSetDefaultGamemode.CreateObject();
+			package.gamemode = (int) gamemode;
+			RelayBroadcast(package);
+		}
 	}
 
 	public class LevelEventArgs : EventArgs
