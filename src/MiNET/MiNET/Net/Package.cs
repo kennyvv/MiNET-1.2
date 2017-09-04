@@ -452,8 +452,7 @@ namespace MiNET.Net
 					Write(record.ClientUuid);
 					WriteSignedVarLong(record.EntityId);
 					Write(record.DisplayName ?? record.Username);
-					Write(record.Skin, record.PlayerInfo?.CertificateData?.ExtraData?.Xuid ?? 
-						"");
+					Write(record.Skin);
 				}
 			}
 			else if (records is PlayerRemoveRecords)
@@ -1339,14 +1338,14 @@ namespace MiNET.Net
 			return ids;
 		}
 
-		public void Write(Skin skin, string xuid = null)
+		public void Write(Skin skin)
 		{
 			Write(skin.SkinId);
 			WriteByteArray(skin.SkinData);
 			WriteByteArray(skin.CapeData);
 			Write(skin.SkinGeometryName);
 			WriteByteArray(skin.SkinGeometry);
-			Write(xuid);
+			Write(skin.XUID);
 		}
 
 		public Skin ReadSkin()
@@ -1360,7 +1359,8 @@ namespace MiNET.Net
 
 			skin.SkinGeometryName = ReadString();
 			skin.SkinGeometry = ReadByteArray(false);
-			var xuid = ReadString();
+			
+			skin.XUID = ReadString();
 
 			return skin;
 		}
@@ -1618,38 +1618,78 @@ namespace MiNET.Net
 		public void Write(MapInfo map)
 		{
 			WriteSignedVarLong(map.MapId);
-			WriteUnsignedVarInt(map.UpdateType);
+
+			var updateType = map.UpdateType;
+
+			var eidsCounts = map.EntityIds.Length;
+			if (eidsCounts > 0)
+			{
+				updateType |= BITFLAG_ENTITY_UPDATE;
+			}
+			if (map.Decorators.Length > 0)
+			{
+				updateType |= BITFLAG_DECORATION_UPDATE;
+			}
+			if (map.Data.Length > 0)
+			{
+				updateType |= BITFLAG_TEXTURE_UPDATE;
+			}
+
+			WriteUnsignedVarInt(updateType);
+			Write(map.DimensionId);
+
+			if ((updateType & BITFLAG_ENTITY_UPDATE) == BITFLAG_ENTITY_UPDATE){
+				WriteUnsignedVarInt((uint) eidsCounts);
+				foreach (var eId in map.EntityIds)
+				{
+					WriteVarLong(eId);
+				}
+			}
+
 
 			//if ((map.UpdateType & BITFLAG_ENTITY_UPDATE) == BITFLAG_ENTITY_UPDATE)
-			//{
-			//}
+				//{
+				//}
 
-			if ((map.UpdateType & BITFLAG_TEXTURE_UPDATE) == BITFLAG_TEXTURE_UPDATE || (map.UpdateType & BITFLAG_DECORATION_UPDATE) == BITFLAG_DECORATION_UPDATE)
+			if ((updateType & BITFLAG_TEXTURE_UPDATE) == BITFLAG_TEXTURE_UPDATE || (updateType & BITFLAG_DECORATION_UPDATE) == BITFLAG_DECORATION_UPDATE)
 			{
 				Write((byte) map.Scale);
 			}
 
-			if ((map.UpdateType & BITFLAG_DECORATION_UPDATE) == BITFLAG_DECORATION_UPDATE)
+			if ((updateType & BITFLAG_DECORATION_UPDATE) == BITFLAG_DECORATION_UPDATE)
 			{
+				WriteUnsignedVarInt((uint) map.DecorationEntityUniqueIds.Length);
+				foreach (var eid in map.DecorationEntityUniqueIds)
+				{
+					WriteVarLong(eid);
+				}
+
 				var count = map.Decorators.Length;
 				WriteUnsignedVarInt((uint) count);
+
 				foreach (var decorator in map.Decorators)
 				{
-					WriteSignedVarInt((decorator.Rotation & 0x0f) | (decorator.Icon << 4));
+					Write((byte) decorator.Rotation);
+					Write((byte) decorator.Icon);
+
+					//WriteSignedVarInt((decorator.Rotation & 0x0f) | (decorator.Icon << 4));
+
 					Write((byte) decorator.X);
 					Write((byte) decorator.Z);
 					Write(decorator.Label);
-					Write(decorator.Color);
+					WriteUnsignedVarInt(decorator.Color);
 				}
 			}
 
-			if ((map.UpdateType & BITFLAG_TEXTURE_UPDATE) == BITFLAG_TEXTURE_UPDATE)
+			if ((updateType & BITFLAG_TEXTURE_UPDATE) == BITFLAG_TEXTURE_UPDATE)
 			{
 				WriteSignedVarInt(map.Col);
 				WriteSignedVarInt(map.Row);
 
 				WriteSignedVarInt(map.XOffset);
 				WriteSignedVarInt(map.ZOffset);
+
+				WriteUnsignedVarInt((uint) (map.Col * map.Row));
 
 				int i = 0;
 				for (int col = 0; col < map.Col; col++)

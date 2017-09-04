@@ -13,7 +13,7 @@ namespace MiNET.Net
 		public byte[] SkinData { get; set; }
 		public string SkinGeometryName { get; set; }
 		public byte[] SkinGeometry { get; set; }
-
+		public string XUID { get; set; }
 
 		public static byte[] GetTextureFromFile(string filename)
 		{

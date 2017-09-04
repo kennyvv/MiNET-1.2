@@ -50,6 +50,7 @@ using MiNET.Worlds;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
+using Button = MiNET.UI.Elements.Button;
 using Level = MiNET.Worlds.Level;
 
 namespace MiNET
@@ -173,9 +174,9 @@ namespace MiNET
 			Log.Warn("TODO: Purchase receipt");
 		}
 
-		public void HandleMcpeServerSettingsRequest(McpeServerSettingsRequest message)
+		public virtual void HandleMcpeServerSettingsRequest(McpeServerSettingsRequest message)
 		{
-			Log.Warn("TODO: Send server settings.");
+			//Do not do anything by default, this is up to the servers...
 		}
 
 		public void HandleMcpeModalFormResponse(McpeModalFormResponse message)
@@ -206,7 +207,7 @@ namespace MiNET
 			}
 		}
 
-		public void OpenForm(IForm form, bool settings = false)
+		private int GetFormId()
 		{
 			int formId = -1;
 			if (FormsOpened.Count > 0)
@@ -229,6 +230,12 @@ namespace MiNET
 			{
 				formId = 0;
 			}
+			return formId;
+		}
+
+		public void OpenForm(IForm form, bool settings = false)
+		{
+			int formId = GetFormId();
 
 			if (FormsOpened.TryAdd(formId, form))
 			{
@@ -2416,10 +2423,10 @@ namespace MiNET
 		public void HandleMcpePlayerHotbar(McpePlayerHotbar message)
 		{
 			//Log.Error("MCPEPLAYERHOTBAR Not implemented!");
-			Log.Warn($"PlayerHotbar:\n\tSelected slot: {message.selectedSlot}\n\t{message.hotbarData.ToString()}");
-			if (message.selectedSlot != Inventory.InHandSlot)
+			Log.Warn($"PlayerHotbar:\n\tSelected hotbar slot: {message.selectedHotbarSlot}\n\tSelect hotbar slot: {message.selectHotbarSlot}");
+			if (message.selectHotbarSlot && message.selectedHotbarSlot != Inventory.SelectedHotbarSlot)
 			{
-				Inventory.InHandSlot = (int) (36 + message.selectedSlot);
+				Inventory.SetHeldItemSlot((int) message.selectedHotbarSlot);
 			}
 		}
 

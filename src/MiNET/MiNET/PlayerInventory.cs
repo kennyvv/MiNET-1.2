@@ -18,7 +18,7 @@ namespace MiNET
 
 		public Item[] Slots { get; private set; }
 		//public int[] ItemHotbar { get; private set; }
-		public int InHandSlot { get; set; } = 36;
+		public int InHandSlot { get; set; } = 0;
 		public int Cursor { get; set; } = -1;
 		public Item CursorItem { get; set; } 
 		public int SelectedHotbarSlot { get; private set; }
@@ -63,7 +63,7 @@ namespace MiNET
 		public virtual Item GetItemInHand()
 		{
 			//var index = ItemHotbar[InHandSlot];
-			var index = InHandSlot;
+			var index = SelectedHotbarSlot;
 			if (index == -1 || index >= Slots.Length) return new ItemAir();
 
 			return Slots[index] ?? new ItemAir();

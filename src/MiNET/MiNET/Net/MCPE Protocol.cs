@@ -1920,6 +1920,7 @@ namespace MiNET.Net
 		}
 
 		public byte type; // = null;
+		public bool islocalized; // = null;
 
 		public McpeText()
 		{
@@ -1934,6 +1935,7 @@ namespace MiNET.Net
 			BeforeEncode();
 
 			Write(type);
+			Write(islocalized);
 
 			AfterEncode();
 		}
@@ -1948,6 +1950,7 @@ namespace MiNET.Net
 			BeforeDecode();
 
 			type = ReadByte();
+			islocalized = ReadBool();
 
 			AfterDecode();
 		}
@@ -1960,6 +1963,7 @@ namespace MiNET.Net
 			base.ResetPackage();
 
 			type=default(byte);
+			islocalized=default(bool);
 		}
 
 	}
@@ -4398,9 +4402,10 @@ namespace MiNET.Net
 	public partial class McpePlayerHotbar : Package<McpePlayerHotbar>
 	{
 
-		public uint selectedSlot; // = null;
+		public uint selectedHotbarSlot; // = null;
 		public byte windowId; // = null;
 		public MetadataInts hotbarData; // = null;
+		public bool selectHotbarSlot; // = null;
 
 		public McpePlayerHotbar()
 		{
@@ -4414,9 +4419,10 @@ namespace MiNET.Net
 
 			BeforeEncode();
 
-			WriteUnsignedVarInt(selectedSlot);
+			WriteUnsignedVarInt(selectedHotbarSlot);
 			Write(windowId);
 			Write(hotbarData);
+			Write(selectHotbarSlot);
 
 			AfterEncode();
 		}
@@ -4430,9 +4436,10 @@ namespace MiNET.Net
 
 			BeforeDecode();
 
-			selectedSlot = ReadUnsignedVarInt();
+			selectedHotbarSlot = ReadUnsignedVarInt();
 			windowId = ReadByte();
 			hotbarData = ReadMetadataInts();
+			selectHotbarSlot = ReadBool();
 
 			AfterDecode();
 		}
@@ -4444,9 +4451,10 @@ namespace MiNET.Net
 		{
 			base.ResetPackage();
 
-			selectedSlot=default(uint);
+			selectedHotbarSlot=default(uint);
 			windowId=default(byte);
 			hotbarData=default(MetadataInts);
+			selectHotbarSlot=default(bool);
 		}
 
 	}

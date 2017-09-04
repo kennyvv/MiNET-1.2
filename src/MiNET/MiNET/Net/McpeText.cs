@@ -4,10 +4,12 @@ namespace MiNET.Net
 	{
 		public string source; // = null;
 		public string message; // = null;
+		public string xuid; //  = null;
+		public string[] parameters;
 
 		partial void AfterEncode()
 		{
-			Write(false);
+			//Write(islocalized);
 			ChatTypes chatType = (ChatTypes)type;
 			switch (chatType)
 			{
@@ -26,9 +28,14 @@ namespace MiNET.Net
 				case ChatTypes.Translation:
 				case ChatTypes.JukeboxPopup:
 					Write(message);
-					// More stuff
+					WriteVarInt(parameters.Length);
+					foreach (var p in parameters)
+					{
+						Write(p);
+					}
 					break;
 			}
+			Write(xuid);
 		}
 
 		public override void Reset()
@@ -36,13 +43,15 @@ namespace MiNET.Net
 			type = 0;
 			source = null;
 			message = null;
+			xuid = null;
+			parameters = new string[0];
 
 			base.Reset();
 		}
 
 		partial void AfterDecode()
 		{
-			ReadBool(); // localization
+			//ReadBool(); // localization
 
 			ChatTypes chatType = (ChatTypes)type;
 			switch (chatType)
@@ -63,9 +72,17 @@ namespace MiNET.Net
 				case ChatTypes.Translation:
 				case ChatTypes.JukeboxPopup:
 					message = ReadString();
+					int count = ReadVarInt();
+					parameters = new string[count];
+					for (int i = 0; i < parameters.Length; i++)
+					{
+						parameters[i] = ReadString();
+					}
 					// More stuff
 					break;
 			}
+
+			xuid = ReadString();
 		}
 	}
 }

@@ -342,6 +342,7 @@ Wiki: [Text](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Text)
 | Name | Type | Size |
 |:-----|:-----|:-----|
 |Type | byte |  |
+|isLocalized | bool |  |
 -----------------------------------------------------------------------
 ### Set Time (0x0a)
 Wiki: [Set Time](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-SetTime)
@@ -1166,9 +1167,10 @@ Wiki: [Player Hotbar](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Pla
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
-|Selected Slot | UnsignedVarInt |  |
+|Selected Hotbar Slot | UnsignedVarInt |  |
 |Window ID | byte |  |
 |Hotbar Data | MetadataInts |  |
+|Select Hotbar Slot | bool |  |
 -----------------------------------------------------------------------
 ### Inventory Content (0x31)
 Wiki: [Inventory Content](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-InventoryContent)
