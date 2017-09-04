@@ -2126,10 +2126,10 @@ namespace MiNET
 			var itemInHand = Inventory.GetItemInHand();
 			if (itemInHand == null) return;
 			if (GameMode != GameMode.Creative &&
-				(transaction.Item.Id != itemInHand.Id || itemInHand.Metadata != transaction.Item.Metadata || itemInHand.Count != transaction.Item.Count)) 
+				(transaction.Item.Id != itemInHand.Id || itemInHand.Metadata != transaction.Item.Metadata  /*||itemInHand.Count != transaction.Item.Count*/)) 
 				//If the transaction & item in-hand do not match, re-send inventory. If this happens to often, kick them for item-hacking.
 			{
-				Log.Warn("Possible equipment hacking!");
+				Log.Warn($"Possible equipment hacking (Hand: {itemInHand} | Transaction: {transaction.Item}) ");
 				_equipmentHackCount++;
 				if (_equipmentHackCount == 3)
 				{

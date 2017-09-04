@@ -10,7 +10,6 @@ namespace MiNET.Entities.Behaviors
 		private static readonly ILog Log = LogManager.GetLogger(typeof (MobController));
 
 		private readonly Mob _entity;
-
 		public MobController(Mob entity)
 		{
 			_entity = entity;
@@ -89,7 +88,7 @@ namespace MiNET.Entities.Behaviors
 			var currPosition = _entity.KnownPosition;
 			var direction = _entity.GetHorizDir()*new Vector3(1, 0, 1);
 
-			var blockDown = level.GetBlock(currPosition + BlockCoordinates.Down);
+		//	var blockDown = level.GetBlock(currPosition + BlockCoordinates.Down);
 			//if (_entity.Velocity.Y < 0 && !blockDown.IsSolid)
 			//{
 			//	Log.Debug($"Falling mob: {_entity.Velocity}, Position: {(Vector3)_entity.KnownPosition}");
@@ -101,31 +100,35 @@ namespace MiNET.Entities.Behaviors
 			bool entityCollide = false;
 			var boundingBox = _entity.GetBoundingBox().OffsetBy(direction*speedFactor);
 
-			var players = level.GetSpawnedPlayers();
-			foreach (var player in players)
+			if (_entity.HasCollision)
 			{
-				if (player.GetBoundingBox().Intersects(boundingBox))
+				var players = level.GetSpawnedPlayers();
+				foreach (var player in players)
 				{
-					entityCollide = true;
-					break;
-				}
-			}
-
-			if (!entityCollide)
-			{
-				var entities = level.GetEntites();
-				foreach (var ent in entities)
-				{
-					if (ent == _entity) continue;
-
-					if (ent.GetBoundingBox().Intersects(boundingBox) && ent.EntityId > _entity.EntityId)
+					if (player.GetBoundingBox().Intersects(boundingBox))
 					{
-						if (_entity.Velocity == Vector3.Zero && level.Random.Next(1000) == 0)
-						{
-							break;
-						}
 						entityCollide = true;
 						break;
+					}
+				}
+
+
+				if (!entityCollide)
+				{
+					var entities = level.GetEntites();
+					foreach (var ent in entities)
+					{
+						if (ent == _entity) continue;
+
+						if (ent.GetBoundingBox().Intersects(boundingBox) && ent.EntityId > _entity.EntityId)
+						{
+							if (_entity.Velocity == Vector3.Zero && level.Random.Next(1000) == 0)
+							{
+								break;
+							}
+							entityCollide = true;
+							break;
+						}
 					}
 				}
 			}
