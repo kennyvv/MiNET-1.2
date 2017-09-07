@@ -2847,7 +2847,9 @@ namespace MiNET.Net
 			AllPriority = (All | Priority),
 		}
 
-		public BlockUpdateRecords records; // = null;
+		public BlockCoordinates coordinates; // = null;
+		public uint blockId; // = null;
+		public uint priorityAndMetadata; // = null;
 
 		public McpeUpdateBlock()
 		{
@@ -2861,7 +2863,9 @@ namespace MiNET.Net
 
 			BeforeEncode();
 
-			Write(records);
+			Write(coordinates);
+			WriteUnsignedVarInt(blockId);
+			WriteUnsignedVarInt(priorityAndMetadata);
 
 			AfterEncode();
 		}
@@ -2875,7 +2879,9 @@ namespace MiNET.Net
 
 			BeforeDecode();
 
-			records = ReadBlockUpdateRecords();
+			coordinates = ReadBlockCoordinates();
+			blockId = ReadUnsignedVarInt();
+			priorityAndMetadata = ReadUnsignedVarInt();
 
 			AfterDecode();
 		}
@@ -2887,7 +2893,9 @@ namespace MiNET.Net
 		{
 			base.ResetPackage();
 
-			records=default(BlockUpdateRecords);
+			coordinates=default(BlockCoordinates);
+			blockId=default(uint);
+			priorityAndMetadata=default(uint);
 		}
 
 	}

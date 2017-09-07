@@ -964,18 +964,12 @@ namespace MiNET.Worlds
 			//BroadcastMessage("Sending MCPEUpdateBlock for: " + block.Coordinates);
 
 			var message = McpeUpdateBlock.CreateObject();
-			message.records = new BlockUpdateRecords()
-			{
-				new BlockUpdateRecord()
-				{
-					BlockId = block.Id,
-					BlockMetadata = block.Metadata,
-					Coordinates = block.Coordinates
-				}
-			};
-		//	message.blockId = block.Id;
-		//	message.coordinates = block.Coordinates;
-		//	message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
+			message.blockId = block.Id;
+			message.priorityAndMetadata = (uint)(8 << 4 | block.Metadata);
+			message.coordinates = block.Coordinates;
+			//	message.blockId = block.Id;
+			//	message.coordinates = block.Coordinates;
+			//	message.blockMetaAndPriority = (byte) (0xb << 4 | (block.Metadata & 0xf));
 			RelayBroadcast(message);
 		}
 
@@ -1183,13 +1177,17 @@ namespace MiNET.Worlds
 	    private static void RevertBlockAction(Player player, Block block, BlockEntity blockEntity)
 	    {
 	        var message = McpeUpdateBlock.CreateObject();
-			message.records = new BlockUpdateRecords
+		    message.blockId = block.Id;
+		    message.priorityAndMetadata = (uint) (8 << 4 | block.Metadata);
+		    message.coordinates = block.Coordinates;
+
+			/*message.records = new BlockUpdateRecords
 			{
 				new BlockUpdateRecord()
 			};
 	        message.records[0].BlockId = block.Id;
 	        message.records[0].Coordinates = block.Coordinates;
-	        message.records[0].BlockMetadata = (byte) (0xb << 4 | (block.Metadata & 0xf));
+	        message.records[0].BlockMetadata = (byte) (0xb << 4 | (block.Metadata & 0xf));*/
 	        player.SendPackage(message);
 
 			// Revert block entity if exists

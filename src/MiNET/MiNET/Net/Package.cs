@@ -25,16 +25,21 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using fNbt;
 using log4net;
+using Microsoft.Win32.SafeHandles;
 using MiNET.Crafting;
 using MiNET.Items;
 using MiNET.Plugins;
@@ -524,7 +529,7 @@ namespace MiNET.Net
 			{
 				Write(coord.Coordinates);
 				WriteUnsignedVarInt((uint)coord.BlockId);
-				WriteUnsignedVarInt((uint)((0xb << 4) | coord.BlockMetadata));
+				WriteUnsignedVarInt((uint)((8 << 4) | coord.BlockMetadata)); //8 = Priority
 			}
 		}
 
@@ -594,27 +599,160 @@ namespace MiNET.Net
 			{
 				Write((byte) 4);
 				var parts = endpoint.Address.ToString().Split('.');
-				foreach (var part in parts)
+				for (var index = 0; index < 4; index++)
 				{
+					var part = parts[index];
 					Write((byte) byte.Parse(part));
 				}
 				Write((short) endpoint.Port, true);
 			}
+			else if (endpoint.AddressFamily == AddressFamily.InterNetworkV6)
+			{
+				Log.Warn("Writing unknown AddressFamily: " + endpoint.AddressFamily);
+				Write((byte)4);
+
+				Write((byte)10);
+				Write((byte)0);
+				Write((byte)1);
+				Write((byte)80);
+
+				Write((short)endpoint.Port, true);
+				return;
+				//ReadShort(); // Address family
+				//port = (ushort)ReadShort(true); // Port
+				//ReadLong(); // Flow info
+				//var addressBytes = ReadBytes(16);
+				//address = new IPAddress(addressBytes);
+
+				sockaddr_in6 a = new sockaddr_in6(endpoint.Address);
+				if (a.Family == (short) AddressFamily.InterNetworkV6)
+				a.sin6_port = (ushort) endpoint.Port;
+
+				Write((byte) 6);
+
+				Write((short) a.Family);
+				Write((ushort) a.Port, true);
+				Write((uint) a.FlowInfo);
+				Write(a.sin6_addr);
+			}
+			else
+			{
+				Log.Warn("Writing unknown AddressFamily: " + endpoint.AddressFamily);
+				Write((byte) 4);
+
+				Write((byte) 10);
+				Write((byte) 0);
+				Write((byte) 1);
+				Write((byte) 80);
+
+				Write((short) endpoint.Port, true);
+			}
 		}
 
+		[Serializable, StructLayout(LayoutKind.Sequential)]
+		private struct sockaddr_in6
+		{
+			public short sin6_family;
+			public ushort sin6_port;
+			public uint sin6_flowinfo;
+			[MarshalAs(UnmanagedType.ByValArray, SizeConst = addrByteCount)]
+			public byte[] sin6_addr;
+			public uint sin6_scope_id;
 
-//typedef struct sockaddr_in6
-//{
-//	ADDRESS_FAMILY sin6_family; // AF_INET6.
-//	USHORT sin6_port;           // Transport level port number.
-//	ULONG sin6_flowinfo;       // IPv6 flow information.
-//	IN6_ADDR sin6_addr;         // IPv6 address.
-//	union {
-//ULONG sin6_scope_id;     // Set of interfaces for a scope.
-//	SCOPE_ID sin6_scope_struct;
-//};
-//}
-//SOCKADDR_IN6_LH, * PSOCKADDR_IN6_LH, FAR * LPSOCKADDR_IN6_LH;
+			const int addrByteCount = 16;
+
+			// if the addr is v4-mapped-v6, 10th and 11th byte contain 0xFF. the last 4 bytes contain the ipv4 address
+			const int v4MapIndex = 10;
+			const int v4Index = v4MapIndex + 2;
+
+			public sockaddr_in6(IPAddress address)
+			{
+				if (address.AddressFamily == AddressFamily.InterNetworkV6)
+				{
+					this.sin6_addr = address.GetAddressBytes();
+					this.sin6_scope_id = (uint)address.ScopeId;
+				}
+				else
+				{
+					// Map v4 address to v4-mapped v6 addr (i.e., ::FFFF:XX.XX.XX.XX)
+					byte[] v4AddressBytes = address.GetAddressBytes();
+
+					this.sin6_addr = new byte[addrByteCount];
+					for (int i = 0; i < v4MapIndex; i++)
+						this.sin6_addr[i] = 0;
+					this.sin6_addr[v4MapIndex] = 0xff;
+					this.sin6_addr[v4MapIndex + 1] = 0xff;
+					for (int i = v4Index; i < addrByteCount; i++)
+						this.sin6_addr[i] = v4AddressBytes[i - v4Index];
+
+					this.sin6_scope_id = 0;     // V4 address doesn't have a scope ID 
+				}
+
+				this.sin6_family = (short)AddressFamily.InterNetworkV6;
+				this.sin6_port = 0;
+				this.sin6_flowinfo = 0;
+			}
+
+			public short Family { get { return this.sin6_family; } }
+			public uint FlowInfo { get { return this.sin6_flowinfo; } }
+
+			// Returns true if the address is a v4-mapped v6 address 
+			// Adapted from ws2ipdef.w's IN6_IS_ADDR_V4MAPPED macro
+			private bool IsV4Mapped
+			{
+				get
+				{
+					// A v4-mapped v6 address will have the last 4 bytes contain the IPv4 address. 
+					// The preceding 2 bytes contain 0xFFFF. All others are 0. 
+					if (sin6_addr[v4MapIndex] != 0xff || sin6_addr[v4MapIndex + 1] != 0xff)
+						return false;
+
+					for (int i = 0; i < v4MapIndex; i++)
+						if (sin6_addr[i] != 0)
+							return false;
+
+					return true;
+				}
+			}
+
+			public ushort Port { get { return this.sin6_port; } }
+
+			// Converts a sockaddr_in6 to IPAddress
+			// A v4 mapped v6 address is converted to a v4 address 
+			public IPAddress ToIPAddress()
+			{
+				if (!(this.sin6_family == (short)AddressFamily.InterNetworkV6))
+				{
+					throw new Exception();
+				}
+
+				if (IsV4Mapped)
+				{
+					byte[] addr = {this.sin6_addr[v4Index],
+						this.sin6_addr[v4Index + 1],
+						this.sin6_addr[v4Index + 2],
+						this.sin6_addr[v4Index + 3]};
+					return new IPAddress(addr);
+				}
+				else
+				{
+					return new IPAddress(this.sin6_addr, this.sin6_scope_id);
+				}
+			}
+		}
+
+		//typedef struct sockaddr_in6
+		//{
+		//	ADDRESS_FAMILY sin6_family; // AF_INET6.
+		//	USHORT sin6_port;           // Transport level port number.
+		//	ULONG sin6_flowinfo;       // IPv6 flow information.
+		//	IN6_ADDR sin6_addr;         // IPv6 address.
+		//	union {
+		//ULONG sin6_scope_id;     // Set of interfaces for a scope.
+		//	SCOPE_ID sin6_scope_struct;
+		//};
+		//}
+		//SOCKADDR_IN6_LH, * PSOCKADDR_IN6_LH, FAR * LPSOCKADDR_IN6_LH;
 
 		public IPEndPoint ReadIPEndPoint()
 		{
@@ -632,10 +770,9 @@ namespace MiNET.Net
 			else if (ipVersion == 6)
 			{
 				ReadShort(); // Address family
-				port = (ushort) ReadShort(true); // Port
+				port = ReadUshort(true); // Port
 				ReadLong(); // Flow info
-				var addressBytes = ReadBytes(16);
-				address = new IPAddress(addressBytes);
+				address = new IPAddress(ReadBytes(16));
 			}
 			else
 			{

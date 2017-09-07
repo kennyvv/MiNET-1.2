@@ -373,7 +373,10 @@
 			<enum id="All" value="(Neighbors | Network)" />
 			<enum id="All Priority" value="(All | Priority)" />
 		</enums>
-		<field name="Records" type="BlockUpdateRecords" />
+    <field name="Coordinates" type="BlockCoordinates" />
+    <field name="Block ID" type="UnsignedVarInt" />
+    <field name="Priority and Metadata" type="UnsignedVarInt" />
+		<!--<field name="Records" type="BlockUpdateRecords" />-->
 	</pdu>
 
 	<pdu id="0x16" online="false" client="false" server="true" name="MCPE_ADD_PAINTING">
