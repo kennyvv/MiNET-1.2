@@ -120,7 +120,6 @@ Read more about packets and this specification on the [Protocol Wiki](https://gi
 | byte [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-byte) |
 | byte[] [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-byte[]) |
 | ByteArray [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-ByteArray) |
-| CommandSet [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-CommandSet) |
 | EntityAttributes [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-EntityAttributes) |
 | FixedString [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-FixedString) |
 | float [(wiki)](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-Type-float) |
@@ -1630,7 +1629,6 @@ Wiki: [Available Commands](https://github.com/NiclasOlofsson/MiNET/wiki//Protoco
 
 | Name | Type | Size |
 |:-----|:-----|:-----|
-|Commands | CommandSet |  |
 -----------------------------------------------------------------------
 ### Command Request (0x4d)
 Wiki: [Command Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-CommandRequest)
@@ -1662,8 +1660,9 @@ Wiki: [Command Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-C
 | Name | Type | Size |
 |:-----|:-----|:-----|
 |Command | string |  |
-|Command type | VarInt |  |
+|Command type | SignedVarInt |  |
 |Request ID | string |  |
+|Unknown | bool |  |
 -----------------------------------------------------------------------
 ### Command Block Update (0x4e)
 Wiki: [Command Block Update](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-CommandBlockUpdate)

@@ -910,24 +910,23 @@ namespace MiNET
 
 		protected virtual void SendAvailableCommands()
 		{
-			/*var settings = new JsonSerializerSettings();
+			var settings = new JsonSerializerSettings();
 			settings.NullValueHandling = NullValueHandling.Ignore;
 			settings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
 			settings.MissingMemberHandling = MissingMemberHandling.Error;
 			settings.Formatting = Formatting.Indented;
 			settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
-			var content = JsonConvert.SerializeObject(Server.PluginManager.Commands, settings);*/
+			var content = JsonConvert.SerializeObject(Server.PluginManager.Commands, settings);
 
 			McpeAvailableCommands commands = McpeAvailableCommands.CreateObject();
-			
-			commands.commands = Server.PluginManager.Commands;
-			//commands.unknown = "{}";
+			commands.CommandSet = Server.PluginManager.Commands;
 			SendPackage(commands);
 		}
 
 		public virtual void HandleMcpeCommandRequest(McpeCommandRequest message)
 		{
+			//return;
 			/*var jsonSerializerSettings = new JsonSerializerSettings
 			{
 				PreserveReferencesHandling = PreserveReferencesHandling.None,
@@ -958,7 +957,7 @@ namespace MiNET
 				commandResult.requestId = message.requestId;
 				commandResult.commandType = message.commandType;
 				commandResult.commandType = (int) McpeCommandRequest.CommandRequestType.Player;
-				commandResult.playerId = NetworkHandler.GetNetworkNetworkIdentifier();
+			//	commandResult.playerId = NetworkHandler.GetNetworkNetworkIdentifier();
 				//commandResult.commandOverload = message.commandOverload;
 				//commandResult.isOutput = true;
 				//commandResult.clientId = NetworkHandler.GetNetworkNetworkIdentifier();
@@ -967,7 +966,7 @@ namespace MiNET
 				//commandResult.entityIdSelf = EntityId;
 				SendPackage(commandResult);
 
-				if (Log.IsDebugEnabled) Log.Debug($"NetworkId={commandResult.playerId}, Command Respone\n{Package.ToJson(commandResult)}\n");
+			//	if (Log.IsDebugEnabled) Log.Debug($"NetworkId={commandResult.playerId}, Command Respone\n{Package.ToJson(commandResult)}\n");
 			}
 		}
 

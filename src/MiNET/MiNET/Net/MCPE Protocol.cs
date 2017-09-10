@@ -5889,7 +5889,6 @@ namespace MiNET.Net
 	public partial class McpeAvailableCommands : Package<McpeAvailableCommands>
 	{
 
-		public CommandSet commands; // = null;
 
 		public McpeAvailableCommands()
 		{
@@ -5903,7 +5902,6 @@ namespace MiNET.Net
 
 			BeforeEncode();
 
-			Write(commands);
 
 			AfterEncode();
 		}
@@ -5917,7 +5915,6 @@ namespace MiNET.Net
 
 			BeforeDecode();
 
-			commands = ReadCommandSet();
 
 			AfterDecode();
 		}
@@ -5929,7 +5926,6 @@ namespace MiNET.Net
 		{
 			base.ResetPackage();
 
-			commands=default(CommandSet);
 		}
 
 	}
@@ -5954,6 +5950,7 @@ namespace MiNET.Net
 		public string command; // = null;
 		public int commandType; // = null;
 		public string requestId; // = null;
+		public bool unknown; // = null;
 
 		public McpeCommandRequest()
 		{
@@ -5968,8 +5965,9 @@ namespace MiNET.Net
 			BeforeEncode();
 
 			Write(command);
-			WriteVarInt(commandType);
+			WriteSignedVarInt(commandType);
 			Write(requestId);
+			Write(unknown);
 
 			AfterEncode();
 		}
@@ -5984,8 +5982,9 @@ namespace MiNET.Net
 			BeforeDecode();
 
 			command = ReadString();
-			commandType = ReadVarInt();
+			commandType = ReadSignedVarInt();
 			requestId = ReadString();
+			unknown = ReadBool();
 
 			AfterDecode();
 		}
@@ -6000,6 +5999,7 @@ namespace MiNET.Net
 			command=default(string);
 			commandType=default(int);
 			requestId=default(string);
+			unknown=default(bool);
 		}
 
 	}

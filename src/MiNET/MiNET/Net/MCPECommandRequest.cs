@@ -9,21 +9,21 @@ namespace MiNET.Net
 {
 	public partial class McpeCommandRequest : Package<McpeCommandRequest>
 	{
-		public long playerId;
+	//	public long playerId;
 		partial void AfterDecode()
 		{
-			if (commandType == (int) CommandRequestType.DevConsole || commandType == (int) CommandRequestType.Player)
-			{
-				playerId = ReadSignedVarLong();
-			}
+		//	if (commandType == (int) CommandRequestType.DevConsole || commandType == (int) CommandRequestType.Player)
+		//	{
+		//		playerId = ReadSignedVarLong();
+		//	}
 		}
 
 		partial void AfterEncode()
 		{
-			if (commandType == (int) CommandRequestType.DevConsole || commandType == (int) CommandRequestType.Player)
-			{
-				WriteSignedVarLong(playerId);
-			}
+		//	if (commandType == (int) CommandRequestType.DevConsole || commandType == (int) CommandRequestType.Player)
+		//	{
+		//		WriteSignedVarLong(playerId);
+		//	}
 		}
 	}
 }

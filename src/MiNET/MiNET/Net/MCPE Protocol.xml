@@ -777,7 +777,7 @@
 	</pdu>
 
 	<pdu id="0x4c" online="false" client="false" server="true" name="MCPE_AVAILABLE_COMMANDS">
-		<field name="Commands" type="CommandSet"  />
+	<!--	<field name="Commands" type="CommandSet"  /> -->
 	</pdu>
 
 	<pdu id="0x4d" online="false" client="true" server="false" name="MCPE_COMMAND_REQUEST">
@@ -796,9 +796,9 @@
 	  </enums>
 
     <field name="Command" type="string"  />
-    <field name="Command type" type="VarInt" />
+    <field name="Command type" type="SignedVarInt" />
     <field name="Request ID" type="string" />
-    
+	  <field name="Unknown" type="bool" />
 		
    <!-- <field name="Command overload" type="string"  />
 		<field name="Unknown 1" type="UnsignedVarInt"  />
