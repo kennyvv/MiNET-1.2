@@ -134,6 +134,10 @@ namespace MiNET
 			if (source != null)
 			{
 				DoKnockback(source, tool);
+				if (tool != null && tool is ItemTool itemTool)
+				{
+					itemTool.UseItem(Entity.Level, Entity, source);
+				}
 			}
 
 			CooldownTick = 10;
@@ -234,7 +238,7 @@ namespace MiNET
 				Entity.BroadcastSetEntityData();
 				Entity.DespawnEntity();
 
-				if (!Config.GetProperty("KeepInventory", false))
+				if (!player.KeepInventory)
 				{
 					player.DropInventory();
 				}

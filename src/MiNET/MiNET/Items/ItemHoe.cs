@@ -7,7 +7,7 @@ using MiNET.Worlds;
 
 namespace MiNET.Items
 {
-	public class ItemHoe : Item
+	public class ItemHoe : ItemTool
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (ItemHoe));
 
@@ -29,11 +29,12 @@ namespace MiNET.Items
 
 				if (farmland.FindWater(world, blockCoordinates, new List<BlockCoordinates>(), 0))
 				{
-					Log.Warn("Found water source");
+					//Log.Warn("Found water source");
 					farmland.Metadata = 7;
 				}
 
 				world.SetBlock(farmland);
+				base.UseItem(world, player, blockCoordinates, face, faceCoords);
 			}
 		}
 	}

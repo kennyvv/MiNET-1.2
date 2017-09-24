@@ -1,6 +1,6 @@
 namespace MiNET.Items
 {
-	public class ItemGoldPickaxe : Item
+	public class ItemGoldPickaxe : ItemTool
 	{
 		public ItemGoldPickaxe() : base(285)
 		{

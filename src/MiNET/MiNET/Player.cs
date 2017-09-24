@@ -454,7 +454,7 @@ namespace MiNET
 		public virtual void HandleMcpeEntityFall(McpeEntityFall message)
 		{
 			double damage = message.fallDistance - 3;
-			if (damage > 0)
+			if (damage > 0 && DoFallDamage)
 			{
 				HealthManager.TakeHit(null, (int) DamageCalculator.CalculatePlayerDamage(null, this, null, damage, DamageCause.Fall), DamageCause.Fall);
 			}
@@ -484,13 +484,25 @@ namespace MiNET
 
 		Action _dimensionFunc;
 
+		protected virtual void BlockBreakChanged(Block block, PlayerAction action, double breakingTime)
+		{
+			
+		}
+
+		protected virtual bool CanBreakBlock(Block block, Item itemInHand)
+		{
+			return true;
+		}
+
+		private bool _breakingBlock = false;
 		/// <summary>
 		///     Handles the player action.
 		/// </summary>
 		/// <param name="message">The message.</param>
 		public virtual void HandleMcpePlayerAction(McpePlayerAction message)
 		{
-			switch ((PlayerAction) message.actionId)
+			var action = (PlayerAction) message.actionId;
+			switch (action)
 			{
 				case PlayerAction.StartBreak:
 				{
@@ -511,6 +523,9 @@ namespace MiNET
 						levelEvent.eventId = (int) LevelEventType.BlockStartCracking;
 						levelEvent.data = (int) (65535/breakTime);
 						Level.RelayBroadcast(levelEvent);
+
+						_breakingBlock = true;
+						BlockBreakChanged(target, action, breakTime);
 					}
 				}
 
@@ -518,11 +533,16 @@ namespace MiNET
 				case PlayerAction.AbortBreak:
 				case PlayerAction.StopBreak:
 				{
+					Block target = Level.GetBlock(message.coordinates);
+
 					McpeLevelEvent levelEvent = McpeLevelEvent.CreateObject();
 					levelEvent.position = message.coordinates;
-					levelEvent.eventId = (int)LevelEventType.BlockStopCracking;
+					levelEvent.eventId = (int) LevelEventType.BlockStopCracking;
 					levelEvent.data = 0;
 					Level.RelayBroadcast(levelEvent);
+
+					_breakingBlock = false;
+					BlockBreakChanged(target, action, -1);
 				}
 					break;
 				case PlayerAction.Breaking:
@@ -668,6 +688,7 @@ namespace MiNET
 		public bool IsNoMvp { get; set; }
 		public bool IsNoClip { get; set; }
 		public bool IsFlying { get; set; }
+		public bool DoFallDamage { get; set; } = true;
 
 		public virtual void HandleMcpeAdventureSettings(McpeAdventureSettings message)
 		{
@@ -725,7 +746,7 @@ namespace MiNET
 			SendPackage(mcpeAdventureSettings);
 		}
 
-		private void UpdateFlags(UserPermission rank, Actionpermissions permissions)
+		protected virtual void UpdateFlags(UserPermission rank, Actionpermissions permissions)
 		{
 			if (rank < PermissionLevel)
 			{
@@ -910,14 +931,14 @@ namespace MiNET
 
 		protected virtual void SendAvailableCommands()
 		{
-			var settings = new JsonSerializerSettings();
+			/*var settings = new JsonSerializerSettings();
 			settings.NullValueHandling = NullValueHandling.Ignore;
 			settings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
 			settings.MissingMemberHandling = MissingMemberHandling.Error;
 			settings.Formatting = Formatting.Indented;
 			settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
-			var content = JsonConvert.SerializeObject(Server.PluginManager.Commands, settings);
+			var content = JsonConvert.SerializeObject(Server.PluginManager.Commands, settings);*/
 
 			McpeAvailableCommands commands = McpeAvailableCommands.CreateObject();
 			commands.CommandSet = Server.PluginManager.Commands;
@@ -1599,7 +1620,9 @@ namespace MiNET
 			McpeMobEquipment mobEquipment = McpeMobEquipment.CreateObject();
 			mobEquipment.runtimeEntityId = EntityManager.EntityIdSelf;
 			mobEquipment.item = Inventory.GetItemInHand();
-			mobEquipment.slot = 0;
+			mobEquipment.slot = (byte) Inventory.InHandSlot;
+			mobEquipment.selectedSlot = (byte) Inventory.SelectedHotbarSlot;
+			mobEquipment.windowsId = 0;
 			SendPackage(mobEquipment);
 		}
 
@@ -2137,7 +2160,8 @@ namespace MiNET
 			var itemInHand = Inventory.GetItemInHand();
 			if (itemInHand == null) return;
 			if (GameMode != GameMode.Creative &&
-				(transaction.Item.Id != itemInHand.Id || itemInHand.Metadata != transaction.Item.Metadata  /*||itemInHand.Count != transaction.Item.Count*/)) 
+				((transaction.Item.Id != itemInHand.Id || itemInHand.Metadata != transaction.Item.Metadata) 
+				&& transaction.ActionType != (int) McpeInventoryTransaction.ItemUseAction.Destroy /*||itemInHand.Count != transaction.Item.Count*/)) 
 				//If the transaction & item in-hand do not match, re-send inventory. If this happens to often, kick them for item-hacking.
 			{
 				Log.Warn($"Possible equipment hacking (Hand: {itemInHand} | Transaction: {transaction.Item}) ");
@@ -2193,13 +2217,44 @@ namespace MiNET
 					//Level.Interact(this, itemInHand, transaction.Position, (BlockFace)transaction.Face, transaction.ClickPosition);
 					break;
 				case McpeInventoryTransaction.ItemUseAction.Destroy:
+
+					Block block = Level.GetBlock(transaction.Position);
+					if (!CanBreakBlock(block, itemInHand))
+					{
+						McpeUpdateBlock revertUpdateBlock = McpeUpdateBlock.CreateObject();
+						revertUpdateBlock.blockId = block.Id;
+						revertUpdateBlock.priorityAndMetadata = (uint)((8 << 4) | block.Metadata);
+						revertUpdateBlock.coordinates = transaction.Position;
+						SendPackage(revertUpdateBlock);
+						return;
+					}
+
 					if (GameMode != GameMode.Creative)
 					{
+						//SendMessage($"Client: {transaction.Item.Metadata} Server: {itemInHand.Metadata}");
 						Level.BreakBlock(this, transaction.Position);
+						//var inHand = Inventory.GetItemInHand();
+
+						//SendMessage("IsBreaking: " + _breakingBlock + " IsTool: " + (inHand.ItemType & ItemType.AnyTool));
+
+						if ((itemInHand.ItemType & ItemType.AnyTool) != 0 && transaction.Item.Metadata != itemInHand.Metadata)
+						{
+							if (itemInHand.Metadata - 1 > transaction.Item.Metadata)
+							{
+							//	SendMessage($"Client metadata missmatch! Client: {transaction.Item.Metadata} Server: {itemInHand.Metadata}");
+								Inventory.SendSetSlot(Inventory.InHandSlot);
+							}
+							else if (itemInHand.Metadata - 1 < transaction.Item.Metadata)
+							{
+							//	SendMessage($"Server metadata missmatch! Client: {transaction.Item.Metadata} Server: {itemInHand.Metadata}");
+								Inventory.SendSetSlot(Inventory.InHandSlot);
+							}
+							//SendMessage($"Metadata missmatch! Client: {transaction.Item.Metadata} Server: {inHand.Metadata}");
+						}
 					}
 					else if (GameMode == GameMode.Creative)
 					{
-						Level.SetAir(transaction.Position);
+						Level.BreakBlock(this, transaction.Position);
 					}
 					break;
 				default:
@@ -2561,6 +2616,39 @@ namespace MiNET
 
 		public void HandleMcpeBlockPickRequest(McpeBlockPickRequest message)
 		{
+			if (GameMode != GameMode.Creative) return;
+			Block b = Level.GetBlock(message.x, message.y, message.z);
+
+			int availableSlot = -1;
+			for (int i = 0;
+				i < 9;
+				i++) //Check if we already have the item in our inventory. And if not check for an available slot.
+			{
+				var s = Inventory.Slots[i];
+				if (s is ItemAir)
+				{
+					availableSlot = i;
+				}
+				else if (s.Id == b.Id)
+				{
+					Inventory.SetHeldItemSlot(i, true);
+					return;
+				}
+			}
+
+			if (Inventory.GetItemInHand() is ItemAir || availableSlot == -1)
+			{
+				var s = Inventory.SelectedHotbarSlot;
+				Inventory.SetInventorySlot(s, new ItemBlock(b, b.Metadata));
+				Inventory.SetHeldItemSlot(s, true);
+				return;
+			}
+			else
+			{
+				Inventory.SetInventorySlot(availableSlot, new ItemBlock(b, b.Metadata));
+				Inventory.SetHeldItemSlot(availableSlot, true);
+				return;
+			}
 		}
 
 		protected virtual int CalculateDamage(Entity target)
@@ -2734,24 +2822,46 @@ namespace MiNET
 		public virtual GameRules GetGameRules()
 		{
 			GameRules rules = new GameRules();
-			rules.Add("drowningdamage", new GameRule<bool>(true));
+			rules.Add("drowningdamage", new GameRule<bool>(!HealthManager.IsInvulnerable));
 			rules.Add("dotiledrops", new GameRule<bool>(true));
 			rules.Add("commandblockoutput", new GameRule<bool>(true));
-			rules.Add("domobloot", new GameRule<bool>(true));
+			rules.Add("domobloot", new GameRule<bool>(Level.MobLooting));
 			rules.Add("dodaylightcycle", new GameRule<bool>(Level.IsWorldTimeStarted));
-			rules.Add("keepinventory", new GameRule<bool>(false));
+			rules.Add("keepinventory", new GameRule<bool>(KeepInventory));
 			rules.Add("domobspawning", new GameRule<bool>(Level.EnableChunkTicking));
 			rules.Add("doentitydrops", new GameRule<bool>(true));
 			rules.Add("dofiretick", new GameRule<bool>(Level.EnableBlockTicking));
 			rules.Add("doweathercycle", new GameRule<bool>(false));
-			rules.Add("falldamage", new GameRule<bool>(true));
+			rules.Add("falldamage", new GameRule<bool>(DoFallDamage));
 			rules.Add("pvp", new GameRule<bool>(IsNoPvp));
-			rules.Add("firedamage", new GameRule<bool>(true));
-			rules.Add("mobgriefing", new GameRule<bool>(true));
+			rules.Add("firedamage", new GameRule<bool>(!HealthManager.IsInvulnerable));
+			rules.Add("mobgriefing", new GameRule<bool>(Level.MobGriefing));
 			rules.Add("sendcommandfeedback", new GameRule<bool>(true));
+			rules.Add("showcoordinates", new GameRule<bool>(_showCoordinates));
 			return rules;
 		}
 
+		public bool KeepInventory = Config.GetProperty("KeepInventory", false);
+
+		[Wired]
+		public void SetKeepInventory(bool value)
+		{
+			KeepInventory = value;
+			SendGameRules();
+		}
+
+		private bool _showCoordinates = false;
+
+		[Wired]
+		public bool ShowCoordinates
+		{
+			get { return _showCoordinates; }
+			set
+			{
+				_showCoordinates = value;
+				SendGameRules();
+			}
+		}
 
 		/// <summary>
 		///     Sends the set spawn position packet.

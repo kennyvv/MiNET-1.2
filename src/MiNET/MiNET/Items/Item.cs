@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using fNbt;
 using MiNET.BlockEntities;
 using MiNET.Blocks;
@@ -22,7 +23,7 @@ namespace MiNET.Items
 		public byte Count { get; set; }
 		public virtual NbtCompound ExtraData { get; set; }
 
-		public ItemMaterial ItemMaterial { get; set; } = ItemMaterial.None;
+		public ItemMaterial ItemMaterial { get; set; } = ItemMaterial.Any;
 		public ItemType ItemType { get; set; } = ItemType.Item;
 		public int MaxStackSize { get; set; } = 64;
 		public bool IsStackable => MaxStackSize > 1;
@@ -169,35 +170,44 @@ namespace MiNET.Items
 		}
 	}
 
-	public enum ItemMaterial
+	[Flags]
+	public enum ItemMaterial : int
 	{
-		//Armor Only
-		Leather = -2,
-		Chain = -1,
+		Any = Wood | Stone | Gold | Iron | Diamond,
 
-		None = 0,
-		Wood = 1,
-		Stone = 2,
-		Gold = 3,
-		Iron = 4,
-		Diamond = 5,
+		//Armor Only
+		Leather = 1 << 0,
+		Chain = 1 << 1,
+
+		None = 1 << 2,
+		Wood = 1 << 3,
+		Stone = 1 << 4,
+		Gold = 1 << 5,
+		Iron = 1 << 6,
+		Diamond = 1 << 7,
 	}
 
-	public enum ItemType
+	[Flags]
+	public enum ItemType : int
 	{
+		Any = AnyTool | AnyArmor | Hand,
+		AnyArmor = Helmet | Chestplate | Leggings | Boots,
+		AnyTool = Sword | Shovel | PickAxe | Axe | Hoe | Shears,
+
 		//Tools
-		Sword,
-		Shovel,
-		PickAxe,
-		Axe,
-		Item,
-		Hoe,
-		Shears,
+		Sword = 1 << 0,
+		Shovel = 1 << 1,
+		PickAxe = 1 << 2,
+		Axe = 1 << 3,
+		Item = 1 << 4,
+		Hoe = 1 << 5,
+		Shears = 1 << 6,
+		Hand = 1 << 7,
 
 		//Armor
-		Helmet,
-		Chestplate,
-		Leggings,
-		Boots
+		Helmet = 1 << 8,
+		Chestplate = 1 << 9,
+		Leggings = 1 << 10,
+		Boots = 1 << 11
 	}
 }

@@ -81,6 +81,8 @@ namespace MiNET.Worlds
 		public bool IsWorldTimeStarted { get; set; } = false;
 		public bool EnableBlockTicking { get; set; } = false;
 		public bool EnableChunkTicking { get; set; } = false;
+		public bool MobGriefing { get; set; } = true;
+		public bool MobLooting { get; set; } = true;
 
 		public bool AllowBuild { get; set; } = true;
 		public bool AllowBreak { get; set; } = true;
@@ -965,7 +967,7 @@ namespace MiNET.Worlds
 
 			var message = McpeUpdateBlock.CreateObject();
 			message.blockId = block.Id;
-			message.priorityAndMetadata = (uint)(8 << 4 | block.Metadata);
+			message.priorityAndMetadata = (uint)(11 << 4 | block.Metadata);
 			message.coordinates = block.Coordinates;
 			//	message.blockId = block.Id;
 			//	message.coordinates = block.Coordinates;

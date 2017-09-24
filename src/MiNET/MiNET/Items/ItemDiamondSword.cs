@@ -1,6 +1,6 @@
 ﻿namespace MiNET.Items
 {
-	public class ItemDiamondSword : Item
+	public class ItemDiamondSword : ItemTool
 	{
 		public ItemDiamondSword() : base(276)
 		{

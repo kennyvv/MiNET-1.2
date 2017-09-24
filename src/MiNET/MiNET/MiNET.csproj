@@ -86,6 +86,7 @@
     <Compile Include="BlockEntities\EnchantingTableBlockEntity.cs" />
     <Compile Include="BlockEntities\FurnaceBlockEntity.cs" />
     <Compile Include="BlockEntities\ItemFrameBlockEntity.cs" />
+    <Compile Include="BlockEntities\RedstoneBlockEntity.cs" />
     <Compile Include="BlockEntities\Sign.cs" />
     <Compile Include="BlockEntities\SkullBlockEntity.cs" />
     <Compile Include="BlockFace.cs" />
@@ -161,6 +162,7 @@
     <Compile Include="Blocks\PurPurStairs.cs" />
     <Compile Include="Blocks\RedGlazedTerracotta.cs" />
     <Compile Include="Blocks\RedSandstone.cs" />
+    <Compile Include="Blocks\RedstoneComponent.cs" />
     <Compile Include="Blocks\StoneSlab2.cs" />
     <Compile Include="Blocks\RedSandstoneStairs.cs" />
     <Compile Include="Blocks\SeaLantern.cs" />
@@ -526,6 +528,7 @@
     <Compile Include="Items\ItemStonePickaxe.cs" />
     <Compile Include="Items\ItemStoneShovel.cs" />
     <Compile Include="Items\ItemStoneSword.cs" />
+    <Compile Include="Items\ItemTool.cs" />
     <Compile Include="Items\ItemWheat.cs" />
     <Compile Include="Items\ItemWheatSeeds.cs" />
     <Compile Include="Items\ItemWoodenAxe.cs" />

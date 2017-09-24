@@ -1,6 +1,6 @@
 ﻿namespace MiNET.Items
 {
-	public class ItemShears : Item
+	public class ItemShears : ItemTool
 	{
 		public ItemShears() : base(359)
 		{

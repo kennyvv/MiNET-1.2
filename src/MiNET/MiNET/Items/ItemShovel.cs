@@ -5,7 +5,7 @@ using MiNET.Worlds;
 
 namespace MiNET.Items
 {
-	public class ItemShovel : Item
+	public class ItemShovel : ItemTool
 	{
 		internal ItemShovel(short id) : base(id)
 		{
@@ -22,6 +22,7 @@ namespace MiNET.Items
 					Coordinates = blockCoordinates,
 				};
 				world.SetBlock(grassPath);
+				base.UseItem(world, player, blockCoordinates, face, faceCoords);
 			}
 		}
 	}

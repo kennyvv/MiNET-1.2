@@ -1,3 +1,5 @@
+using MiNET.Items;
+
 namespace MiNET.Blocks
 {
 	public class Obsidian : Block
@@ -6,6 +8,9 @@ namespace MiNET.Blocks
 		{
 			BlastResistance = 6000;
 			Hardness = 50;
+
+			Tool = ItemType.PickAxe;
+			ToolMaterial = ItemMaterial.Diamond;
 		}
 	}
 }

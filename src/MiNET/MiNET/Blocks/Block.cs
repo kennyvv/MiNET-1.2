@@ -61,6 +61,9 @@ namespace MiNET.Blocks
 
 		public byte BiomeId { get; set; }
 
+		public ItemType Tool { get; set; } = ItemType.Any;
+		public ItemMaterial ToolMaterial { get; set; } = ItemMaterial.Any;
+
 		public Block(byte id)
 		{
 			Id = id;

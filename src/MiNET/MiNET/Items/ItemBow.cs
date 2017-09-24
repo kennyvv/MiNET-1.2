@@ -55,6 +55,9 @@ namespace MiNET.Items
 			arrow.BroadcastMovement = true;
 			arrow.DespawnOnImpact = false;
 			arrow.SpawnEntity();
+
+			Metadata++;
+			player.Inventory.UpdateInventorySlot(player.Inventory.InHandSlot, this);
 		}
 
 		private float CalculateForce(long timeUsed)
