@@ -25,8 +25,8 @@ namespace MiNET
 			NumberOfPlayers = serverInfo.NumberOfPlayers;
 			MaxNumberOfPlayers = serverInfo.MaxNumberOfPlayers;
 
-			var protocolVersion = "136";
-			var clientVersion = "1.2.0.31";
+			var protocolVersion = "137";
+			var clientVersion = "1.2";
 			var edition = "MCPE";
 
 			if (eduMotd)
