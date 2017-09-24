@@ -5,7 +5,7 @@ using MiNET.Worlds;
 
 namespace MiNET.Blocks
 {
-	public class UnlitRedstoneTorch : Block
+	public class UnlitRedstoneTorch : RedstoneComponent
 	{
 		public UnlitRedstoneTorch() : this(75)
 		{
@@ -19,14 +19,16 @@ namespace MiNET.Blocks
 
 		protected override bool CanPlace(Level world, BlockCoordinates blockCoordinates, BlockCoordinates targetCoordinates, BlockFace face)
 		{
-			Block block = world.GetBlock(blockCoordinates);
-			if (block is Farmland
+			//return true;
+			Block block = world.GetBlock(targetCoordinates);
+			/*if (block is Farmland
 				|| block is Ice
 				/*|| block is Glowstone || block is Leaves  */
-				|| block is Tnt
+			/*	|| block is Tnt
 				|| block is BlockStairs
 				|| block is StoneSlab
 				|| block is WoodSlab) return true;
+				*/
 
 			//TODO: More checks here, but PE blocks it pretty good right now
 			if (block is Glass && face == BlockFace.Up) return true;
@@ -36,7 +38,7 @@ namespace MiNET.Blocks
 
 		public override bool PlaceBlock(Level world, Player player, BlockCoordinates blockCoordinates, BlockFace face, Vector3 faceCoords)
 		{
-			if (face == BlockFace.Down) return true;
+			//if (face == BlockFace.Down) return true;
 
 			switch (face)
 			{
@@ -58,6 +60,8 @@ namespace MiNET.Blocks
 			}
 
 			world.SetBlock(this);
+
+			base.PlaceBlock(world, player, blockCoordinates, face, faceCoords);
 			return true;
 		}
 

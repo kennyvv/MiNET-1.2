@@ -39,6 +39,8 @@ namespace MiNET.Blocks
 	/// </summary>
 	public class Block : ICloneable
 	{
+		protected static readonly bool RedstoneEnabled = Config.GetProperty("EnableRedstone", false);
+
 		public BlockCoordinates Coordinates { get; set; }
 		public byte Id { get; protected set; }
 		public byte Metadata { get; set; }
@@ -245,6 +247,61 @@ namespace MiNET.Blocks
 
 		public virtual void DoPhysics(Level level)
 		{
+		}
+
+		public virtual bool IsPowered(Level level)
+		{
+			if (!RedstoneEnabled) return false;
+
+			return IsDirectlyPowered(level);
+		}
+
+		public bool IsDirectlyPowered(Level level)
+		{
+			if (!RedstoneEnabled) return false;
+
+			var left = Coordinates + BlockCoordinates.Left;
+			var right = Coordinates + BlockCoordinates.Right;
+			var forward = Coordinates + BlockCoordinates.Forwards;
+			var backwards = Coordinates + BlockCoordinates.Backwards;
+			var down = Coordinates + BlockCoordinates.Down;
+
+			var bLeft = level.GetBlock(left);
+			//	level.BroadcastMessage("Left: " + bLeft);
+			if (bLeft is RedstoneComponent rLeft)
+			{
+				if (rLeft.Power == 16) return true;
+			}
+
+			var bRight = level.GetBlock(right);
+			//level.BroadcastMessage("Right: " + bRight);
+			if (bRight is RedstoneComponent rRight)
+			{
+				if (rRight.Power == 16) return true;
+			}
+
+			var bForward = level.GetBlock(forward);
+			//	level.BroadcastMessage("Forward: " + bForward);
+			if (bForward is RedstoneComponent rForward)
+			{
+				if (rForward.Power == 16) return true;
+			}
+
+			var bBackward = level.GetBlock(backwards);
+			//	level.BroadcastMessage("Backward: " + bBackward);
+			if (bBackward is RedstoneComponent rBackward)
+			{
+				if (rBackward.Power == 16) return true;
+			}
+
+			var bDown = level.GetBlock(down);
+			//	level.BroadcastMessage("Down: " + bDown);
+			if (bDown is RedstoneComponent rDown)
+			{
+				if (rDown.Power == 16) return true;
+			}
+
+			return false;
 		}
 
 		public virtual BoundingBox GetBoundingBox()
