@@ -2614,7 +2614,7 @@ namespace MiNET
 			HungerManager.IncreaseExhaustion(0.3f);
 		}
 
-		public void HandleMcpeBlockPickRequest(McpeBlockPickRequest message)
+		public virtual void HandleMcpeBlockPickRequest(McpeBlockPickRequest message)
 		{
 			if (GameMode != GameMode.Creative) return;
 			Block b = Level.GetBlock(message.x, message.y, message.z);
