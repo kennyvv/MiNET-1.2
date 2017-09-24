@@ -117,18 +117,8 @@ namespace MiNET.Plugins.Commands
 		}
 
 		[Command]
-		public void Summon(Player player, EntityTypeEnum entityType, bool noAi = true, BlockPos spawnPos = null)
+		public void Summon(Player player, EntityType petType, bool noAi = true, BlockPos spawnPos = null)
 		{
-			EntityType petType;
-			try
-			{
-				petType = (EntityType) Enum.Parse(typeof (EntityType), entityType.Value, true);
-			}
-			catch (ArgumentException e)
-			{
-				return;
-			}
-
 			if (!Enum.IsDefined(typeof (EntityType), petType))
 			{
 				player.SendMessage("No entity found");
@@ -519,18 +509,18 @@ namespace MiNET.Plugins.Commands
 		}
 
 		[Command]
-		public void Enchant(Player commander, Target target, EnchantmentTypeEnum enchantmentTypeName, int level = 1)
+		public void Enchant(Player commander, Target target, EnchantingType enchanting, int level = 1)
 		{
 			Player targetPlayer = target.Players.First();
 			Item item = targetPlayer.Inventory.GetItemInHand();
 			if (item is ItemAir) return;
 
-			EnchantingType enchanting;
-			if (!Enum.TryParse(enchantmentTypeName.Value.Replace("_", ""), true, out enchanting)) return;
+			//EnchantingType enchanting;
+			//if (!Enum.TryParse(enchantment.Value.Replace("_", ""), true, out enchanting)) return;
 
 			var enchanings = item.GetEnchantings();
 			enchanings.RemoveAll(ench => ench.Id == enchanting);
-			enchanings.Add(new Enchanting {Id = enchanting, Level = (short) level});
+			enchanings.Add(new Enchanting { Id = enchanting, Level = (short)level });
 			item.SetEnchantings(enchanings);
 			targetPlayer.Inventory.SendSetSlot(targetPlayer.Inventory.InHandSlot);
 		}
@@ -553,8 +543,9 @@ namespace MiNET.Plugins.Commands
 
 			commander.Level.BroadcastMessage($"{targetPlayer.Username} changed to game mode {gameMode}.", type: MessageType.Raw);
 
-			return new SimpleResponse {Body = $"Set {targetPlayer.Username} game mode to {gameMode}."};
+			return new SimpleResponse { Body = $"Set {targetPlayer.Username} game mode to {gameMode}." };
 		}
+
 
 		[Command]
 		public void Fill(Player commander, BlockPos from, BlockPos to, BlockTypeEnum tileName, int tileData = 0)

@@ -642,7 +642,7 @@
     <enum id="Muted" value="0x400" />
   </enums>
 
-  <enums id="CommandPermission">
+  <enums id="Permission Level">
     <enum id="Normal" value="0" />
     <enum id="Operator" value="1" />
     <enum id="Host" value="2" />
@@ -650,7 +650,7 @@
     <enum id="Admin" value="4" />
   </enums>
 
-  <enums id="PermissionLevel">
+  <enums id="Command Permission">
     <enum id="Visitor" value="0" />
     <enum id="Member" value="1" />
     <enum id="Operator" value="2" />

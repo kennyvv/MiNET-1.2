@@ -32,6 +32,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Numerics;
+using System.Reflection;
 using System.Threading;
 using log4net;
 using log4net.Appender;
@@ -44,6 +45,7 @@ using MiNET.Entities.World;
 using MiNET.Items;
 using MiNET.Net;
 using MiNET.Particles;
+using MiNET.Plugins.Commands;
 using MiNET.UI.Forms;
 using MiNET.Utils;
 using MiNET.Worlds;
@@ -787,7 +789,7 @@ namespace MiNET
 		}
 
 		public UserPermission PermissionLevel { get; set; } = UserPermission.Operator;
-		public Commandpermission CommandPermission { get; set; } = Commandpermission.Operator;
+		public CommandPermission CommandPermission { get; set; } = CommandPermission.Operator;
 		public Actionpermissions ActionPermissions { get; set; } = Actionpermissions.All;
 		public bool IsSpectator { get; set; }
 
@@ -947,47 +949,35 @@ namespace MiNET
 
 		public virtual void HandleMcpeCommandRequest(McpeCommandRequest message)
 		{
-			//return;
+			//Log.Warn($"Raw command: {message.command}");
+			
+
 			/*var jsonSerializerSettings = new JsonSerializerSettings
 			{
 				PreserveReferencesHandling = PreserveReferencesHandling.None,
 				Formatting = Formatting.Indented,
 			};*/
 
-			//var commandJson = JsonConvert.DeserializeObject<dynamic>(message.command);
+		//	var commandJson = JsonConvert.DeserializeObject<dynamic>(message.commandInputJson);
 			//Log.Debug($"CommandJson\n{JsonConvert.SerializeObject(commandJson, jsonSerializerSettings)}");
-			string cmd = message.command;
-			if (cmd.StartsWith("/")) cmd = cmd.Substring(1);
-			var split = cmd.Split(' ');
 
-			object result = Server.PluginManager.HandleCommand(this, split[0], split.Skip(1).ToArray());
-			//string result = null;
-			//if (result != null)
+			var result = Server.PluginManager.HandleCommand(this, message.command);
+			if (result != null)
 			{
-				/*var settings = new JsonSerializerSettings();
-				settings.NullValueHandling = NullValueHandling.Ignore;
-				settings.DefaultValueHandling = DefaultValueHandling.Include;
-				settings.MissingMemberHandling = MissingMemberHandling.Error;
-				settings.Formatting = Formatting.Indented;
-				settings.StringEscapeHandling = StringEscapeHandling.EscapeNonAscii;
-				settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+				if (result is string)
+				{
+					string sRes = result as string;
+					SendMessage(sRes);
+					return;
+				}
 
-				var content = JsonConvert.SerializeObject(result, settings);*/
-				McpeCommandRequest commandResult = McpeCommandRequest.CreateObject();
-				commandResult.command = message.command;
-				commandResult.requestId = message.requestId;
-				commandResult.commandType = message.commandType;
-				commandResult.commandType = (int) McpeCommandRequest.CommandRequestType.Player;
-			//	commandResult.playerId = NetworkHandler.GetNetworkNetworkIdentifier();
-				//commandResult.commandOverload = message.commandOverload;
-				//commandResult.isOutput = true;
-				//commandResult.clientId = NetworkHandler.GetNetworkNetworkIdentifier();
-				//commandResult.commandInputJson = "null\n";
-				//commandResult.commandOutputJson = content;
-				//commandResult.entityIdSelf = EntityId;
-				SendPackage(commandResult);
-
-			//	if (Log.IsDebugEnabled) Log.Debug($"NetworkId={commandResult.playerId}, Command Respone\n{Package.ToJson(commandResult)}\n");
+			
+				var resultType = result.GetType();
+				string bodyValue = resultType.GetProperty("Body")?.GetValue(result, null) as string;
+				if (bodyValue != null)
+				{
+					SendMessage(bodyValue);
+				}
 			}
 		}
 

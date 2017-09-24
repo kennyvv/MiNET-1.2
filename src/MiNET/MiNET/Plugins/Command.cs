@@ -48,6 +48,9 @@ namespace MiNET.Plugins
 		public MethodInfo Method { get; set; }
 
 		[JsonIgnore]
+		public object Instance { get; set; }
+
+		[JsonIgnore]
 		public string Description { get; set; }
 
 		public Input Input { get; set; }
@@ -211,6 +214,14 @@ namespace MiNET.Plugins
 
 	// blockType
 	public class BlockTypeEnum : EnumBase
+	{
+	}
+
+	public class EffectEnum : EnumBase
+	{
+	}
+
+	public class EnchantEnum : EnumBase
 	{
 	}
 

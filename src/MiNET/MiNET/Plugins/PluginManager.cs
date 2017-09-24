@@ -7,7 +7,10 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using log4net;
+using MiNET.Effects;
+using MiNET.Entities;
 using MiNET.Net;
 using MiNET.Plugins.Attributes;
 using MiNET.Utils;
@@ -25,7 +28,7 @@ namespace MiNET.Plugins
 		private readonly List<object> _plugins = new List<object>();
 		private readonly Dictionary<MethodInfo, PacketHandlerAttribute> _packetHandlerDictionary = new Dictionary<MethodInfo, PacketHandlerAttribute>();
 		private readonly Dictionary<MethodInfo, PacketHandlerAttribute> _packetSendHandlerDictionary = new Dictionary<MethodInfo, PacketHandlerAttribute>();
-		private readonly Dictionary<MethodInfo, CommandAttribute> _pluginCommands = new Dictionary<MethodInfo, CommandAttribute>();
+		private readonly Dictionary<MethodInfo, PluginCommand> _pluginCommands = new Dictionary<MethodInfo, PluginCommand>();
 
 		public List<object> Plugins
 		{
@@ -88,7 +91,7 @@ namespace MiNET.Plugins
 								var plugin = ctor.Invoke(null);
 								_plugins.Add(plugin);
 								LoadCommands(type);
-								Commands = GenerateCommandSet(_pluginCommands.Keys.ToArray());
+								Commands = GenerateCommandSet(_pluginCommands.Values.ToArray());
 								LoadPacketHandlers(type);
 							}
 						}
@@ -134,14 +137,14 @@ namespace MiNET.Plugins
 			}
 		}
 
-		public void LoadCommands(object instance)
+		/*public void LoadCommands(object instance)
 		{
 			if (!_plugins.Contains(instance)) _plugins.Add(instance);
 			LoadCommands(instance.GetType());
 			Commands = GenerateCommandSet(_pluginCommands.Keys.ToArray());
 
 			DebugPrintCommands();
-		}
+		}*/
 
 		private void DebugPrintCommands()
 		{
@@ -160,8 +163,11 @@ namespace MiNET.Plugins
 			Log.Info($"Commmands\n{content}");
 		}
 
-		public void LoadCommands(Type type)
+		public void LoadCommands(object instance)
 		{
+			if (!_plugins.Contains(instance)) _plugins.Add(instance);
+
+			var type = instance.GetType();
 			var methods = type.GetMethods();
 			foreach (MethodInfo method in methods)
 			{
@@ -178,35 +184,43 @@ namespace MiNET.Plugins
 
 				try
 				{
-					_pluginCommands.Add(method, commandAttribute);
+					_pluginCommands.Add(method, new PluginCommand()
+					{
+						Attribute = commandAttribute,
+						Instance = instance,
+						Method = method
+					});
 				}
 				catch (ArgumentException e)
 				{
 					Log.Debug($"Command already exist {method.Name}, {method}", e);
 				}
 			}
+
+			Commands = GenerateCommandSet(_pluginCommands.Values.ToArray());
 		}
 
-		public static CommandSet GenerateCommandSet(MethodInfo[] methods)
+		public static CommandSet GenerateCommandSet(PluginCommand[] methods)
 		{
 			CommandSet commands = new CommandSet();
 
-			foreach (MethodInfo method in methods)
+			foreach (PluginCommand plugincommand in methods)
 			{
-				CommandAttribute commandAttribute = Attribute.GetCustomAttribute(method, typeof (CommandAttribute), false) as CommandAttribute;
+				CommandAttribute commandAttribute = Attribute.GetCustomAttribute(plugincommand.Method, typeof (CommandAttribute), false) as CommandAttribute;
 				if (commandAttribute == null) continue;
 
-				AuthorizeAttribute authorizeAttribute = Attribute.GetCustomAttribute(method, typeof (AuthorizeAttribute), false) as AuthorizeAttribute ?? new AuthorizeAttribute();
+				AuthorizeAttribute authorizeAttribute = Attribute.GetCustomAttribute(plugincommand.Method, typeof (AuthorizeAttribute), false) as AuthorizeAttribute ?? new AuthorizeAttribute();
 
 				if (string.IsNullOrEmpty(commandAttribute.Name))
 				{
-					commandAttribute.Name = method.Name;
+					commandAttribute.Name = plugincommand.Method.Name;
 				}
 
 				var overload = new Overload
 				{
-					Description = commandAttribute.Description??"Bullshit",
-					Method = method,
+					Description = commandAttribute.Description ?? "No Description",
+					Method = plugincommand.Method,
+					Instance = plugincommand.Instance,
 					Input = new Input(),
 					Output = new Output()
 					{
@@ -245,7 +259,7 @@ namespace MiNET.Plugins
 							{
 								Permission = authorizeAttribute.Permission.ToString().ToLowerInvariant(),
 								Aliases = commandAttribute.Aliases,
-								Description = commandAttribute.Description??"Bullshit",
+								Description = commandAttribute.Description ?? "No Description",
 								Overloads = new Dictionary<string, Overload>
 								{
 									{
@@ -258,7 +272,7 @@ namespace MiNET.Plugins
 				}
 
 
-				var parameters = method.GetParameters();
+				var parameters = plugincommand.Method.GetParameters();
 				bool isFirstParam = true;
 				List<Parameter> inputParams = new List<Parameter>();
 				foreach (var parameter in parameters)
@@ -277,7 +291,40 @@ namespace MiNET.Plugins
 					{
 						if (parameter.ParameterType.IsEnum)
 						{
-							param.EnumValues = parameter.ParameterType.GetEnumNames().Select(s => s.ToLowerInvariant()).ToArray();
+							if (parameter.ParameterType == typeof (GameMode))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "GameMode";
+							}
+							else if (parameter.ParameterType == typeof (Difficulty))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "Difficulty";
+							}
+							else if (parameter.ParameterType == typeof(EntityType))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "EntityType";
+							}
+							else if (parameter.ParameterType == typeof (EnchantingType))
+							{
+								param.EnumType = "Enchant";
+								param.EnumValues = Enum.GetNames(parameter.ParameterType).
+									Select(s => s.ToLowerInvariant()).Distinct().
+									ToArray();
+							}
+							else if (parameter.ParameterType == typeof (EffectType))
+							{
+								param.EnumType = "Effect";
+								param.EnumValues = Enum.GetNames(parameter.ParameterType).Select(s => s.ToLowerInvariant()).Distinct()
+									.ToArray();
+							}
+							else
+							{
+								param.EnumValues = Enum.GetNames(parameter.ParameterType).Select(s => s.ToLowerInvariant()).Distinct()
+									.ToArray();
+								param.EnumType = parameter.ParameterType.Name.Replace("Enum", "");
+							}
 						}
 						else
 						{
@@ -285,6 +332,37 @@ namespace MiNET.Plugins
 							typeName = typeName.Replace("Enum", "");
 							typeName = typeName.ToLowerInvariant()[0] + typeName.Substring(1);
 							param.EnumType = typeName;
+
+							if (parameter.ParameterType == typeof(ItemTypeEnum))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "Item";
+							}
+							if (parameter.ParameterType == typeof(BlockTypeEnum))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "Block";
+							}
+							if (parameter.ParameterType == typeof(EntityTypeEnum))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "EntityType";
+							}
+							if (parameter.ParameterType == typeof(CommandNameEnum))
+							{
+								param.EnumValues = new string[] { };
+								param.EnumType = "CommandName";
+							}
+							if (parameter.ParameterType == typeof(EnchantEnum))
+							{
+								param.EnumValues = Enum.GetNames(typeof(EnchantingType));
+								param.EnumType = "Enchant";
+							}
+							if (parameter.ParameterType == typeof(EffectEnum))
+							{
+								param.EnumValues = Enum.GetNames(typeof(EffectType));
+								param.EnumType = "Effect";
+							}
 						}
 					}
 					inputParams.Add(param);
@@ -300,9 +378,9 @@ namespace MiNET.Plugins
 				}
 
 				// Output objects
-				if (method.ReturnType != typeof (void))
+				if (plugincommand.Method.ReturnType != typeof (void))
 				{
-					var properties = method.ReturnType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+					var properties = plugincommand.Method.ReturnType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 					List<Parameter> outputParams = new List<Parameter>();
 					foreach (PropertyInfo property in properties)
 					{
@@ -352,22 +430,21 @@ namespace MiNET.Plugins
 			return new string(chArray);
 		}
 
-
 		private static string GetPropertyType(PropertyInfo parameter)
 		{
 			string value = parameter.PropertyType.ToString();
 
-			if (parameter.PropertyType == typeof (int))
+			if (parameter.PropertyType == typeof(int))
 				value = "int";
-			else if (parameter.PropertyType == typeof (short))
+			else if (parameter.PropertyType == typeof(short))
 				value = "int";
-			else if (parameter.PropertyType == typeof (byte))
+			else if (parameter.PropertyType == typeof(byte))
 				value = "int";
-			else if (parameter.PropertyType == typeof (bool))
+			else if (parameter.PropertyType == typeof(bool))
 				value = "bool";
-			else if (parameter.PropertyType == typeof (string))
+			else if (parameter.PropertyType == typeof(string))
 				value = "string";
-			else if (parameter.PropertyType == typeof (string[]))
+			else if (parameter.PropertyType == typeof(string[]))
 				value = "rawtext";
 			else
 			{
@@ -381,27 +458,27 @@ namespace MiNET.Plugins
 		{
 			string value = parameter.ParameterType.ToString();
 
-			if (parameter.ParameterType == typeof (int))
+			if (parameter.ParameterType == typeof(int))
 				value = "int";
-			else if (parameter.ParameterType == typeof (short))
+			else if (parameter.ParameterType == typeof(short))
 				value = "int";
-			else if (parameter.ParameterType == typeof (byte))
+			else if (parameter.ParameterType == typeof(byte))
 				value = "int";
-			else if (parameter.ParameterType == typeof (bool))
+			else if (parameter.ParameterType == typeof(bool))
 				value = "bool";
-			else if (parameter.ParameterType == typeof (string))
+			else if (parameter.ParameterType == typeof(string))
 				value = "string";
-			else if (parameter.ParameterType == typeof (string[]))
+			else if (parameter.ParameterType == typeof(string[]))
 				value = "rawtext";
-			else if (parameter.ParameterType == typeof (Target))
+			else if (parameter.ParameterType == typeof(Target))
 				value = "target";
-			else if (parameter.ParameterType == typeof (BlockPos))
+			else if (parameter.ParameterType == typeof(BlockPos))
 				value = "blockpos";
 			else if (parameter.ParameterType.IsEnum)
 				value = "stringenum";
-			else if (parameter.ParameterType.BaseType == typeof (EnumBase))
+			else if (parameter.ParameterType.BaseType == typeof(EnumBase))
 				value = "stringenum";
-			else if (typeof (IParameterSerializer).IsAssignableFrom(parameter.ParameterType))
+			else if (typeof(IParameterSerializer).IsAssignableFrom(parameter.ParameterType))
 				// Custom serialization
 				value = "string";
 			else
@@ -409,6 +486,7 @@ namespace MiNET.Plugins
 
 			return value;
 		}
+
 
 		public void UnloadCommands(object instance)
 		{
@@ -421,7 +499,7 @@ namespace MiNET.Plugins
 				_pluginCommands.Remove(method);
 			}
 
-			Commands = GenerateCommandSet(_pluginCommands.Keys.ToArray());
+			Commands = GenerateCommandSet(_pluginCommands.Values.ToArray());
 		}
 
 		public void LoadPacketHandlers(object instance)
@@ -523,7 +601,43 @@ namespace MiNET.Plugins
 			}
 		}
 
-		public object HandleCommand(Player player, string commandName, string[] commandOverload)
+		public object HandleCommand(Player player, string cmdline)
+		{
+			var split = Regex.Split(cmdline, "(?<=^[^\"]*(?:\"[^\"]*\"[^\"]*)*) (?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)").Select(s => s.Trim('"')).ToArray();
+			string commandName = split[0].Trim('/');
+			string[] arguments = split.Skip(1).ToArray();
+
+			Command command = null;
+			if (Commands.ContainsKey(commandName))
+			{
+				command = Commands[commandName];
+			}
+			else
+			{
+				command = Commands.Values.FirstOrDefault(cmd => cmd.Versions.Any(version => version.Aliases != null && version.Aliases.Any(s => s == commandName)));
+			}
+
+			if (command == null) return null;
+
+			foreach (var overload in command.Versions.First().Overloads.Values)
+			{
+				CommandPermission requiredPermission = (CommandPermission)Enum.Parse(typeof(CommandPermission), command.Versions.First().Permission, true);
+				if (player.CommandPermission < requiredPermission)
+				{
+					Log.Debug($"Insufficient permissions. Require {requiredPermission} but player had {player.CommandPermission}");
+					return null;
+				}
+				
+				MethodInfo method = overload.Method;
+
+				var retVal = ExecuteCommand(overload.Instance, method, player, arguments);
+				if (retVal != null) return retVal;
+			}
+
+			return null;
+		}
+
+		public object HandleCommand(Player player, string commandName, string commandOverload, dynamic commandInputJson)
 		{
 			Log.Debug($"HandleCommand {commandName}");
 
@@ -541,27 +655,23 @@ namespace MiNET.Plugins
 
 				if (command == null) return null;
 
-				Overload overload = command.Versions.First().Overloads.FirstOrDefault().Value;
+				Overload overload = command.Versions.First().Overloads[commandOverload];
 
-				UserPermission requiredPermission = (UserPermission) Enum.Parse(typeof (UserPermission), command.Versions.First().Permission, true);
-				if (player.PermissionLevel < requiredPermission)
+				CommandPermission requiredPermission = (CommandPermission)Enum.Parse(typeof(CommandPermission), command.Versions.First().Permission, true);
+				if (player.CommandPermission < requiredPermission)
 				{
-					Log.Debug($"Insufficient permissions. Require {requiredPermission} but player had {player.PermissionLevel}");
+					Log.Debug($"Insufficient permissions. Require {requiredPermission} but player had {player.CommandPermission}");
 					return null;
 				}
 
 				MethodInfo method = overload.Method;
-				if (commandOverload.Length < method.GetParameters().Length - 1)
-				{
-					return null;
-				}
 
-				/*List<string> strings = new List<string>();
+				List<string> strings = new List<string>();
 				if (commandInputJson != null)
 				{
 					foreach (ParameterInfo parameter in method.GetParameters())
 					{
-						if (typeof (Player).IsAssignableFrom(parameter.ParameterType)) continue;
+						if (typeof(Player).IsAssignableFrom(parameter.ParameterType)) continue;
 
 						if (HasProperty(commandInputJson, parameter.Name))
 						{
@@ -569,9 +679,9 @@ namespace MiNET.Plugins
 							strings.Add(commandInputJson[ToCamelCase(parameter.Name)].ToString());
 						}
 					}
-				}*/
+				}
 
-				return ExecuteCommand(method, player, commandOverload);
+				return ExecuteCommand(overload.Instance, method, player, strings.ToArray());
 			}
 			catch (Exception e)
 			{
@@ -580,6 +690,7 @@ namespace MiNET.Plugins
 
 			return null;
 		}
+
 
 		public static bool HasProperty(dynamic obj, string name)
 		{
@@ -592,14 +703,12 @@ namespace MiNET.Plugins
 			return Attribute.IsDefined(param, typeof (ParamArrayAttribute));
 		}
 
-		private object ExecuteCommand(MethodInfo method, Player player, string[] args)
+		private object ExecuteCommand(object objInstance, MethodInfo method, Player player, string[] args)
 		{
-			Log.Info($"Execute command {method}");
-
 			var parameters = method.GetParameters();
 
 			int addLenght = 0;
-			if (parameters.Length > 0 && typeof (Player).IsAssignableFrom(parameters[0].ParameterType))
+			if (parameters.Length > 0 && typeof(Player).IsAssignableFrom(parameters[0].ParameterType))
 			{
 				addLenght = 1;
 			}
@@ -612,12 +721,12 @@ namespace MiNET.Plugins
 				int i = k - addLenght;
 				if (k == 0 && addLenght == 1)
 				{
-					if (typeof (Player).IsAssignableFrom(parameter.ParameterType))
+					if (typeof(Player).IsAssignableFrom(parameter.ParameterType))
 					{
 						objectArgs[k] = player;
 						continue;
 					}
-					Log.WarnFormat("Command method {0} missing Player as first argument.", method.Name);
+
 					return null;
 				}
 
@@ -627,7 +736,7 @@ namespace MiNET.Plugins
 					continue;
 				}
 
-				if (typeof (IParameterSerializer).IsAssignableFrom(parameter.ParameterType))
+				if (typeof(IParameterSerializer).IsAssignableFrom(parameter.ParameterType))
 				{
 					var ctor = parameter.ParameterType.GetConstructor(Type.EmptyTypes);
 					IParameterSerializer defaultValue = ctor.Invoke(null) as IParameterSerializer;
@@ -638,71 +747,83 @@ namespace MiNET.Plugins
 					continue;
 				}
 
-				if (parameter.ParameterType.BaseType == typeof (EnumBase))
+				if (parameter.ParameterType.BaseType == typeof(EnumBase))
 				{
 					var ctor = parameter.ParameterType.GetConstructor(Type.EmptyTypes);
-					EnumBase instance = (EnumBase) ctor.Invoke(null);
+					EnumBase instance = (EnumBase)ctor.Invoke(null);
 					instance.Value = args[i];
 					objectArgs[k] = instance;
 					continue;
 				}
 
-				if (parameter.ParameterType == typeof (Target))
+				if (parameter.ParameterType == typeof(Target))
 				{
-					var target = JsonConvert.DeserializeObject<Target>(args[i]);
+					Target target;
+					try
+					{
+						target = JsonConvert.DeserializeObject<Target>(args[i]);
+					}
+					catch
+					{
+						target = new Target
+						{
+							Selector = args[i]
+						};
+					}
 					target = FillTargets(player, player.Level, target);
+
 					objectArgs[k] = target;
 					continue;
 				}
 
-				if (parameter.ParameterType == typeof (BlockPos))
+				if (parameter.ParameterType == typeof(BlockPos))
 				{
 					var blockpos = JsonConvert.DeserializeObject<BlockPos>(args[i]);
 					objectArgs[k] = blockpos;
 					continue;
 				}
 
-				if (parameter.ParameterType == typeof (string))
+				if (parameter.ParameterType == typeof(string))
 				{
 					objectArgs[k] = args[i];
 					continue;
 				}
-				if (parameter.ParameterType == typeof (byte))
+				if (parameter.ParameterType == typeof(byte))
 				{
 					byte value;
 					if (!byte.TryParse(args[i], out value)) return null;
 					objectArgs[k] = value;
 					continue;
 				}
-				if (parameter.ParameterType == typeof (short))
+				if (parameter.ParameterType == typeof(short))
 				{
 					short value;
 					if (!short.TryParse(args[i], out value)) return null;
 					objectArgs[k] = value;
 					continue;
 				}
-				if (parameter.ParameterType == typeof (int))
+				if (parameter.ParameterType == typeof(int))
 				{
 					int value;
 					if (!int.TryParse(args[i], out value)) return null;
 					objectArgs[k] = value;
 					continue;
 				}
-				if (parameter.ParameterType == typeof (bool))
+				if (parameter.ParameterType == typeof(bool))
 				{
 					bool value;
 					if (!bool.TryParse(args[i], out value)) return null;
 					objectArgs[k] = value;
 					continue;
 				}
-				if (parameter.ParameterType == typeof (float))
+				if (parameter.ParameterType == typeof(float))
 				{
 					float value;
 					if (!float.TryParse(args[i], out value)) return null;
 					objectArgs[k] = value;
 					continue;
 				}
-				if (parameter.ParameterType == typeof (double))
+				if (parameter.ParameterType == typeof(double))
 				{
 					double value;
 					if (!double.TryParse(args[i], out value)) return null;
@@ -711,10 +832,32 @@ namespace MiNET.Plugins
 				}
 				if (parameter.ParameterType.IsEnum)
 				{
+					if (parameter.ParameterType == typeof(GameMode))
+					{
+						GameMode result;
+						if (!Enum.TryParse(args[i], true, out result))
+						{
+							switch (args[i])
+							{
+								case "s":
+									result = GameMode.Survival;
+									break;
+								case "c":
+									result = GameMode.Creative;
+									break;
+								case "a":
+									result = GameMode.Adventure;
+									break;
+							}
+						}
+
+						objectArgs[k] = result;
+						continue;
+					}
+
 					Enum value = Enum.Parse(parameter.ParameterType, args[i], true) as Enum;
 					if (value == null)
 					{
-						Log.Error($"Could not convert to valid enum value: {args[i]}");
 						continue;
 					}
 
@@ -722,7 +865,7 @@ namespace MiNET.Plugins
 					continue;
 				}
 
-				if (IsParams(parameter) && parameter.ParameterType == typeof (string[]))
+				if (IsParams(parameter) && parameter.ParameterType == typeof(string[]))
 				{
 					List<string> strings = new List<string>();
 					for (int j = i; j < args.Length; j++)
@@ -733,71 +876,65 @@ namespace MiNET.Plugins
 					continue;
 				}
 
+				Log.Warn("Unsupported parameter type: " + parameter.ParameterType);
 				return null;
 			}
 
-			object result = null;
-
-			try
+			/*if (parameters.Length != objectArgs.Length)
 			{
-				object pluginInstance = _plugins.FirstOrDefault(plugin => plugin.GetType() == method.DeclaringType);
-				if (pluginInstance == null) return null;
-
-				ICommandFilter filter = pluginInstance as ICommandFilter;
-				if (filter != null)
-				{
-					filter.OnCommandExecuting(player);
-				}
-
-				if (method.IsStatic)
-				{
-					result = method.Invoke(null, objectArgs);
-				}
-				else
-				{
-					if (method.DeclaringType == null) return false;
-
-					Plugin.CurrentPlayer = player; // Setting thread local for call
-					result = method.Invoke(pluginInstance, objectArgs);
-					Plugin.CurrentPlayer = null; // Done with thread local, we using pool to make sure it's reset.
-				}
-
-				if (filter != null)
-				{
-					filter.OnCommandExecuted();
-				}
+				Log.Warn("Param count does not match!");
 			}
-			catch (Exception e)
+
+			for (int i = 0; i < Math.Min(parameters.Length, objectArgs.Length); i++)
 			{
-				Log.Error($"Error while executing command {method}", e);
-			}
-			return result;
+				var param = parameters[i];
+				var objectArg = objectArgs[i];
+
+				Log.Warn($"{i} = Suspected {param.ParameterType} got {objectArg.GetType()}");
+			}*/
+
+			return method.Invoke(objInstance, objectArgs);
+
+			//return null;
 		}
 
 		private Target FillTargets(Player commander, Level level, Target target)
 		{
-			if (target.Selector == "nearestPlayer" && target.Rules == null)
+			if (target.Selector == "@p" && target.Rules == null)
 			{
 				target.Players = new[] {commander};
 			}
-			else if (target.Selector == "nearestPlayer" && target.Rules != null)
+			else if (target.Selector == "@p" && target.Rules != null)
 			{
 				string username = target.Rules.First().Value;
 				var players = level.GetAllPlayers().Where(p => p.Username == username);
 				target.Players = players.ToArray();
 			}
-			else if (target.Selector == "allPlayers")
+			else if (target.Selector == "@a")
 			{
 				target.Players = level.GetAllPlayers();
 			}
-			else if (target.Selector == "allEntities")
+			else if (target.Selector == "@e")
 			{
 				target.Entities = level.GetEntites();
 			}
-			else if (target.Selector == "randomPlayer")
+			else if (target.Selector == "@r")
 			{
 				Player[] players = level.GetAllPlayers();
 				target.Players = new[] {players[new Random().Next(players.Length)]};
+			}
+			else if (target.Selector == "@s")
+			{
+				target.Players = new Player[]
+				{
+					commander
+				};
+			}
+			else
+			{
+				Player[] players = level.GetAllPlayers()
+					.Where(x => x.Username.Equals(target.Selector, StringComparison.InvariantCultureIgnoreCase)).ToArray();
+				target.Players = players;
 			}
 
 			return target;
@@ -922,6 +1059,13 @@ namespace MiNET.Plugins
 			}
 
 			return sb.ToString();
+		}
+
+		public class PluginCommand
+		{
+			public object Instance;
+			public CommandAttribute Attribute;
+			public MethodInfo Method;
 		}
 	}
 }

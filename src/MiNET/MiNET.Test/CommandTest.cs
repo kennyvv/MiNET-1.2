@@ -124,10 +124,10 @@ namespace MiNET
 			Console.WriteLine($"{output}");
 		}
 
-		[Test]
+	/*	[Test]
 		public void DeserializeObjectModelTest()
 		{
-			CommandSet commandSet = PluginManager.GenerateCommandSet(typeof (CoreCommands).GetMethods());
+			CommandSet commandSet = PluginManager.GenerateCommandSet(typeof(CoreCommands).GetMethods());
 
 			string json =
 				@"
@@ -142,7 +142,7 @@ namespace MiNET
 
 			PluginManager pm = new PluginManager();
 			pm.Commands = commandSet;
-			pm.HandleCommand(null, "tp", commandJson);
+			pm.HandleCommand(null, "tp", "default", commandJson);
 
 			var settings = new JsonSerializerSettings();
 			settings.NullValueHandling = NullValueHandling.Ignore;
@@ -153,7 +153,7 @@ namespace MiNET
 
 			var output = JsonConvert.SerializeObject(commandSet, settings);
 			Console.WriteLine($"{output}");
-		}
+		}*/
 
 
 		[Test]
@@ -188,7 +188,7 @@ namespace MiNET
 		{
 		}
 
-		[Test]
+		/*[Test]
 		public void CommandUsageTest()
 		{
 			CommandSet commandSetIn = PluginManager.GenerateCommandSet(typeof (HelpCommand).GetMethods());
@@ -217,6 +217,6 @@ namespace MiNET
 			//	Console.WriteLine(result);
 
 			//}
-		}
+		}*/
 	}
 }

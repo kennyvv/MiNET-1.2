@@ -86,7 +86,6 @@
     <Compile Include="BlockEntities\EnchantingTableBlockEntity.cs" />
     <Compile Include="BlockEntities\FurnaceBlockEntity.cs" />
     <Compile Include="BlockEntities\ItemFrameBlockEntity.cs" />
-    <Compile Include="BlockEntities\RedstoneBlockEntity.cs" />
     <Compile Include="BlockEntities\Sign.cs" />
     <Compile Include="BlockEntities\SkullBlockEntity.cs" />
     <Compile Include="BlockFace.cs" />

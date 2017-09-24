@@ -598,7 +598,7 @@ namespace MiNET.Net
 		Flying = 0x200,
 		Muted = 0x400,
 	}
-	public enum Commandpermission
+	public enum PermissionLevel
 	{
 		Normal = 0,
 		Operator = 1,
@@ -606,7 +606,7 @@ namespace MiNET.Net
 		Automation = 3,
 		Admin = 4,
 	}
-	public enum Permissionlevel
+	public enum CommandPermission
 	{
 		Visitor = 0,
 		Member = 1,

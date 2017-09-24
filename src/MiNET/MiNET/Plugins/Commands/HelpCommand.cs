@@ -21,7 +21,7 @@ namespace MiNET.Plugins.Commands
 			public int StatusCode { get; set; }
 		}
 
-		[Command(Description = "commands.help.description", OutputFormatStrings = new[] {"{0}"})]
+	//	[Command(Description = "commands.help.description", OutputFormatStrings = new[] {"{0}"})]
 		public HelpResponseByName Help(Player player, CommandNameEnum command)
 		{
 			Command cmd;
@@ -41,7 +41,7 @@ namespace MiNET.Plugins.Commands
 			}
 
 			return null;
-		}
+		} 
 
 		public class HelpResponseByPage
 		{
@@ -52,7 +52,7 @@ namespace MiNET.Plugins.Commands
 			public int SuccessCount { get; set; } = 1;
 		}
 
-		[Command(Description = "commands.help.description", OutputFormatStrings = new[] {"commands.help.header", "{2}", "commands.help.footer"})]
+	//	[Command(Description = "commands.help.description", OutputFormatStrings = new[] {"commands.help.header", "{2}", "commands.help.footer"})]
 		public HelpResponseByPage Help(Player player, int page = 0)
 		{
 			page = page < 1 ? 0 : page - 1;
