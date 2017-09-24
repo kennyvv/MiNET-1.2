@@ -1,8 +1,4 @@
-﻿using System;
-using MiNET;
-using Newtonsoft.Json.Linq;
-using MiNET.UI.Elements;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json.Linq;
 
 namespace MiNET.UI.Forms
 {
@@ -10,22 +6,13 @@ namespace MiNET.UI.Forms
 	{
 		public string Title { get; set; }
 		public string Content { get; set; }
-		public List<Button> Buttons { get; set; }
-		public List<IElement> Elements { get; set; }
+		public string Button1Text { get; set; } = "Yes";
+		public string Button2Text { get; set; } = "No";
 
 		public ModalForm(string title, string content = "")
 		{
 			Title = title;
-			Buttons = new List<Button>(2);
-			Elements = new List<IElement>();
-		}
-
-		public JArray GetElements()
-		{
-			var j = new JArray();
-			foreach (var element in Elements)
-				j.Add(element.GetData());
-			return j;
+			Content = content;
 		}
 
 		public string GetData()
@@ -34,30 +21,48 @@ namespace MiNET.UI.Forms
 			{
 				{ "type", "modal" },
 				{ "title", Title },
-				{ "content", GetElements().ToString() },
-				{ "buttons", GetButtons() }
+				{ "content", Content},
+				{ "button1", Button1Text },
+				{ "button2", Button2Text }
 			};
 			return j.ToString(Newtonsoft.Json.Formatting.None);
 		}
 
-		public JArray GetButtons()
-		{
-			var j = new JArray();
-			foreach (var button in Buttons)
-			{
-				j.Add(button);
-			}
-			return j;
-		}
-
+		private bool Processed = false;
 		public void Process(Player player, string response)
 		{
+			Processed = true;
+			if (bool.TryParse(response, out bool result))
+			{
+				if (result)
+				{
+					OnConfirm(player);
+				}
+				else
+				{
+					OnDeny(player);
+				}
+			}
+			else
+			{
+				OnDeny(player);
+			}
+		}
 
+		protected virtual void OnConfirm(Player player)
+		{
+			
+		}
+
+		protected virtual void OnDeny(Player player)
+		{
+			
 		}
 
 		public virtual void OnClose(Player player)
 		{
-			
+			if (!Processed)
+				OnDeny(player);
 		}
 
 		public virtual void OnShow(Player player)
