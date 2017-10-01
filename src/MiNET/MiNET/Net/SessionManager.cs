@@ -6,19 +6,19 @@ namespace MiNET
 {
 	public class SessionManager
 	{
-		private ConcurrentDictionary<UUID, Session> _sessions = new ConcurrentDictionary<UUID, Session>();
+		protected ConcurrentDictionary<UUID, Session> Sessions = new ConcurrentDictionary<UUID, Session>();
 
 		public virtual Session FindSession(Player player)
 		{
 			Session session;
-			_sessions.TryGetValue(player.ClientUuid, out session);
+			Sessions.TryGetValue(player.ClientUuid, out session);
 
 			return session;
 		}
 
 		public virtual Session CreateSession(Player player)
 		{
-			_sessions.TryAdd(player.ClientUuid, new Session(player));
+			Sessions.TryAdd(player.ClientUuid, new Session(player));
 
 			return FindSession(player);
 		}
@@ -32,7 +32,7 @@ namespace MiNET
 			if (session.Player == null) return;
 			if (session.Player.ClientUuid == null) return;
 
-			_sessions.TryRemove(session.Player.ClientUuid, out session);
+			Sessions.TryRemove(session.Player.ClientUuid, out session);
 		}
 	}
 

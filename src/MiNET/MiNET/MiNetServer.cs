@@ -48,11 +48,9 @@ namespace MiNET
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (MiNetServer));
 
-		private const int DefaultPort = 19132;
-
 		public IPEndPoint Endpoint { get; private set; }
 		private UdpClient _listener;
-		private ConcurrentDictionary<IPEndPoint, PlayerNetworkSession> _playerSessions = new ConcurrentDictionary<IPEndPoint, PlayerNetworkSession>();
+		public ConcurrentDictionary<IPEndPoint, PlayerNetworkSession> PlayerSessions { get; private set; }= new ConcurrentDictionary<IPEndPoint, PlayerNetworkSession>();
 
 		public MotdProvider MotdProvider { get; set; }
 
@@ -65,9 +63,6 @@ namespace MiNET
 
 		public PluginManager PluginManager { get; set; }
 		public SessionManager SessionManager { get; set; }
-
-		private Timer _internalPingTimer;
-		private Timer _cleanerTimer;
 
 		public int InacvitityTimeout { get; private set; }
 		public int ResendThreshold { get; private set; }
@@ -168,6 +163,11 @@ namespace MiNET
 
 					// Bootstrap server
 					PluginManager.ExecuteStartup(this);
+					ServerInfo = ServerInfo ?? new ServerInfo(PlayerSessions)
+					{
+						MaxNumberOfPlayers = Config.GetProperty("MaxNumberOfPlayers", 1000),
+						MaxNumberOfConcurrentConnects = Config.GetProperty("MaxNumberOfConcurrentConnects", Config.GetProperty("MaxNumberOfPlayers", 1000))
+					};
 
 					GreylistManager = GreylistManager ?? new GreylistManager(this);
 					SessionManager = SessionManager ?? new SessionManager();
@@ -190,12 +190,6 @@ namespace MiNET
 
 					new Thread(ProcessDatagrams) {IsBackground = true}.Start(_listener);
 				}
-
-				ServerInfo = new ServerInfo(_playerSessions)
-				{
-					MaxNumberOfPlayers = Config.GetProperty("MaxNumberOfPlayers", 1000)
-				};
-				ServerInfo.MaxNumberOfConcurrentConnects = Config.GetProperty("MaxNumberOfConcurrentConnects", ServerInfo.MaxNumberOfPlayers);
 
 				Log.Info("Server open for business on port " + Endpoint?.Port + " ...");
 
@@ -348,7 +342,7 @@ namespace MiNET
 			else
 			{
 				PlayerNetworkSession playerSession;
-				if (!_playerSessions.TryGetValue(senderEndpoint, out playerSession))
+				if (!PlayerSessions.TryGetValue(senderEndpoint, out playerSession))
 				{
 					//Log.DebugFormat("Receive MCPE message 0x{1:x2} without session {0}", senderEndpoint.Address, msgId);
 					//if (!_badPacketBans.ContainsKey(senderEndpoint.Address))
@@ -361,7 +355,7 @@ namespace MiNET
 				if (playerSession.MessageHandler == null)
 				{
 					Log.ErrorFormat("Receive MCPE message 0x{1:x2} without message handler {0}. Session removed.", senderEndpoint.Address, msgId);
-					_playerSessions.TryRemove(senderEndpoint, out playerSession);
+					PlayerSessions.TryRemove(senderEndpoint, out playerSession);
 					//if (!_badPacketBans.ContainsKey(senderEndpoint.Address))
 					//{
 					//	_badPacketBans.Add(senderEndpoint.Address, true);
@@ -549,7 +543,7 @@ namespace MiNET
 
 		private void HandleRakNetMessage(IPEndPoint senderEndpoint, OpenConnectionRequest1 incoming)
 		{
-			lock (_playerSessions)
+			lock (PlayerSessions)
 			{
 				// Already connecting, then this is just a duplicate
 				if (_connectionAttemps.ContainsKey(senderEndpoint))
@@ -586,7 +580,7 @@ namespace MiNET
 		private void HandleRakNetMessage(IPEndPoint senderEndpoint, OpenConnectionRequest2 incoming)
 		{
 			PlayerNetworkSession session;
-			lock (_playerSessions)
+			lock (PlayerSessions)
 			{
 				DateTime trash;
 				if (!_connectionAttemps.TryRemove(senderEndpoint, out trash))
@@ -595,7 +589,7 @@ namespace MiNET
 					return;
 				}
 
-				if (_playerSessions.TryGetValue(senderEndpoint, out session))
+				if (PlayerSessions.TryGetValue(senderEndpoint, out session))
 				{
 					// Already connecting, then this is just a duplicate
 					if (session.State == ConnectionState.Connecting /* && DateTime.UtcNow < session.LastUpdatedTime + TimeSpan.FromSeconds(2)*/)
@@ -607,7 +601,7 @@ namespace MiNET
 
 					session.Disconnect("Reconnecting.", false);
 
-					_playerSessions.TryRemove(senderEndpoint, out session);
+					PlayerSessions.TryRemove(senderEndpoint, out session);
 				}
 
 				session = new PlayerNetworkSession(this, null, senderEndpoint, incoming.mtuSize)
@@ -618,7 +612,7 @@ namespace MiNET
 					NetworkIdentifier = incoming.clientGuid
 				};
 
-				_playerSessions.TryAdd(senderEndpoint, session);
+				PlayerSessions.TryAdd(senderEndpoint, session);
 			}
 
 			//Player player = PlayerFactory.CreatePlayer(this, senderEndpoint);

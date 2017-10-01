@@ -313,8 +313,8 @@
     <Compile Include="Blocks\Tnt.cs" />
     <Compile Include="Blocks\Wool.cs" />
     <Compile Include="Blocks\YellowGlazedTerracotta.cs" />
-    <Compile Include="CertificateData.cs" />
-    <Compile Include="ConnectionState.cs" />
+    <Compile Include="Net\CertificateData.cs" />
+    <Compile Include="Net\ConnectionState.cs" />
     <Compile Include="Crafting\Recipe.cs" />
     <Compile Include="DamageCalculator.cs" />
     <Compile Include="Effects\Absorption.cs" />
@@ -434,9 +434,9 @@
     <Compile Include="Entities\Vehicles\Minecart.cs" />
     <Compile Include="GreyListManager.cs" />
     <Compile Include="HungerManager.cs" />
-    <Compile Include="Inventory.cs" />
-    <Compile Include="InventoryManager.cs" />
-    <Compile Include="InventoryUtils.cs" />
+    <Compile Include="Inventory\Inventory.cs" />
+    <Compile Include="Inventory\InventoryManager.cs" />
+    <Compile Include="Inventory\InventoryUtils.cs" />
     <Compile Include="INetworkHandler.cs" />
     <Compile Include="Items\FoodItem.cs" />
     <Compile Include="Items\ItemAir.cs" />
@@ -537,8 +537,8 @@
     <Compile Include="Items\ItemRawChicken.cs" />
     <Compile Include="Items\ItemRawPorkchop.cs" />
     <Compile Include="LevelEventType.cs" />
-    <Compile Include="LevelManager.cs" />
-    <Compile Include="LoginMessageHandler.cs" />
+    <Compile Include="Worlds\LevelManager.cs" />
+    <Compile Include="Net\LoginMessageHandler.cs" />
     <Compile Include="MessageType.cs" />
     <Compile Include="MotdProvider.cs" />
     <Compile Include="Net\InternalPing.cs" />
@@ -581,7 +581,7 @@
     <Compile Include="PlayerAttribute.cs" />
     <Compile Include="PlayerAttributes.cs" />
     <Compile Include="PlayerFactory.cs" />
-    <Compile Include="PlayerNetworkSession.cs" />
+    <Compile Include="Net\PlayerNetworkSession.cs" />
     <Compile Include="Plugins\Attributes\AuthorizeAttribute.cs" />
     <Compile Include="Plugins\Command.cs" />
     <Compile Include="Plugins\Commands\HelpCommand.cs" />
@@ -602,7 +602,7 @@
     <Compile Include="Blocks\WoodenDoor.cs" />
     <Compile Include="Explosion.cs" />
     <Compile Include="HealthManager.cs" />
-    <Compile Include="PlayerInventory.cs" />
+    <Compile Include="Inventory\PlayerInventory.cs" />
     <Compile Include="Items\Item.cs" />
     <Compile Include="Items\ItemBlock.cs" />
     <Compile Include="Items\ItemWoodenDoor.cs" />
@@ -632,7 +632,7 @@
     <Compile Include="Plugins\PluginManager.cs" />
     <Compile Include="Popup.cs" />
     <Compile Include="ServerInfo.cs" />
-    <Compile Include="SessionManager.cs" />
+    <Compile Include="Net\SessionManager.cs" />
     <Compile Include="Sounds\AnvilBreakSound.cs" />
     <Compile Include="Sounds\AnvilFallSound.cs" />
     <Compile Include="Sounds\AnvilUseSound.cs" />
