@@ -11,7 +11,7 @@ namespace MiNET.Worlds
 
 		private long _entityId = EntityIdSelf + 1;
 
-		public long AddEntity(Entity entity)
+		public virtual long AddEntity(Entity entity)
 		{
 			if (entity.EntityId == EntityIdUndefined)
 			{
@@ -21,7 +21,7 @@ namespace MiNET.Worlds
 			return entity.EntityId;
 		}
 
-		public void RemoveEntity(Entity caller, Entity entity)
+		public virtual void RemoveEntity(Entity caller, Entity entity)
 		{
 			if (entity == caller) throw new Exception("Tried to REMOVE entity for self");
 			if (entity.EntityId != EntityIdUndefined) entity.EntityId = EntityIdUndefined;

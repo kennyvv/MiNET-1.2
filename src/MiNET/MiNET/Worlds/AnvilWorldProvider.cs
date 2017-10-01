@@ -1,4 +1,4 @@
-﻿#region LICENSE
+#region LICENSE
 
 // The contents of this file are subject to the Common Public Attribution
 // License Version 1.0. (the "License"); you may not use this file except in
@@ -38,24 +38,10 @@ using MiNET.BlockEntities;
 using MiNET.Blocks;
 using MiNET.Net;
 using MiNET.Utils;
+using MiNET.Worlds.Generators;
 
 namespace MiNET.Worlds
 {
-	public class Mapper : Tuple<int, Func<int, byte, byte>>
-	{
-		public Mapper(int blockId, Func<int, byte, byte> dataMapper)
-			: base(blockId, dataMapper)
-		{
-		}
-	}
-
-	public class NoDataMapper : Mapper
-	{
-		public NoDataMapper(int blockId) : base(blockId, (bi, i1) => i1)
-		{
-		}
-	}
-
 	public class AnvilWorldProvider : IWorldProvider, ICachingWorldProvider, ICloneable
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (AnvilWorldProvider));

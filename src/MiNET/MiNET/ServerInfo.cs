@@ -24,7 +24,6 @@
 #endregion
 
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using log4net;
@@ -35,7 +34,6 @@ namespace MiNET
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (ServerInfo));
 
-		private LevelManager _levelManager;
 		public ConcurrentDictionary<IPEndPoint, PlayerNetworkSession> PlayerSessions { get; private set; }
 
 		public int NumberOfPlayers { get; set; }
@@ -60,33 +58,13 @@ namespace MiNET
 		public int MaxNumberOfConcurrentConnects { get; set; }
 		public int ConnectionsInConnectPhase = 0;
 
-		public ServerInfo(LevelManager levelManager, ConcurrentDictionary<IPEndPoint, PlayerNetworkSession> playerSessions)
+		public ServerInfo(ConcurrentDictionary<IPEndPoint, PlayerNetworkSession> playerSessions)
 		{
-			//CreateCounters();
-
-			//PerformanceCounter ctrNumberOfPacketsOutPerSecond = new PerformanceCounter("MiNET", nameof(NumberOfPacketsOutPerSecond), "MiNET", false);
-			//PerformanceCounter ctrNumberOfPacketsInPerSecond = new PerformanceCounter("MiNET", nameof(NumberOfPacketsInPerSecond), "MiNET", false);
-			//PerformanceCounter ctrNumberOfAckSent = new PerformanceCounter("MiNET", nameof(NumberOfAckSent), "MiNET", false);
-			//PerformanceCounter ctrNumberOfAckReceive = new PerformanceCounter("MiNET", nameof(NumberOfAckReceive), "MiNET", false);
-			//PerformanceCounter ctrNumberOfNakReceive = new PerformanceCounter("MiNET", nameof(NumberOfNakReceive), "MiNET", false);
-			//PerformanceCounter ctrNumberOfResends = new PerformanceCounter("MiNET", nameof(NumberOfResends), "MiNET", false);
-			//PerformanceCounter ctrNumberOfFails = new PerformanceCounter("MiNET", nameof(NumberOfFails), "MiNET", false);
-
-
-			_levelManager = levelManager;
 			PlayerSessions = playerSessions;
 			{
 				ThroughPut = new Timer(delegate(object state)
 				{
 					NumberOfPlayers = PlayerSessions.Count;
-
-					//ctrNumberOfPacketsOutPerSecond.IncrementBy(NumberOfPacketsOutPerSecond);
-					//ctrNumberOfPacketsInPerSecond.IncrementBy(NumberOfPacketsInPerSecond);
-					//ctrNumberOfAckReceive.IncrementBy(NumberOfAckReceive);
-					//ctrNumberOfAckSent.IncrementBy(NumberOfAckSent);
-					//ctrNumberOfNakReceive.IncrementBy(NumberOfNakReceive);
-					//ctrNumberOfResends.IncrementBy(NumberOfResends);
-					//ctrNumberOfFails.IncrementBy(NumberOfFails);
 
 					int threads;
 					int portThreads;
@@ -113,30 +91,6 @@ namespace MiNET
 
 					Interlocked.Exchange(ref NumberOfDeniedConnectionRequestsPerSecond, 0);
 				}, null, 1000, 1000);
-			}
-		}
-
-		protected virtual void CreateCounters()
-		{
-			//if (PerformanceCounterCategory.Exists("MiNET"))
-			//{
-			//	PerformanceCounterCategory.Delete("MiNET");
-			//}
-
-			if (!PerformanceCounterCategory.Exists("MiNET"))
-			{
-				CounterCreationDataCollection ccds = new CounterCreationDataCollection
-				{
-					new CounterCreationData(nameof(NumberOfPacketsOutPerSecond), "", PerformanceCounterType.RateOfCountsPerSecond32),
-					new CounterCreationData(nameof(NumberOfPacketsInPerSecond), "", PerformanceCounterType.RateOfCountsPerSecond32),
-					new CounterCreationData(nameof(NumberOfAckReceive), "", PerformanceCounterType.RateOfCountsPerSecond32),
-					new CounterCreationData(nameof(NumberOfAckSent), "", PerformanceCounterType.RateOfCountsPerSecond32),
-					new CounterCreationData(nameof(NumberOfNakReceive), "", PerformanceCounterType.RateOfCountsPerSecond32),
-					new CounterCreationData(nameof(NumberOfResends), "", PerformanceCounterType.RateOfCountsPerSecond32),
-					new CounterCreationData(nameof(NumberOfFails), "", PerformanceCounterType.RateOfCountsPerSecond32),
-				};
-
-				PerformanceCounterCategory.Create("MiNET", "MiNET Performance Counters", PerformanceCounterCategoryType.MultiInstance, ccds);
 			}
 		}
 	}

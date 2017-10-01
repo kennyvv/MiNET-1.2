@@ -6,6 +6,9 @@ namespace MiNET
 {
 	public class MotdProvider
 	{
+		public const int ProtocolVersion = 137;
+		public const string ClientVersion = "1.2";
+
 		public string Motd { get; set; }
 
 		public string SecondLine { get; set; }
@@ -25,13 +28,13 @@ namespace MiNET
 			NumberOfPlayers = serverInfo.NumberOfPlayers;
 			MaxNumberOfPlayers = serverInfo.MaxNumberOfPlayers;
 
-			var protocolVersion = "137";
-			var clientVersion = "1.2";
+			var protocolVersion = ProtocolVersion;
+			var clientVersion = ClientVersion;
 			var edition = "MCPE";
 
 			if (eduMotd)
 			{
-				protocolVersion = "111";
+				protocolVersion = 111;
 				clientVersion = "1.0.17";
 				edition = "MCEE";
 			}

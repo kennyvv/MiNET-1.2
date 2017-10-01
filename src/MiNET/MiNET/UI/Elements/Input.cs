@@ -7,11 +7,13 @@ namespace MiNET.UI.Elements
 	public class Input : IElement
 	{
 		public string Text { get; set; }
+		public string Title { get; set; }
 		public string Placeholder { get; set; }
 
-		public Input(string placeholder = "", string text = "")
+		public Input(string placeholder = "", string title = "", string text = "")
 		{
 			Text = text;
+			Title = title;
 			Placeholder = placeholder;
 		}
 
@@ -20,7 +22,7 @@ namespace MiNET.UI.Elements
 			var j = new JObject
 			{
 				{ "type", "input" },
-				{ "text", Text },
+				{ "text", Title },
 				{ "placeholder", Placeholder },
 				{ "default", Text }
 			};

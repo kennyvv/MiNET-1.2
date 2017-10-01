@@ -1188,7 +1188,13 @@ namespace MiNET
 			new Item(446, 10, 1),
 			new Item(446, 2, 1),
 			new Item(446, 6, 1),
-			new Item(401, 0, 1),
+			new Item(401, 0, 1)
+			{
+				ExtraData = new NbtCompound("Fireworks")
+				{
+					new NbtByte("Flight", 1)
+				}
+			},
 			new Item(401, 0, 1)
 			{
 				ExtraData = new NbtCompound("Fireworks")
@@ -1198,7 +1204,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {0}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1216,7 +1222,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {8}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1234,7 +1240,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {7}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1252,7 +1258,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {15}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1270,7 +1276,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {12}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1288,7 +1294,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {14}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1306,7 +1312,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {1}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1324,7 +1330,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {4}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1342,7 +1348,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {5}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1360,7 +1366,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {13}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1378,7 +1384,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {9}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1396,7 +1402,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {3}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1414,7 +1420,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {11}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] {1 }),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1432,7 +1438,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {10}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1450,7 +1456,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {2}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)
@@ -1468,7 +1474,7 @@ namespace MiNET
 						new NbtCompound()
 						{
 							new NbtByteArray("FireworkColor", new byte[] {6}),
-							new NbtByteArray("FireworkFade", new byte[] { }),
+							new NbtByteArray("FireworkFade", new byte[] { 1}),
 							new NbtByte("FireworkFlicker", 0),
 							new NbtByte("FireworkTrail", 0),
 							new NbtByte("FireworkType", 0)

@@ -330,7 +330,7 @@ namespace MiNET.Worlds
 			}
 		}
 
-		public void AddEntity(Entity entity)
+		public virtual void AddEntity(Entity entity)
 		{
 			lock (Entities)
 			{
@@ -347,7 +347,7 @@ namespace MiNET.Worlds
 			}
 		}
 
-		public void RemoveEntity(Entity entity)
+		public virtual void RemoveEntity(Entity entity)
 		{
 			lock (Entities)
 			{

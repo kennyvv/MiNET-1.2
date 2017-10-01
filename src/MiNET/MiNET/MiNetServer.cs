@@ -191,7 +191,7 @@ namespace MiNET
 					new Thread(ProcessDatagrams) {IsBackground = true}.Start(_listener);
 				}
 
-				ServerInfo = new ServerInfo(LevelManager, _playerSessions)
+				ServerInfo = new ServerInfo(_playerSessions)
 				{
 					MaxNumberOfPlayers = Config.GetProperty("MaxNumberOfPlayers", 1000)
 				};

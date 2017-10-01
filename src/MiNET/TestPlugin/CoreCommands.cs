@@ -49,6 +49,7 @@ using MiNET.UI.Elements;
 using MiNET.UI.Forms;
 using MiNET.Utils;
 using MiNET.Worlds;
+using MiNET.Worlds.Generators;
 
 namespace TestPlugin
 {
@@ -458,7 +459,7 @@ namespace TestPlugin
 
 							if (nextLevel == null)
 							{
-								nextLevel = new Level(levelManager, world, new AnvilWorldProvider() {MissingChunkProvider = new FlatlandWorldProvider()}, Context.LevelManager.EntityManager, player.GameMode, Difficulty.Normal);
+								nextLevel = new Level(levelManager, world, new AnvilWorldProvider() {MissingChunkProvider = new FlatLandWorldGenerator()}, Context.LevelManager.EntityManager, player.GameMode, Difficulty.Normal);
 								nextLevel.Initialize();
 								Context.LevelManager.Levels.Add(nextLevel);
 							}

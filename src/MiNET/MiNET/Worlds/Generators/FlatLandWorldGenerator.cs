@@ -1,4 +1,4 @@
-﻿#region LICENSE
+#region LICENSE
 
 // The contents of this file are subject to the Common Public Attribution
 // License Version 1.0. (the "License"); you may not use this file except in
@@ -23,26 +23,44 @@
 
 #endregion
 
-using System.Numerics;
 using MiNET.Utils;
 
-namespace MiNET.Worlds
+namespace MiNET.Worlds.Generators
 {
-	public interface IWorldProvider
+	public class FlatLandWorldGenerator : IWorldGenerator
 	{
-		bool IsCaching { get; }
+		public FlatLandWorldGenerator()
+		{
+		}
 
-		void Initialize();
+		public void Initialize()
+		{
+		}
 
-		ChunkColumn GenerateChunkColumn(ChunkCoordinates chunkCoordinates);
+		public ChunkColumn GenerateChunkColumn(ChunkCoordinates chunkCoordinates)
+		{
+			ChunkColumn chunk = new ChunkColumn();
+			chunk.x = chunkCoordinates.X;
+			chunk.z = chunkCoordinates.Z;
 
-		Vector3 GetSpawnPoint();
-		string GetName();
+			PopulateChunk(chunk);
 
-		long GetTime();
+			return chunk;
+		}
 
-		int SaveChunks();
-		bool HaveNether();
-		bool HaveTheEnd();
+		public void PopulateChunk(ChunkColumn chunk)
+		{
+			for (int x = 0; x < 16; x++)
+			{
+				for (int z = 0; z < 16; z++)
+				{
+					chunk.SetBlock(x, 1, z, 7); // Bedrock
+					chunk.SetBlock(x, 2, z, 3); // Dirt
+					chunk.SetBlock(x, 3, z, 3); // Dirt
+					chunk.SetBlock(x, 4, z, 2); // Grass
+					chunk.SetHeight(x, z, 4);
+				}
+			}
+		}
 	}
 }

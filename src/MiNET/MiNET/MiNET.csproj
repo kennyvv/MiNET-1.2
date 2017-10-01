@@ -41,9 +41,8 @@
       <HintPath>..\packages\MiNET.fnbt.0.6.9\lib\net35-client\fNbt.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="jose-jwt, Version=2.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\jose-jwt.2.3.0\lib\net461\jose-jwt.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="jose-jwt, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\jose-jwt.2.4.0\lib\net461\jose-jwt.dll</HintPath>
     </Reference>
     <Reference Include="LibNoise">
       <HintPath>..\packages\LibNoise.0.2\lib\NET45\LibNoise.dll</HintPath>
@@ -314,7 +313,6 @@
     <Compile Include="Blocks\Tnt.cs" />
     <Compile Include="Blocks\Wool.cs" />
     <Compile Include="Blocks\YellowGlazedTerracotta.cs" />
-    <Compile Include="CertificateChain.cs" />
     <Compile Include="CertificateData.cs" />
     <Compile Include="ConnectionState.cs" />
     <Compile Include="Crafting\Recipe.cs" />
@@ -678,11 +676,11 @@
     <Compile Include="Utils\MetadataVector3.cs" />
     <Compile Include="Utils\MultiMediaTimer.cs" />
     <Compile Include="Utils\NbtStringConverter.cs" />
-    <Compile Include="Utils\OpenSimplex.cs" />
     <Compile Include="Utils\PrefixedArray.cs" />
     <Compile Include="Utils\Ray.cs" />
     <Compile Include="Utils\ResourcePacks.cs" />
     <Compile Include="Utils\RuleData.cs" />
+    <Compile Include="Utils\SimplexOctaveGenerator.cs" />
     <Compile Include="Utils\StreamExtensions.cs" />
     <Compile Include="Utils\VarInt.cs" />
     <Compile Include="Utils\WannabeRandom.cs" />
@@ -691,7 +689,6 @@
     <Compile Include="Utils\Compression.cs" />
     <Compile Include="Utils\BlockCoordinates.cs" />
     <Compile Include="Utils\Endian.cs" />
-    <Compile Include="Utils\CryptoRandom.cs" />
     <Compile Include="Utils\Int24.cs" />
     <Compile Include="Utils\ItemStack.cs" />
     <Compile Include="Utils\MetadataByte.cs" />
@@ -708,30 +705,25 @@
     <Compile Include="Utils\NibbleArray.cs" />
     <Compile Include="Utils\PlayerLocation.cs" />
     <Compile Include="Utils\Records.cs" />
+    <Compile Include="Worlds\Generators\AirWorldGenerator.cs" />
     <Compile Include="Worlds\AnvilWorldProvider.cs" />
     <Compile Include="Worlds\BiomeUtils.cs" />
     <Compile Include="Worlds\Chunk.cs" />
     <Compile Include="Worlds\BlockLightCalculations.cs" />
     <Compile Include="Worlds\ChunkColumn.cs" />
-    <Compile Include="Worlds\CoolWorldProvider.cs" />
-    <Compile Include="Worlds\CraftNetAnvilWorldProvider.cs" />
     <Compile Include="Worlds\Difficulty.cs" />
     <Compile Include="Worlds\Dimension.cs" />
     <Compile Include="Worlds\EntityManager.cs" />
-    <Compile Include="Worlds\ExperimentalWorldProvider.cs" />
-    <Compile Include="Worlds\FlatlandWorldProvider.cs" />
+    <Compile Include="Worlds\Generators\FlatLandWorldGenerator.cs" />
     <Compile Include="Worlds\GameMode.cs" />
     <Compile Include="Worlds\ICachingWorldProvider.cs" />
+    <Compile Include="Worlds\Generators\IWorldGenerator.cs" />
     <Compile Include="Worlds\IWorldProvider.cs" />
     <Compile Include="Worlds\Level.cs" />
     <Compile Include="Worlds\LevelInfo.cs" />
+    <Compile Include="Worlds\Mapper.cs" />
+    <Compile Include="Worlds\NoDataMapper.cs" />
     <Compile Include="Worlds\SkyLightCalculations.cs" />
-    <Compile Include="Worlds\Structures\AcaciaTree.cs" />
-    <Compile Include="Worlds\Structures\BirchTree.cs" />
-    <Compile Include="Worlds\Structures\JungleTree.cs" />
-    <Compile Include="Worlds\Structures\OakTree.cs" />
-    <Compile Include="Worlds\Structures\SpruceTree.cs" />
-    <Compile Include="Worlds\Structures\StructureClass.cs" />
     <None Include="Net\MCPE Protocol Documentation.md">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

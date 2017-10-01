@@ -31,6 +31,7 @@ using System.Threading.Tasks;
 using log4net;
 using MiNET.Utils;
 using MiNET.Worlds;
+using MiNET.Worlds.Generators;
 
 namespace MiNET
 {
@@ -42,6 +43,12 @@ namespace MiNET
 
 		public EntityManager EntityManager { get; set; } = new EntityManager();
 
+		private readonly GameMode _gameMode = Config.GetProperty("GameMode", GameMode.Survival);
+		private readonly Difficulty _difficulty = Config.GetProperty("Difficulty", Difficulty.Normal);
+		private readonly int _viewDistance = Config.GetProperty("ViewDistance", 11);
+		private readonly bool _enableBlockTicking = Config.GetProperty("EnableBlockTicking", false);
+		private readonly bool _enableChunkTicking = Config.GetProperty("EnableChunkTicking", false);
+		private readonly bool _isWorldTimeStarted = Config.GetProperty("IsWorldTimeStarted", false);
 		public LevelManager()
 		{
 		}
@@ -51,71 +58,20 @@ namespace MiNET
 			Level level = Levels.FirstOrDefault(l => l.LevelId.Equals(name, StringComparison.InvariantCultureIgnoreCase));
 			if (level == null)
 			{
-				GameMode gameMode = Config.GetProperty("GameMode", GameMode.Survival);
-				Difficulty difficulty = Config.GetProperty("Difficulty", Difficulty.Normal);
-				int viewDistance = Config.GetProperty("ViewDistance", 11);
-				bool enableBlockTicking = Config.GetProperty("EnableBlockTicking", false);
-				bool enableChunkTicking = Config.GetProperty("EnableChunkTicking", false);
-				bool isWorldTimeStarted = Config.GetProperty("IsWorldTimeStarted", false);
-
-				IWorldProvider worldProvider = null;
-
-				switch (Config.GetProperty("WorldProvider", "flat").ToLower().Trim())
+				AnvilWorldProvider worldProvider = new AnvilWorldProvider
 				{
-					case "cool":
-						worldProvider = new CoolWorldProvider();
-						break;
-					case "experimental":
-						worldProvider = new ExperimentalWorldProvider();
-						break;
-					case "anvil":
-					case "flat":
-					case "flatland":
-					default:
-						worldProvider = new AnvilWorldProvider
-						{
-							MissingChunkProvider = new FlatlandWorldProvider(),
-							ReadSkyLight = !Config.GetProperty("CalculateLights", false),
-							ReadBlockLight = !Config.GetProperty("CalculateLights", false),
-						};
-						break;
-				}
+					MissingChunkProvider = new FlatLandWorldGenerator(),
+					ReadSkyLight = !Config.GetProperty("CalculateLights", false),
+					ReadBlockLight = !Config.GetProperty("CalculateLights", false),
+				};
 
-				level = new Level(this, name, worldProvider, EntityManager, gameMode, difficulty, viewDistance)
+				level = new Level(this, name, worldProvider, EntityManager, _gameMode, _difficulty, _viewDistance)
 				{
-					EnableBlockTicking = enableBlockTicking,
-					EnableChunkTicking = enableChunkTicking,
-					IsWorldTimeStarted = isWorldTimeStarted
+					EnableBlockTicking = _enableBlockTicking,
+					EnableChunkTicking = _enableChunkTicking,
+					IsWorldTimeStarted = _isWorldTimeStarted
 				};
 				level.Initialize();
-
-				if (Config.GetProperty("CalculateLights", false))
-				{
-					{
-						AnvilWorldProvider wp = level.WorldProvider as AnvilWorldProvider;
-						if (wp != null)
-						{
-							wp.Locked = true;
-							Stopwatch sw = new Stopwatch();
-
-							var chunkCount = 0;
-							sw.Restart();
-							SkyLightCalculations.Calculate(level);
-							sw.Stop();
-							chunkCount = wp._chunkCache.Where(chunk => chunk.Value != null).ToArray().Length;
-							Log.Debug($"Recalculated sky light for {chunkCount} chunks, {chunkCount * 16 * 16 * 256} blocks. Time {sw.ElapsedMilliseconds}ms");
-
-							int count = wp.LightSources.Count;
-							sw.Restart();
-							RecalculateBlockLight(level, wp);
-
-							chunkCount = wp._chunkCache.Where(chunk => chunk.Value != null).ToArray().Length;
-							Log.Debug($"Recalculated sky and block light for {chunkCount} chunks, {chunkCount * 16 * 16 * 256} blocks and {count} light sources. Time {sw.ElapsedMilliseconds}ms. Touched {BlockLightCalculations.touches}");
-
-							wp.Locked = false;
-						}
-					}
-				}
 
 				Levels.Add(level);
 
@@ -154,8 +110,7 @@ namespace MiNET
 			if (dimension == Dimension.Nether && !level.WorldProvider.HaveNether()) return null;
 			if (dimension == Dimension.TheEnd && !level.WorldProvider.HaveTheEnd()) return null;
 
-			AnvilWorldProvider overworld = level.WorldProvider as AnvilWorldProvider;
-			if (overworld == null) return null;
+			if (!(level.WorldProvider is AnvilWorldProvider overworld)) return null;
 
 			var worldProvider = new AnvilWorldProvider(overworld.BasePath)
 			{
@@ -176,78 +131,7 @@ namespace MiNET
 
 			newLevel.Initialize();
 
-			if (Config.GetProperty("CalculateLights", false))
-			{
-				SkyLightCalculations.Calculate(newLevel);
-
-				int count = worldProvider.LightSources.Count;
-				Log.Debug($"Recalculating block light for {count} light sources.");
-				Stopwatch sw = new Stopwatch();
-				sw.Start();
-				RecalculateBlockLight(newLevel, worldProvider);
-
-				var chunkCount = worldProvider._chunkCache.Where(chunk => chunk.Value != null).ToArray().Length;
-				Log.Debug($"Recalc sky and block light for {chunkCount} chunks, {chunkCount*16*16*256} blocks and {count} light sources. Time {sw.ElapsedMilliseconds}ms");
-			}
-
 			return newLevel;
-		}
-	}
-
-	public class SpreadLevelManager : LevelManager
-	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (SpreadLevelManager));
-
-		private readonly int _numberOfLevels;
-
-		public SpreadLevelManager(int numberOfLevels)
-		{
-			Log.Warn($"Creating and caching {numberOfLevels} levels");
-
-			//Level template = CreateLevel("Default", null);
-
-			_numberOfLevels = numberOfLevels;
-			Levels = new List<Level>();
-			Parallel.For(0, numberOfLevels, i =>
-			{
-				var name = "Default" + i;
-				//Levels.Add(CreateLevel(name, template._worldProvider));
-				Levels.Add(CreateLevel(name, null));
-				Log.Warn($"Created level {name}");
-			});
-
-			Log.Warn("DONE Creating and caching worlds");
-		}
-
-		public override Level GetLevel(Player player, string name)
-		{
-			Random rand = new Random();
-
-			return Levels[rand.Next(0, _numberOfLevels)];
-		}
-
-		public virtual Level CreateLevel(string name, IWorldProvider provider)
-		{
-			GameMode gameMode = Config.GetProperty("GameMode", GameMode.Survival);
-			Difficulty difficulty = Config.GetProperty("Difficulty", Difficulty.Peaceful);
-			int viewDistance = Config.GetProperty("ViewDistance", 11);
-
-			IWorldProvider worldProvider = null;
-			worldProvider = provider ?? new AnvilWorldProvider {MissingChunkProvider = new FlatlandWorldProvider()};
-
-			var level = new Level(this, name, worldProvider, EntityManager, gameMode, difficulty, viewDistance);
-			level.Initialize();
-
-			OnLevelCreated(new LevelEventArgs(null, level));
-
-			return level;
-		}
-
-		public event EventHandler<LevelEventArgs> LevelCreated;
-
-		protected virtual void OnLevelCreated(LevelEventArgs e)
-		{
-			LevelCreated?.Invoke(this, e);
 		}
 	}
 }

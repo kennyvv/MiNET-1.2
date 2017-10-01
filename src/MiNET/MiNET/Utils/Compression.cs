@@ -35,39 +35,6 @@ namespace MiNET.Utils
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (Compression));
 
-		//public static byte[] Compress(byte[] inputData)
-		//{
-		//	if (inputData == null)
-		//		throw new ArgumentNullException("inputData");
-
-		//	using (var compressIntoMs = MiNetServer.MemoryStreamManager.GetStream())
-		//	{
-		//		using (var gzs = new BufferedStream(new GZipStream(compressIntoMs, CompressionMode.Compress), 2*4096))
-		//		{
-		//			gzs.Write(inputData, 0, inputData.Length);
-		//		}
-		//		return compressIntoMs.ToArray();
-		//	}
-		//}
-
-		//public static byte[] Decompress(byte[] inputData)
-		//{
-		//	if (inputData == null)
-		//		throw new ArgumentNullException("inputData");
-
-		//	using (var compressedMs = new MemoryStream(inputData))
-		//	{
-		//		using (var decompressedMs = MiNetServer.MemoryStreamManager.GetStream())
-		//		{
-		//			using (var gzs = new BufferedStream(new GZipStream(compressedMs, CompressionMode.Decompress), 2*4096))
-		//			{
-		//				gzs.CopyTo(decompressedMs);
-		//			}
-		//			return decompressedMs.ToArray();
-		//		}
-		//	}
-		//}
-
 		public static byte[] Compress(byte[] input, int offset, int length, bool writeLen = false)
 		{
 			return CompressIntoStream(input, offset, length, CompressionLevel.Fastest, writeLen).ToArray();
