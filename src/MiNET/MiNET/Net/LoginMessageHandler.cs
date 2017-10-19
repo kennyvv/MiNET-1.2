@@ -203,13 +203,13 @@ namespace MiNET
 						if (Log.IsDebugEnabled)
 						{
 							Log.Debug($"x5u cert (string): {x5u}");
-							ECDiffieHellmanPublicKey publicKey = CryptoUtils.CreateEcDiffieHellmanPublicKey(x5u);
+							ECDiffieHellmanPublicKey publicKey = CryptoUtils.FromDerEncoded(x5u.DecodeBase64Url());
 							Log.Debug($"Cert:\n{publicKey.ToXmlString()}");
 						}
 
 						// Validate
-						CngKey newKey = CryptoUtils.ImportECDsaCngKeyFromString(x5u);
-						CertificateData data = JWT.Decode<CertificateData>(token.ToString(), newKey);
+						ECDiffieHellmanCngPublicKey newKey = (ECDiffieHellmanCngPublicKey)CryptoUtils.FromDerEncoded(x5u.DecodeBase64Url());
+						CertificateData data = JWT.Decode<CertificateData>(token.ToString(), newKey.Import());
 
 						if (data != null)
 						{
@@ -258,12 +258,15 @@ namespace MiNET
 
 						_session.CryptoContext = new CryptoContext
 						{
-							UseEncryption = Config.GetProperty("UseEncryptionForAll", false) || (Config.GetProperty("UseEncryption", true) && !string.IsNullOrWhiteSpace(_playerInfo.CertificateData.ExtraData.Xuid)),
+							UseEncryption = Config.GetProperty("UseEncryptionForAll", false) ||
+							                (Config.GetProperty("UseEncryption", true) &&
+							                 !string.IsNullOrWhiteSpace(_playerInfo.CertificateData.ExtraData.Xuid)),
 						};
 
 						if (_session.CryptoContext.UseEncryption)
 						{
-							ECDiffieHellmanPublicKey publicKey = CryptoUtils.CreateEcDiffieHellmanPublicKey(_playerInfo.CertificateData.IdentityPublicKey);
+							ECDiffieHellmanPublicKey publicKey =
+								CryptoUtils.FromDerEncoded(_playerInfo.CertificateData.IdentityPublicKey.DecodeBase64Url());
 							if (Log.IsDebugEnabled) Log.Debug($"Cert:\n{publicKey.ToXmlString()}");
 
 							// Create shared shared secret
@@ -271,10 +274,9 @@ namespace MiNET
 							ecKey.HashAlgorithm = CngAlgorithm.Sha256;
 							ecKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
 							ecKey.SecretPrepend = Encoding.UTF8.GetBytes("RANDOM SECRET"); // Server token
-
 							byte[] secret = ecKey.DeriveKeyMaterial(publicKey);
 
-							if (Log.IsDebugEnabled) Log.Debug($"SECRET KEY (b64):\n{Convert.ToBase64String(secret)}");
+							if (Log.IsDebugEnabled) Log.Debug($"SECRET KEY (b64):\n{secret.EncodeBase64()}");
 
 							{
 								RijndaelManaged rijAlg = new RijndaelManaged
@@ -303,22 +305,24 @@ namespace MiNET
 								_session.CryptoContext.OutputStream = outputStream;
 								_session.CryptoContext.CryptoStreamIn = cryptoStreamIn;
 								_session.CryptoContext.CryptoStreamOut = cryptoStreamOut;
+
+								string b64Key = ecKey.PublicKey.ToDerEncoded().EncodeBase64();
+								var handshakeJson = new HandshakeData() {salt = ecKey.SecretPrepend.EncodeBase64()};
+
+								string val = JWT.Encode(handshakeJson, ecKey.Key, JwsAlgorithm.ES384,
+									new Dictionary<string, object> {{"x5u", b64Key}});
+								Log.Warn($"Headers: {string.Join(";", JWT.Headers(val))}");
+								Log.Warn($"Return salt:\n{JWT.Payload(val)}");
+
+								var response = McpeServerToClientHandshake.CreateObject();
+								response.NoBatch = true;
+								response.ForceClear = true;
+								response.token = val;
+
+								_session.SendPackage(response);
+
+								if (Log.IsDebugEnabled) Log.Warn($"Encryption enabled for {_session.Username}");
 							}
-
-							//TODO: JSON now.
-							throw new Exception("JSON!!!");
-							//var response = McpeServerToClientHandshake.CreateObject();
-						//	response.NoBatch = true;
-						//	response.ForceClear = true;
-
-							//response.token = 
-								//	response.serverPublicKey = Convert.ToBase64String(ecKey.PublicKey.GetDerEncoded());
-								//	response.tokenLength = (short) ecKey.SecretPrepend.Length;
-								//	response.token = ecKey.SecretPrepend;
-
-								//_session.SendPackage(response);
-
-							if (Log.IsDebugEnabled) Log.Warn($"Encryption enabled for {_session.Username}");
 						}
 					}
 				}

@@ -1453,15 +1453,15 @@ namespace MiNET.Client
 			SendPackage(magic);
 		}
 
-		private void InitiateEncryption(string serverKey, byte[] randomKeyToken)
+		private void InitiateEncryption(byte[] serverKey, byte[] randomKeyToken)
 		{
 			try
 			{
-				ECDiffieHellmanPublicKey publicKey = CryptoUtils.CreateEcDiffieHellmanPublicKey(serverKey);
+				ECDiffieHellmanPublicKey publicKey = CryptoUtils.FromDerEncoded(serverKey);
 				Log.Debug("ServerKey (b64):\n" + serverKey);
-				//Log.Debug($"Cert:\n{publicKey.ToXmlString()}");
+				Log.Debug($"Cert:\n{publicKey.ToXmlString()}");
 
-				Log.Debug($"RANDOM TOKEN (raw):\n{randomKeyToken}");
+				Log.Debug($"RANDOM TOKEN (raw):\n\n{Encoding.UTF8.GetString(randomKeyToken)}");
 
 				if (randomKeyToken.Length != 0)
 				{
