@@ -96,7 +96,7 @@ namespace MiNET.Worlds
 		public int ViewDistance { get; set; }
 
 		public Random Random { get; private set; }
-
+		public bool AutoSave { get; }
 		public Level(LevelManager levelManager, string levelId, IWorldProvider worldProvider, EntityManager entityManager, GameMode gameMode = GameMode.Survival, Difficulty difficulty = Difficulty.Normal, int viewDistance = 11)
 		{
 			Random = new Random();
@@ -115,6 +115,8 @@ namespace MiNET.Worlds
 			Difficulty = difficulty;
 			ViewDistance = viewDistance;
 			WorldProvider = worldProvider;
+
+			AutoSave = Config.GetProperty("AutoSave", false);
 		}
 
 		public LevelManager LevelManager { get; }
@@ -574,6 +576,16 @@ namespace MiNET.Worlds
 				// Send player movements
 				BroadCastMovement(players, entities);
 
+				if (AutoSave && TickTime%72000 == 0) //Save every 5 minutes.
+				{
+					Task.Run(() =>
+					{
+						Log.Info("Saving chunks...");
+						int count = WorldProvider.SaveChunks();
+						Log.Info($"Saved {count} chunks...");
+					});
+				}
+
 				if (Log.IsDebugEnabled && _tickTimer.ElapsedMilliseconds >= 50) Log.Error($"World tick too too long: {_tickTimer.ElapsedMilliseconds} ms");
 			}
 			catch (Exception e)
@@ -857,11 +869,95 @@ namespace MiNET.Worlds
 					if (chunkColumn != null)
 					{
 						chunk = chunkColumn.GetBatch();
+					//	LoadEntities(chunkColumn);
 					}
 
 					chunksUsed.Add(pair.Key, chunk);
 
 					yield return chunk;
+				}
+			}
+		}
+
+		private void LoadEntities(ChunkColumn column)
+		{
+			var entities = column.Entities;
+			foreach (var entityTag in entities)
+			{
+				Entity entity = null;
+
+				string id = entityTag["id"].StringValue;
+				switch (id.ToLowerInvariant())
+				{
+					case "cow":
+						entity = new Cow(this);
+						break;
+					case "sheep":
+						entity = new Sheep(this);
+						break;
+					case "chicken":
+						entity = new Chicken(this);
+						break;
+					case "pig":
+						entity = new Pig(this);
+						break;
+					case "rabbit":
+						entity = new Rabbit(this);
+						break;
+
+					case "zombie":
+						entity = new Zombie(this);
+						break;
+					case "creeper":
+						entity = new Creeper(this);
+						break;
+
+					case "item":
+						entity = new ItemEntity(this, ItemFactory.GetItem(entityTag["Item"]["id"].StringValue, entityTag["Item"]["Damage"].ShortValue));
+						break;
+
+					default:
+						Log.Warn("Unknown entity: " + id);
+						continue;
+				}
+
+				if (entity != null)
+				{
+					if (entityTag["Motion"] is NbtList motion)
+					{
+						var x = motion[0].DoubleValue;
+						var y = motion[1].DoubleValue;
+						var z = motion[2].DoubleValue;
+
+						entity.Velocity = new Vector3((float)x, (float)y, (float)z);
+					}
+
+					if (entityTag["Pos"] is NbtList pos)
+					{
+						var x = pos[0].DoubleValue;
+						var y = pos[1].DoubleValue;
+						var z = pos[2].DoubleValue;
+
+						entity.KnownPosition = new PlayerLocation((float)x, (float)y, (float)z);
+					}
+
+					if (entityTag["Rotation"] is NbtList rot)
+					{
+						var yaw = rot[0].FloatValue;
+						var pitch = rot[1].FloatValue;
+						entity.KnownPosition.Yaw = yaw;
+						entity.KnownPosition.HeadYaw = yaw;
+						entity.KnownPosition.Pitch = pitch;
+					}
+
+					entity.HealthManager.Health = entityTag["Health"].ShortValue;
+					entity.HealthManager.FireTick = entityTag["Fire"].ShortValue;
+					if (entity.HealthManager.FireTick > 0)
+					{
+						entity.HealthManager.IsOnFire = true;
+					}
+
+					entity.SpawnEntity();
 				}
 			}
 		}

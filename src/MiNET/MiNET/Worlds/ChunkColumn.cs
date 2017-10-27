@@ -54,6 +54,7 @@ namespace MiNET.Worlds
 
 		//TODO: This dictionary need to be concurent. Investigate performance before changing.
 		public IDictionary<BlockCoordinates, NbtCompound> BlockEntities = new Dictionary<BlockCoordinates, NbtCompound>();
+		public IList<NbtCompound> Entities = new List<NbtCompound>();
 
 		private byte[] _cache;
 		public bool isDirty;

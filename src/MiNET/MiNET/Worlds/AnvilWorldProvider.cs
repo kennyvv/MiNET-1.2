@@ -36,6 +36,8 @@ using fNbt;
 using log4net;
 using MiNET.BlockEntities;
 using MiNET.Blocks;
+using MiNET.Entities;
+using MiNET.Entities.Passive;
 using MiNET.Net;
 using MiNET.Utils;
 using MiNET.Worlds.Generators;
@@ -287,8 +289,8 @@ namespace MiNET.Worlds
 		{
 			try
 			{
-				int width = 32;
-				int depth = 32;
+				const int width = 32;
+				const int depth = 32;
 
 				int rx = coordinates.X >> 5;
 				int rz = coordinates.Z >> 5;
@@ -309,51 +311,40 @@ namespace MiNET.Worlds
 
 				using (var regionFile = File.OpenRead(filePath))
 				{
-					byte[] buffer = new byte[8192];
-
-					regionFile.Read(buffer, 0, 8192);
-
-					int xi = (coordinates.X % width);
-					if (xi < 0) xi += 32;
-					int zi = (coordinates.Z % depth);
-					if (zi < 0) zi += 32;
-					int tableOffset = (xi + zi * width) * 4;
-
-					regionFile.Seek(tableOffset, SeekOrigin.Begin);
+					int locationIndex = ((coordinates.X & (width - 1)) + (coordinates.Z & (depth - 1))*width) << 2;
+					regionFile.Seek(locationIndex, SeekOrigin.Begin);
 
 					byte[] offsetBuffer = new byte[4];
 					regionFile.Read(offsetBuffer, 0, 3);
 					Array.Reverse(offsetBuffer);
 					int offset = BitConverter.ToInt32(offsetBuffer, 0) << 4;
 
-					byte[] bytes = BitConverter.GetBytes(offset >> 4);
-					Array.Reverse(bytes);
-					if (offset != 0 && offsetBuffer[0] != bytes[0] && offsetBuffer[1] != bytes[1] && offsetBuffer[2] != bytes[2])
-					{
-						throw new Exception($"Not the same buffer\n{Package.HexDump(offsetBuffer)}\n{Package.HexDump(bytes)}");
-					}
+					int sectorCount = regionFile.ReadByte();
 
-					int length = regionFile.ReadByte();
-
-					if (offset == 0 || length == 0)
+					if (offset == 0 || sectorCount == 0)
 					{
 						var chunkColumn = generator?.GenerateChunkColumn(coordinates);
 						if (chunkColumn != null)
 						{
-							//chunkColumn.NeedSave = true;
+							chunkColumn.NeedSave = true;
 						}
 
 						return chunkColumn;
 					}
 
-					regionFile.Seek(offset, SeekOrigin.Begin);
-					byte[] waste = new byte[4];
-					regionFile.Read(waste, 0, 4);
+					/*regionFile.Seek(4096 + locationIndex, SeekOrigin.Begin);
+					regionFile.Read(offsetBuffer, 0, 4);
+					Array.Reverse(offsetBuffer);
+					int lastModified = BitConverter.ToInt32(offsetBuffer, 0);
+					Log.Warn("Last modified: " + lastModified);*/
+
+					regionFile.Seek(offset + 4, SeekOrigin.Begin); //Offset + the length header
+
 					int compressionMode = regionFile.ReadByte();
 
 					if (compressionMode != 0x02)
 						throw new Exception($"CX={coordinates.X}, CZ={coordinates.Z}, NBT wrong compression. Expected 0x02, got 0x{compressionMode:X2}. " +
-											$"Offset={offset}, length={length}\n{Package.HexDump(waste)}");
+											$"Offset={offset}, Sectors={sectorCount}");
 
 					var nbt = new NbtFile();
 					nbt.LoadFromStream(regionFile, NbtCompression.ZLib);
@@ -395,6 +386,11 @@ namespace MiNET.Worlds
 					}
 
 					NbtList entities = dataTag["Entities"] as NbtList;
+					if (entities != null)
+					{
+						chunk.Entities = entities.ToArray<NbtCompound>();
+					}
+
 					NbtList blockEntities = dataTag["TileEntities"] as NbtList;
 					if (blockEntities != null)
 					{
@@ -754,26 +750,15 @@ namespace MiNET.Worlds
 
 			using (var regionFile = File.Open(filePath, FileMode.Open))
 			{
-				// Region files begin with an 8kiB header containing information about which chunks are present in the region file, 
-				// when they were last updated, and where they can be found.
-				byte[] buffer = new byte[8192];
-				regionFile.Read(buffer, 0, buffer.Length);
+				int locationIndex = ((coordinates.X & (width - 1)) + (coordinates.Z & (depth - 1)) * width) << 2;
+				regionFile.Seek(locationIndex, SeekOrigin.Begin);
 
-				int xi = (coordinates.X % width);
-				if (xi < 0) xi += 32;
-				int zi = (coordinates.Z % depth);
-				if (zi < 0) zi += 32;
-				int tableOffset = (xi + zi * width) * 4;
-
-				regionFile.Seek(tableOffset, SeekOrigin.Begin);
-
-				// Location information for a chunk consists of four bytes split into two fields: the first three bytes are a(big - endian) offset in 4KiB sectors 
-				// from the start of the file, and a remaining byte which gives the length of the chunk(also in 4KiB sectors, rounded up).
 				byte[] offsetBuffer = new byte[4];
 				regionFile.Read(offsetBuffer, 0, 3);
 				Array.Reverse(offsetBuffer);
 				int offset = BitConverter.ToInt32(offsetBuffer, 0) << 4;
-				byte sectorCount = (byte)regionFile.ReadByte();
+
+				int sectorCount = regionFile.ReadByte();
 
 				testTime.Restart(); // RESTART
 
@@ -788,6 +773,7 @@ namespace MiNET.Worlds
 
 				// Don't write yet, just use the lenght
 
+				//TODO: Search for available sectors
 				if (offset == 0 || sectorCount == 0 || nbtSectorCount > sectorCount)
 				{
 					if (Log.IsDebugEnabled) if (sectorCount != 0) Log.Warn($"Creating new sectors for this chunk even tho it existed. Old sector count={sectorCount}, new sector count={nbtSectorCount} (lenght={nbtLength})");
@@ -795,12 +781,17 @@ namespace MiNET.Worlds
 					regionFile.Seek(0, SeekOrigin.End);
 					offset = (int)((int)regionFile.Position & 0xfffffff0);
 
-					regionFile.Seek(tableOffset, SeekOrigin.Begin);
+					regionFile.Seek(locationIndex, SeekOrigin.Begin);
 
 					byte[] bytes = BitConverter.GetBytes(offset >> 4);
 					Array.Reverse(bytes);
 					regionFile.Write(bytes, 0, 3);
 					regionFile.WriteByte(nbtSectorCount);
+
+					regionFile.Seek(4096 + locationIndex, SeekOrigin.Begin);
+					bytes = BitConverter.GetBytes((int) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds);
+					Array.Reverse(bytes);
+					regionFile.Write(bytes, 0, bytes.Length);
 				}
 
 				byte[] lenghtBytes = BitConverter.GetBytes(nbtLength + 1);
@@ -886,6 +877,7 @@ namespace MiNET.Worlds
 
 			// TODO: Save entities
 			NbtList entitiesTag = new NbtList("Entities", NbtTagType.Compound);
+			//foreach(var entity in )
 			levelTag.Add(entitiesTag);
 
 			NbtList blockEntitiesTag = new NbtList("TileEntities", NbtTagType.Compound);
