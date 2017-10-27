@@ -4,22 +4,22 @@ namespace MiNET.Entities.Behaviors
 {
 	public class OwnerHurtByTargetBehavior : IBehavior
 	{
-		private Wolf _wolf;
+		private Mob _mob;
 
-		public OwnerHurtByTargetBehavior(Wolf wolf)
+		public OwnerHurtByTargetBehavior(Mob mob)
 		{
-			_wolf = wolf;
+			_mob = mob;
 		}
 
 		public bool ShouldStart()
 		{
-			if (!_wolf.IsTamed) return false;
+			if (!_mob.IsTamed) return false;
 
-			Player owner = (Player) _wolf.Owner;
+			Player owner = _mob.Owner as Player;
 
-			if (owner.HealthManager.LastDamageSource == null) return false;
+			if (owner?.HealthManager.LastDamageSource == null) return false;
 
-			_wolf.SetTarget(owner.HealthManager.LastDamageSource);
+			_mob.SetTarget(owner.HealthManager.LastDamageSource);
 
 			return true;
 		}
@@ -29,7 +29,7 @@ namespace MiNET.Entities.Behaviors
 			return false;
 		}
 
-		public void OnTick()
+		public void OnTick(Entity[] entities)
 		{
 		}
 

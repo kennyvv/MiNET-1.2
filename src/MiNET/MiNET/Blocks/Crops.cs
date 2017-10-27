@@ -34,7 +34,7 @@ namespace MiNET.Blocks
 {
 	public abstract class Crops : Block
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (Crops));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(Crops));
 
 		protected byte MaxGrowth { get; set; } = 7;
 
@@ -49,7 +49,7 @@ namespace MiNET.Blocks
 			var itemInHand = player.Inventory.GetItemInHand();
 			if (Metadata < MaxGrowth && itemInHand is ItemDye && itemInHand.Metadata == 15)
 			{
-				Metadata += (byte) new Random().Next(2, 6);
+				Metadata += (byte)new Random().Next(2, 6);
 				if (Metadata > MaxGrowth) Metadata = MaxGrowth;
 
 				level.SetBlock(this);
@@ -114,7 +114,7 @@ namespace MiNET.Blocks
 
 			//1 / (floor(25 / points) + 1)
 
-			double chance = 1/(Math.Floor(25/points) + 1);
+			double chance = 1 / (Math.Floor(25 / points) + 1);
 
 			var calculateGrowthChance = level.Random.NextDouble() <= chance;
 			//Log.Debug($"Calculated growth chance. Will grow={calculateGrowthChance} on a chance score of {chance}");
@@ -123,7 +123,7 @@ namespace MiNET.Blocks
 
 		protected override bool CanPlace(Level world, BlockCoordinates blockCoordinates, BlockCoordinates targetCoordinates, BlockFace face)
 		{
-			if (base.CanPlace(world, blockCoordinates, face))
+			if (base.CanPlace(world, blockCoordinates, targetCoordinates, face))
 			{
 				Block under = world.GetBlock(Coordinates + BlockCoordinates.Down);
 				return under is Farmland;
@@ -136,6 +136,7 @@ namespace MiNET.Blocks
 		{
 			if (Coordinates + BlockCoordinates.Down == blockCoordinates)
 			{
+				Log.Debug($"BlockUpdate {blockCoordinates}");
 				level.BreakBlock(this);
 			}
 		}

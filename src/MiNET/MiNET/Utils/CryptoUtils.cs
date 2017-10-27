@@ -36,6 +36,7 @@ using JetBrains.Annotations;
 using Jose;
 using log4net;
 using MiNET.Net;
+using MiNET.Utils.Skins;
 
 namespace MiNET.Utils
 {

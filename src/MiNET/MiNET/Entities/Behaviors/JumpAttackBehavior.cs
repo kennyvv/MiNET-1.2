@@ -6,10 +6,10 @@ namespace MiNET.Entities.Behaviors
 {
 	public class JumpAttackBehavior : IBehavior
 	{
-		private readonly Wolf _wolf;
+		private readonly Mob _wolf;
 		private readonly double _leapHeight;
 
-		public JumpAttackBehavior(Wolf wolf, double leapHeight)
+		public JumpAttackBehavior(Mob wolf, double leapHeight)
 		{
 			_wolf = wolf;
 			_leapHeight = leapHeight;
@@ -30,7 +30,7 @@ namespace MiNET.Entities.Behaviors
 			return !_wolf.IsOnGround;
 		}
 
-		public void OnTick()
+		public void OnTick(Entity[] entities)
 		{
 			var direction = (Vector3) _wolf.Target.KnownPosition - _wolf.KnownPosition;
 			var distance = _wolf.DistanceTo(_wolf.Target);

@@ -7,7 +7,7 @@ namespace MiNET.Blocks
 {
 	public class Torch : Block
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (Torch));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(Torch));
 
 		public Torch() : base(50)
 		{
@@ -37,6 +37,11 @@ namespace MiNET.Blocks
 
 		//	return !block.IsTransparent;
 		//}
+
+		public override void BlockUpdate(Level level, BlockCoordinates blockCoordinates)
+		{
+			base.BlockUpdate(level, blockCoordinates);
+		}
 
 		public override bool PlaceBlock(Level world, Player player, BlockCoordinates blockCoordinates, BlockFace face, Vector3 faceCoords)
 		{

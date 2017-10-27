@@ -36,6 +36,7 @@ using fNbt;
 using log4net;
 using MiNET.Net;
 using MiNET.Utils;
+using MiNET.Utils.Skins;
 
 namespace MiNET
 {

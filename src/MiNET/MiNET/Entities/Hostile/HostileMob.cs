@@ -7,11 +7,13 @@ namespace MiNET.Entities.Hostile
 		protected HostileMob(int entityTypeId, Level level)
 			: base(entityTypeId, level)
 		{
+			NoAi = true;
 		}
 
 		protected HostileMob(EntityType type, Level level)
 			: base(type, level)
 		{
+			NoAi = true;
 		}
 	}
 }

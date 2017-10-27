@@ -18,7 +18,7 @@ namespace MiNET.Items
 
 			Snowball snowBall = new Snowball(player, world);
 			snowBall.KnownPosition = (PlayerLocation) player.KnownPosition.Clone();
-			snowBall.KnownPosition.Y += 1.62f;
+			//snowBall.KnownPosition.Y += 1.62f;
 			snowBall.Velocity = snowBall.KnownPosition.GetDirection()*(force);
 			snowBall.BroadcastMovement = true;
 			snowBall.DespawnOnImpact = true;

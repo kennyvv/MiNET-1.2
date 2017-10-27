@@ -14,7 +14,7 @@ namespace MiNET.Entities.Passive
 		private static readonly ILog Log = LogManager.GetLogger(typeof (Wolf));
 
 		public byte CollarColor { get; set; }
-		public Entity Owner { get; set; }
+		//public Entity Owner { get; set; }
 
 		public Wolf(Level level) : base(EntityType.Wolf, level)
 		{

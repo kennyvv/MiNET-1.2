@@ -38,7 +38,7 @@ namespace MiNET.Entities.Behaviors
 			return _duration-- > 0;
 		}
 
-		public void OnTick()
+		public void OnTick(Entity[] entities)
 		{
 			var dx = _player.KnownPosition.X - _entity.KnownPosition.X;
 			var dz = _player.KnownPosition.Z - _entity.KnownPosition.Z;
@@ -52,7 +52,7 @@ namespace MiNET.Entities.Behaviors
 			var yaw = thetaOffset + tanOutput;
 
 			double bDiff = Math.Sqrt((dx*dx) + (dz*dz));
-			var dy = (_entity.KnownPosition.Y + _entity.Height) - (_player.KnownPosition.Y + 1.62);
+			var dy = (_entity.KnownPosition.Y + _entity.Height) - (_player.KnownPosition.Y + (1.62 / 2f));
 			double pitch = RadianToDegree(Math.Atan(dy/(bDiff)));
 
 			_entity.Direction = (float) yaw;

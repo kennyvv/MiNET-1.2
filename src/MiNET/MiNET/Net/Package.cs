@@ -45,6 +45,7 @@ using MiNET.Items;
 using MiNET.Plugins;
 using MiNET.Plugins.Attributes;
 using MiNET.Utils;
+using MiNET.Utils.Skins;
 using Newtonsoft.Json;
 
 namespace MiNET.Net
@@ -1475,14 +1476,14 @@ namespace MiNET.Net
 			return ids;
 		}
 
-		public void Write(Skin skin)
+		public void Write(Skin skin, string xuid = null)
 		{
 			Write(skin.SkinId);
 			WriteByteArray(skin.SkinData);
 			WriteByteArray(skin.CapeData);
 			Write(skin.SkinGeometryName);
-			WriteByteArray(skin.SkinGeometry);
-			Write(skin.XUID);
+			Write(skin.SkinGeometry);
+			Write(xuid);
 		}
 
 		public Skin ReadSkin()
@@ -1491,13 +1492,9 @@ namespace MiNET.Net
 
 			skin.SkinId = ReadString();
 			skin.SkinData = ReadByteArray(false);
-
 			skin.CapeData = ReadByteArray(false);
-
 			skin.SkinGeometryName = ReadString();
-			skin.SkinGeometry = ReadByteArray(false);
-			
-			skin.XUID = ReadString();
+			skin.SkinGeometry = ReadString();
 
 			return skin;
 		}
@@ -1511,7 +1508,7 @@ namespace MiNET.Net
 
 		public void Write(Recipes recipes)
 		{
-			WriteUnsignedVarInt((uint) recipes.Count);
+			WriteUnsignedVarInt((uint)recipes.Count);
 
 			foreach (Recipe recipe in recipes)
 			{
@@ -1519,7 +1516,7 @@ namespace MiNET.Net
 				{
 					WriteSignedVarInt(0); // Type
 
-					ShapelessRecipe rec = (ShapelessRecipe) recipe;
+					ShapelessRecipe rec = (ShapelessRecipe)recipe;
 					WriteVarInt(rec.Input.Count);
 					foreach (Item stack in rec.Input)
 					{
@@ -1533,7 +1530,7 @@ namespace MiNET.Net
 				{
 					WriteSignedVarInt(1); // Type
 
-					ShapedRecipe rec = (ShapedRecipe) recipe;
+					ShapedRecipe rec = (ShapedRecipe)recipe;
 					WriteSignedVarInt(rec.Width);
 					WriteSignedVarInt(rec.Height);
 
@@ -1541,7 +1538,7 @@ namespace MiNET.Net
 					{
 						for (int h = 0; h < rec.Height; h++)
 						{
-							Write(rec.Input[(h*rec.Width) + w]);
+							Write(rec.Input[(h * rec.Width) + w]);
 						}
 					}
 					WriteVarInt(1);
@@ -1550,7 +1547,7 @@ namespace MiNET.Net
 				}
 				else if (recipe is SmeltingRecipe)
 				{
-					SmeltingRecipe rec = (SmeltingRecipe) recipe;
+					SmeltingRecipe rec = (SmeltingRecipe)recipe;
 					WriteSignedVarInt(rec.Input.Metadata == 0 ? 2 : 3); // Type
 					WriteSignedVarInt(rec.Input.Id);
 					if (rec.Input.Metadata != 0) WriteSignedVarInt(rec.Input.Metadata);
@@ -1577,20 +1574,20 @@ namespace MiNET.Net
 				}
 			}
 
-			Write((byte) 1);
+			Write((byte)1);
 		}
 
 		public Recipes ReadRecipes()
 		{
 			Recipes recipes = new Recipes();
 
-			int count = (int) ReadUnsignedVarInt();
+			int count = (int)ReadUnsignedVarInt();
 
 			Log.Error($"Reading {count} recipes");
 
 			for (int i = 0; i < count; i++)
 			{
-				int recipeType = (int) ReadSignedVarInt();
+				int recipeType = (int)ReadSignedVarInt();
 
 				//Log.Error($"Read recipe no={i} type={recipeType}");
 
@@ -1624,7 +1621,7 @@ namespace MiNET.Net
 					{
 						for (int h = 0; h < height; h++)
 						{
-							recipe.Input[(h*width) + w] = ReadItem();
+							recipe.Input[(h * width) + w] = ReadItem();
 						}
 					}
 
@@ -1641,7 +1638,7 @@ namespace MiNET.Net
 				{
 					SmeltingRecipe recipe = new SmeltingRecipe();
 					//short meta = (short) ReadVarInt(); // input (with metadata) 
-					short id = (short) ReadSignedVarInt(); // input (with metadata) 
+					short id = (short)ReadSignedVarInt(); // input (with metadata) 
 					Item result = ReadItem(); // Result
 					recipe.Input = ItemFactory.GetItem(id, 0);
 					recipe.Result = result;
@@ -1653,8 +1650,8 @@ namespace MiNET.Net
 				{
 					//const ENTRY_FURNACE_DATA = 3;
 					SmeltingRecipe recipe = new SmeltingRecipe();
-					short id = (short) ReadSignedVarInt(); // input (with metadata) 
-					short meta = (short) ReadSignedVarInt(); // input (with metadata) 
+					short id = (short)ReadSignedVarInt(); // input (with metadata) 
+					short meta = (short)ReadSignedVarInt(); // input (with metadata) 
 					Item result = ReadItem(); // Result
 					recipe.Input = ItemFactory.GetItem(id, meta);
 					recipe.Result = result;

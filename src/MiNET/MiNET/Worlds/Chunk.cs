@@ -34,14 +34,14 @@ namespace MiNET.Worlds
 {
 	public class Chunk : ICloneable
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (ChunkColumn));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(ChunkColumn));
 
 		private bool _isAllAir = true;
 
-		public byte[] blocks = new byte[16*16*16];
-		public NibbleArray metadata = new NibbleArray(16*16*16);
-		public NibbleArray blocklight = new NibbleArray(16*16*16);
-		public NibbleArray skylight = new NibbleArray(16*16*16);
+		public byte[] blocks = new byte[16 * 16 * 16];
+		public NibbleArray metadata = new NibbleArray(16 * 16 * 16);
+		public NibbleArray blocklight = new NibbleArray(16 * 16 * 16);
+		public NibbleArray skylight = new NibbleArray(16 * 16 * 16);
 
 		private byte[] _cache;
 		private bool _isDirty;
@@ -67,7 +67,7 @@ namespace MiNET.Worlds
 
 		private static int GetIndex(int bx, int by, int bz)
 		{
-			return (bx*256) + (bz*16) + by;
+			return (bx * 256) + (bz * 16) + by;
 		}
 
 		public byte GetBlock(int bx, int by, int bz)
@@ -90,8 +90,8 @@ namespace MiNET.Worlds
 		public void SetBlocklight(int bx, int by, int bz, byte data)
 		{
 			blocklight[GetIndex(bx, by, bz)] = data;
-			_cache = null;
-			_isDirty = true;
+			//_cache = null;
+			//_isDirty = true;
 		}
 
 		public byte GetMetadata(int bx, int by, int bz)
@@ -114,8 +114,8 @@ namespace MiNET.Worlds
 		public void SetSkylight(int bx, int by, int bz, byte data)
 		{
 			skylight[GetIndex(bx, by, bz)] = data;
-			_cache = null;
-			_isDirty = true;
+			//_cache = null;
+			//_isDirty = true;
 		}
 
 		public byte[] GetBytes()
@@ -128,6 +128,8 @@ namespace MiNET.Worlds
 
 				writer.Write(blocks);
 				writer.Write(metadata.Data);
+				//writer.Write(skylight.Data);
+				//writer.Write(blocklight.Data);
 				_cache = stream.ToArray();
 			}
 
@@ -136,16 +138,16 @@ namespace MiNET.Worlds
 
 		public object Clone()
 		{
-			Chunk cc = (Chunk) MemberwiseClone();
+			Chunk cc = (Chunk)MemberwiseClone();
 
-			cc.blocks = (byte[]) blocks.Clone();
-			cc.metadata = (NibbleArray) metadata.Clone();
-			cc.blocklight = (NibbleArray) blocklight.Clone();
-			cc.skylight = (NibbleArray) skylight.Clone();
+			cc.blocks = (byte[])blocks.Clone();
+			cc.metadata = (NibbleArray)metadata.Clone();
+			cc.blocklight = (NibbleArray)blocklight.Clone();
+			cc.skylight = (NibbleArray)skylight.Clone();
 
 			if (_cache != null)
 			{
-				cc._cache = (byte[]) _cache.Clone();
+				cc._cache = (byte[])_cache.Clone();
 			}
 
 			cc._cacheSync = new object();

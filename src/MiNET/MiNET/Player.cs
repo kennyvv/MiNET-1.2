@@ -48,6 +48,7 @@ using MiNET.Particles;
 using MiNET.Plugins.Commands;
 using MiNET.UI.Forms;
 using MiNET.Utils;
+using MiNET.Utils.Skins;
 using MiNET.Worlds;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -96,7 +97,6 @@ namespace MiNET
 
 		public HungerManager HungerManager { get; set; }
 
-		public bool IsOnGround { get; set; }
 		public bool IsFalling { get; set; }
 		public bool IsFlyingHorizontally { get; set; }
 
@@ -689,7 +689,7 @@ namespace MiNET
 		public bool IsNoPvm { get; set; }
 		public bool IsNoMvp { get; set; }
 		public bool IsNoClip { get; set; }
-		public bool IsFlying { get; set; }
+		public bool IsFlying { get; set; } = false;
 		public bool DoFallDamage { get; set; } = true;
 
 		public virtual void HandleMcpeAdventureSettings(McpeAdventureSettings message)
@@ -933,15 +933,6 @@ namespace MiNET
 
 		protected virtual void SendAvailableCommands()
 		{
-			/*var settings = new JsonSerializerSettings();
-			settings.NullValueHandling = NullValueHandling.Ignore;
-			settings.DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate;
-			settings.MissingMemberHandling = MissingMemberHandling.Error;
-			settings.Formatting = Formatting.Indented;
-			settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-
-			var content = JsonConvert.SerializeObject(Server.PluginManager.Commands, settings);*/
-
 			McpeAvailableCommands commands = McpeAvailableCommands.CreateObject();
 			commands.CommandSet = Server.PluginManager.Commands;
 			SendPackage(commands);
@@ -949,18 +940,6 @@ namespace MiNET
 
 		public virtual void HandleMcpeCommandRequest(McpeCommandRequest message)
 		{
-			//Log.Warn($"Raw command: {message.command}");
-			
-
-			/*var jsonSerializerSettings = new JsonSerializerSettings
-			{
-				PreserveReferencesHandling = PreserveReferencesHandling.None,
-				Formatting = Formatting.Indented,
-			};*/
-
-		//	var commandJson = JsonConvert.DeserializeObject<dynamic>(message.commandInputJson);
-			//Log.Debug($"CommandJson\n{JsonConvert.SerializeObject(commandJson, jsonSerializerSettings)}");
-
 			var result = Server.PluginManager.HandleCommand(this, message.command);
 			if (result != null)
 			{
@@ -1877,34 +1856,6 @@ namespace MiNET
 			Log.Warn($"Player {Username} drops item frame at {message.coordinates}");
 		}
 
-		//public virtual void HandleMcpeDropItem(McpeDropItem message)
-		//{
-		//	lock (Inventory)
-		//	{
-		//		Item droppedItem = message.item;
-		//		if (Log.IsDebugEnabled) Log.Debug($"Player {Username} drops item {droppedItem} with inv slot {message.itemtype}");
-
-		//		if (droppedItem.Count == 0) return; // 0.15 bug
-
-		//		if (!VerifyItemStack(droppedItem)) return;
-
-		//		// Clear current inventory slot.
-
-		//		ItemEntity itemEntity = new ItemEntity(Level, droppedItem)
-		//		{
-		//			Velocity = KnownPosition.GetDirection()*0.7f,
-		//			KnownPosition =
-		//			{
-		//				X = KnownPosition.X,
-		//				Y = KnownPosition.Y + 1.62f,
-		//				Z = KnownPosition.Z
-		//			},
-		//		};
-
-		//		itemEntity.SpawnEntity();
-		//	}
-		//}
-
 		public virtual void HandleMcpeMobEquipment(McpeMobEquipment message)
 		{
 			//Log.Warn($"!!! MOB EQUIPMENT ({message.selectedSlot}) !!!");
@@ -2030,7 +1981,7 @@ namespace MiNET
 			else
 			{
 				McpeInventorySlot sendSlot = McpeInventorySlot.CreateObject();
-				sendSlot.inventoryId = 0;
+				sendSlot.inventoryId = inventory.WindowsId;
 				sendSlot.slot = slot;
 				sendSlot.item = itemStack;
 				SendPackage(sendSlot);
@@ -2144,6 +2095,7 @@ namespace MiNET
 			return;
 		}
 
+		private long _itemUseTimer;
 		private int _equipmentHackCount = 0;
 		protected virtual void HandleItemUse(Transaction transaction)
 		{
@@ -2180,7 +2132,7 @@ namespace MiNET
 
 					if (transaction.Face >= 0 && transaction.Face <= 5)
 					{
-						Level.Interact(this, itemInHand, transaction.Position, (BlockFace)transaction.Face, transaction.FromPosition);
+						Level.Interact(this, itemInHand, transaction.Position, (BlockFace) transaction.Face, transaction.FromPosition);
 					}
 					else
 					{
@@ -2202,6 +2154,7 @@ namespace MiNET
 						setEntityData.runtimeEntityId = EntityId;
 						setEntityData.metadata = metadata;
 						Level.RelayBroadcast(this, setEntityData);
+
 					}
 					break;
 					//Level.Interact(this, itemInHand, transaction.Position, (BlockFace)transaction.Face, transaction.ClickPosition);
@@ -2252,6 +2205,8 @@ namespace MiNET
 			}
 		}
 
+		private List<Item> _craftingInput = new List<Item>(new Item[9]);
+		public bool UsingCraftingTable { get; set; }
 		protected virtual void HandleInventoryNormal(Transaction transaction)
 		{
 			foreach (var trans in transaction.Transactions)
@@ -2269,7 +2224,12 @@ namespace MiNET
 				}
 				else if (trans is CraftTransactionRecord rec)
 				{
-					switch (rec.Action)
+					int invId = rec.Action;
+					int slot = rec.Slot;
+					Item oldItem = rec.OldItem;
+					Item newItem = rec.NewItem;
+
+					switch (invId)
 					{
 						case 3: //Put Slot
 
@@ -2278,10 +2238,20 @@ namespace MiNET
 
 							break;
 						case 7: //Get Result
+							if (VerifyRecipe(_craftingInput, oldItem))
+							{
 
+							}
+							else
+							{
+
+							}
+
+							_craftingInput.Clear();
+							_craftingInput.AddRange(new Item[9]);
 							break;
 						case 9: //Craft use
-
+							_craftingInput[slot] = newItem;
 							break;
 
 						case 29: //Enchant item
@@ -2414,6 +2384,101 @@ namespace MiNET
 						}
 					}
 				}
+			}
+		}
+
+		private bool VerifyRecipe(List<Item> craftingInput, Item result)
+		{
+			List<Item> shapedInput = new List<Item>();
+			foreach (var item in craftingInput)
+			{
+				shapedInput.Add(item ?? new Item(0));
+			}
+
+			List<Item> shapelessInput = new List<Item>();
+			foreach (var item in craftingInput)
+			{
+				if (item == null) continue;
+				shapelessInput.Add(item);
+			}
+
+		//	Log.Debug($"Looking for matching recipes with the result {result}");
+			var recipes = RecipeManager.Recipes.Where(r => r is ShapedRecipe).Where(r => ((ShapedRecipe)r).Result.Id == result.Id && ((ShapedRecipe)r).Result.Metadata == result.Metadata).ToList();
+			recipes.AddRange(RecipeManager.Recipes.Where(r => r is ShapelessRecipe).Where(r => ((ShapelessRecipe)r).Result.Id == result.Id && ((ShapelessRecipe)r).Result.Metadata == result.Metadata).ToList());
+			//Log.Debug($"Found {recipes.Count} matching recipes with the result {result}");
+			foreach (var r in recipes)
+			{
+				if (r is ShapedRecipe)
+				{
+					var recipe = (ShapedRecipe)r;
+					int rowOffset = -1;
+					int colOffset = -1;
+					int dim = UsingCraftingTable ? 3 : 2;
+					for (int row = 0; row < dim; row++)
+					{
+						for (int col = 0; col < dim; col++)
+						{
+							var item = craftingInput[col + (dim * row)];
+							if (item == null) continue;
+
+							if (rowOffset == -1 && item.Id != 0)
+							{
+								rowOffset = row;
+							}
+							if (colOffset == -1 && item.Id != 0)
+							{
+								colOffset = col;
+							}
+						}
+					}
+
+					List<Item> shapedInputSmall = new List<Item>(new Item[recipe.Height * recipe.Width]);
+					for (int row = 0; row < recipe.Height; row++)
+					{
+						for (int col = 0; col < recipe.Width; col++)
+						{
+							shapedInputSmall[col + (recipe.Width * row)] = craftingInput[(colOffset + col) + (dim * (row + rowOffset))];
+						}
+					}
+
+				//	Log.Debug($"Items input={ToJson(craftingInput)}");
+				//	Log.Debug($"Items input={ToJson(shapedInputSmall)}");
+				//	Log.Debug($"Recipe input={ToJson(recipe.Input)}");
+
+					var match = (recipe.Input.Length == shapedInputSmall.Count);
+				//	Log.Debug($"ShapedRecipe Count match={match}");
+					match = match && !shapedInputSmall.Except(recipe.Input, new ItemCompare()).Any();
+				//	Log.Debug($"Items match={match}");
+					if (match) return true;
+				}
+				else
+				{
+					var recipe = (ShapelessRecipe)r;
+					var match = (recipe.Input.Count == shapelessInput.Count);
+				//	Log.Debug($"ShapelessRecipe Count match={match}");
+					match = match && !shapelessInput.Except(recipe.Input, new ItemCompare()).Any();
+				//	Log.Debug($"Items match={match}");
+					if (match) return true;
+				}
+			}
+
+			return false;
+		}
+
+		private class ItemCompare : IEqualityComparer<Item>
+		{
+			public bool Equals(Item x, Item y)
+			{
+				if (ReferenceEquals(null, x)) return false;
+				if (ReferenceEquals(null, y)) return false;
+				if (ReferenceEquals(x, y)) return true;
+
+				return x.Id == y.Id && (x.Metadata == y.Metadata || x.Metadata == -1 || y.Metadata == -1);
+			}
+
+			public int GetHashCode(Item obj)
+			{
+				return 0;
 			}
 		}
 
@@ -2690,65 +2755,6 @@ namespace MiNET
 			}
 		}
 
-		private long _itemUseTimer;
-
-		//public virtual void HandleMcpeUseItem(McpeUseItem message)
-		//{
-		//	if (message.item == null)
-		//	{
-		//		Log.Warn($"{Username} sent us a use item message with no item (null).");
-		//		return;
-		//	}
-
-		//	if (GameMode != GameMode.Creative && !VerifyItemStack(message.item))
-		//	{
-		//		Log.Warn($"Kicked {Username} for use item hacking.");
-		//		Disconnect("Error #324. Please report this error.");
-		//		return;
-		//	}
-
-		//	// Make sure we are holding the item we claim to be using
-		//	Item itemInHand = Inventory.GetItemInHand();
-		//	if (itemInHand == null || itemInHand.Id != message.item.Id)
-		//	{
-		//		Log.Warn($"Use item detected difference between server and client. Expected item {message.item} but server had item {itemInHand}");
-		//		return; // Cheat(?)
-		//	}
-
-		//	if (itemInHand.GetType() == typeof (Item))
-		//	{
-		//		Log.Warn($"Generic item in hand when placing block. Can not complete request. Expected item {message.item} and item in hand is {itemInHand}");
-		//	}
-
-		//	if (message.face >= 0 && message.face <= 5)
-		//	{
-		//		// Right click
-
-		//		Level.Interact(this, itemInHand, message.blockcoordinates, (BlockFace) message.face, message.facecoordinates);
-		//	}
-		//	else
-		//	{
-		//		Log.Debug($"Begin non-block action with {itemInHand}");
-
-		//		// Snowballs and shit
-
-		//		_itemUseTimer = Level.TickTime;
-
-		//		itemInHand.UseItem(Level, this, message.blockcoordinates);
-
-		//		IsUsingItem = true;
-		//		MetadataDictionary metadata = new MetadataDictionary
-		//		{
-		//			[0] = GetDataValue()
-		//		};
-
-		//		var setEntityData = McpeSetEntityData.CreateObject();
-		//		setEntityData.runtimeEntityId = EntityId;
-		//		setEntityData.metadata = metadata;
-		//		Level.RelayBroadcast(this, setEntityData);
-		//	}
-		//}
-
 		public void SendRespawn()
 		{
 			McpeRespawn mcpeRespawn = McpeRespawn.CreateObject();
@@ -2840,7 +2846,7 @@ namespace MiNET
 			SendGameRules();
 		}
 
-		private bool _showCoordinates = false;
+		private bool _showCoordinates = true;
 
 		[Wired]
 		public bool ShowCoordinates
@@ -3164,7 +3170,7 @@ namespace MiNET
 			SendPackage(package);
 		}
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
 			OnTicking(new PlayerEventArgs(this));
 
@@ -3207,7 +3213,7 @@ namespace MiNET
 
 			HungerManager.OnTick();
 
-			base.OnTick();
+			base.OnTick(entities);
 
 			if (LastAttackTarget != null && LastAttackTarget.HealthManager.IsDead)
 			{
@@ -3641,7 +3647,7 @@ namespace MiNET
 		public PlayerEventArgs(Player player)
 		{
 			Player = player;
-			Level = player.Level;
+			Level = player?.Level;
 		}
 	}
 }

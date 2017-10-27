@@ -13,7 +13,7 @@
 // WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 // the specific language governing rights and limitations under the License.
 // 
-// The Original Code is Niclas Olofsson.
+// The Original Code is MiNET.
 // 
 // The Original Developer is the Initial Developer.  The Initial Developer of
 // the Original Code is Niclas Olofsson.
@@ -44,7 +44,7 @@ namespace MiNET.Worlds
 {
 	public class AnvilWorldProvider : IWorldProvider, ICachingWorldProvider, ICloneable
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (AnvilWorldProvider));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(AnvilWorldProvider));
 
 		public static readonly Dictionary<int, Tuple<int, Func<int, byte, byte>>> Convert;
 
@@ -252,6 +252,11 @@ namespace MiNET.Worlds
 			return 0;
 		}
 
+		public bool CachedChunksContains(ChunkCoordinates chunkCoord)
+		{
+			return _chunkCache.ContainsKey(chunkCoord);
+		}
+
 		public ChunkColumn[] GetCachedChunks()
 		{
 			return _chunkCache.Values.Where(column => column != null).ToArray();
@@ -262,15 +267,14 @@ namespace MiNET.Worlds
 			_chunkCache.Clear();
 		}
 
-		public ChunkColumn GenerateChunkColumn(ChunkCoordinates chunkCoordinates)
+		public ChunkColumn GenerateChunkColumn(ChunkCoordinates chunkCoordinates, bool cacheOnly = false)
 		{
-			if (Locked)
+			ChunkColumn chunk;
+			if (Locked || cacheOnly)
 			{
-				ChunkColumn chunk;
 				_chunkCache.TryGetValue(chunkCoordinates, out chunk);
 				return chunk;
 			}
-
 
 			// Warning: The following code MAY execute the GetChunk 2 times for the same coordinate
 			// if called in rapid succession. However, for the scenario of the provider, this is highly unlikely.
@@ -296,7 +300,8 @@ namespace MiNET.Worlds
 					var chunkColumn = generator?.GenerateChunkColumn(coordinates);
 					if (chunkColumn != null)
 					{
-						//chunkColumn.NeedSave = true;
+						//SkyLightBlockAccess blockAccess = new SkyLightBlockAccess(this, chunkColumn);
+						//new SkyLightCalculations().RecalcSkyLight(chunkColumn, blockAccess);
 					}
 
 					return chunkColumn;
@@ -308,11 +313,11 @@ namespace MiNET.Worlds
 
 					regionFile.Read(buffer, 0, 8192);
 
-					int xi = (coordinates.X%width);
+					int xi = (coordinates.X % width);
 					if (xi < 0) xi += 32;
-					int zi = (coordinates.Z%depth);
+					int zi = (coordinates.Z % depth);
 					if (zi < 0) zi += 32;
-					int tableOffset = (xi + zi*width)*4;
+					int tableOffset = (xi + zi * width) * 4;
 
 					regionFile.Seek(tableOffset, SeekOrigin.Begin);
 
@@ -348,12 +353,12 @@ namespace MiNET.Worlds
 
 					if (compressionMode != 0x02)
 						throw new Exception($"CX={coordinates.X}, CZ={coordinates.Z}, NBT wrong compression. Expected 0x02, got 0x{compressionMode:X2}. " +
-						                    $"Offset={offset}, length={length}\n{Package.HexDump(waste)}");
+											$"Offset={offset}, length={length}\n{Package.HexDump(waste)}");
 
 					var nbt = new NbtFile();
 					nbt.LoadFromStream(regionFile, NbtCompression.ZLib);
 
-					NbtCompound dataTag = (NbtCompound) nbt.RootTag["Level"];
+					NbtCompound dataTag = (NbtCompound)nbt.RootTag["Level"];
 
 					bool isPocketEdition = false;
 					if (dataTag.Contains("MCPE BID"))
@@ -379,7 +384,7 @@ namespace MiNET.Worlds
 						int[] intHeights = heights.IntArrayValue;
 						for (int i = 0; i < 256; i++)
 						{
-							chunk.height[i] = (short) intHeights[i];
+							chunk.height[i] = (short)intHeights[i];
 						}
 					}
 
@@ -395,7 +400,7 @@ namespace MiNET.Worlds
 					{
 						foreach (var nbtTag in blockEntities)
 						{
-							var blockEntityTag = (NbtCompound) nbtTag.Clone();
+							var blockEntityTag = (NbtCompound)nbtTag.Clone();
 							string entityId = blockEntityTag["id"].StringValue;
 							int x = blockEntityTag["x"].IntValue;
 							int y = blockEntityTag["y"].IntValue;
@@ -427,7 +432,7 @@ namespace MiNET.Worlds
 								}
 								else if (blockEntity is ChestBlockEntity)
 								{
-									NbtList items = (NbtList) blockEntityTag["Items"];
+									NbtList items = (NbtList)blockEntityTag["Items"];
 
 									if (items != null)
 									{
@@ -460,9 +465,16 @@ namespace MiNET.Worlds
 
 					chunk.isDirty = false;
 					chunk.NeedSave = false;
+
+					if (Config.GetProperty("CalculateLights", false))
+					{
+						SkyLightBlockAccess blockAccess = new SkyLightBlockAccess(this, chunk);
+						new SkyLightCalculations().RecalcSkyLight(chunk, blockAccess);
+						//TODO: Block lights.
+					}
+
 					return chunk;
 				}
-
 			}
 			catch (Exception e)
 			{
@@ -527,7 +539,7 @@ namespace MiNET.Worlds
 
 						if (yi == 0 && (blockId == 8 || blockId == 9)) blockId = 7; // Bedrock under water
 
-						chunk.SetBlock(x, y, z, (byte) blockId);
+						chunk.SetBlock(x, y, z, (byte)blockId);
 						byte metadata = Nibble4(data, anvilIndex);
 						metadata = dataConverter(blockId, metadata);
 
@@ -548,14 +560,7 @@ namespace MiNET.Worlds
 
 						if (blockId == 0) continue;
 
-						if (convertBid && blockId == 3 && metadata == 1)
-						{
-							// Dirt Course => (Grass Path)
-							chunk.SetBlock(x, y, z, 198);
-							chunk.SetMetadata(x, y, z, 0);
-							blockId = 198;
-						}
-						else if (convertBid && blockId == 3 && metadata == 2)
+						if (convertBid && blockId == 3 && metadata == 2)
 						{
 							// Dirt Podzol => (Podzol)
 							chunk.SetBlock(x, y, z, 243);
@@ -567,7 +572,7 @@ namespace MiNET.Worlds
 						{
 							var block = BlockFactory.GetBlockById(chunk.GetBlock(x, y, z));
 							block.Coordinates = new BlockCoordinates(x + (chunkColumn.x << 4), yi, z + (chunkColumn.z << 4));
-							chunk.SetBlocklight(x, y, z, (byte) block.LightLevel);
+							chunk.SetBlocklight(x, y, z, (byte)block.LightLevel);
 							lock (LightSources) LightSources.Enqueue(block);
 						}
 					}
@@ -586,15 +591,15 @@ namespace MiNET.Worlds
 
 		private static byte Nibble4(byte[] arr, int index)
 		{
-			return (byte) (arr[index >> 1] >> ((index & 1)*4) & 0xF);
+			return (byte)(arr[index >> 1] >> ((index & 1) * 4) & 0xF);
 		}
 
 		private static void SetNibble4(byte[] arr, int index, byte value)
 		{
 			value &= 0xF;
 			var idx = index >> 1;
-			arr[idx] &= (byte) (0xF << (((index + 1) & 1)*4));
-			arr[idx] |= (byte) (value << ((index & 1)*4));
+			arr[idx] &= (byte)(0xF << (((index + 1) & 1) * 4));
+			arr[idx] |= (byte)(value << ((index & 1) * 4));
 		}
 
 		public Vector3 GetSpawnPoint()
@@ -754,11 +759,11 @@ namespace MiNET.Worlds
 				byte[] buffer = new byte[8192];
 				regionFile.Read(buffer, 0, buffer.Length);
 
-				int xi = (coordinates.X%width);
+				int xi = (coordinates.X % width);
 				if (xi < 0) xi += 32;
-				int zi = (coordinates.Z%depth);
+				int zi = (coordinates.Z % depth);
 				if (zi < 0) zi += 32;
-				int tableOffset = (xi + zi*width)*4;
+				int tableOffset = (xi + zi * width) * 4;
 
 				regionFile.Seek(tableOffset, SeekOrigin.Begin);
 
@@ -768,7 +773,7 @@ namespace MiNET.Worlds
 				regionFile.Read(offsetBuffer, 0, 3);
 				Array.Reverse(offsetBuffer);
 				int offset = BitConverter.ToInt32(offsetBuffer, 0) << 4;
-				byte sectorCount = (byte) regionFile.ReadByte();
+				byte sectorCount = (byte)regionFile.ReadByte();
 
 				testTime.Restart(); // RESTART
 
@@ -779,7 +784,7 @@ namespace MiNET.Worlds
 
 				byte[] nbtBuf = nbt.SaveToBuffer(NbtCompression.ZLib);
 				int nbtLength = nbtBuf.Length;
-				byte nbtSectorCount = (byte) Math.Ceiling(nbtLength/4096d);
+				byte nbtSectorCount = (byte)Math.Ceiling(nbtLength / 4096d);
 
 				// Don't write yet, just use the lenght
 
@@ -788,7 +793,7 @@ namespace MiNET.Worlds
 					if (Log.IsDebugEnabled) if (sectorCount != 0) Log.Warn($"Creating new sectors for this chunk even tho it existed. Old sector count={sectorCount}, new sector count={nbtSectorCount} (lenght={nbtLength})");
 
 					regionFile.Seek(0, SeekOrigin.End);
-					offset = (int) ((int) regionFile.Position & 0xfffffff0);
+					offset = (int)((int)regionFile.Position & 0xfffffff0);
 
 					regionFile.Seek(tableOffset, SeekOrigin.Begin);
 
@@ -842,7 +847,7 @@ namespace MiNET.Worlds
 
 				NbtCompound sectionTag = new NbtCompound();
 				sectionsTag.Add(sectionTag);
-				sectionTag.Add(new NbtByte("Y", (byte) i));
+				sectionTag.Add(new NbtByte("Y", (byte)i));
 
 				byte[] blocks = new byte[4096];
 				byte[] data = new byte[2048];
@@ -856,7 +861,7 @@ namespace MiNET.Worlds
 						{
 							for (int y = 0; y < 16; y++)
 							{
-								int anvilIndex = y*16*16 + z*16 + x;
+								int anvilIndex = y * 16 * 16 + z * 16 + x;
 								byte blockId = section.GetBlock(x, y, z);
 								blocks[anvilIndex] = blockId;
 								SetNibble4(data, anvilIndex, section.GetMetadata(x, y, z));
@@ -886,7 +891,7 @@ namespace MiNET.Worlds
 			NbtList blockEntitiesTag = new NbtList("TileEntities", NbtTagType.Compound);
 			foreach (NbtCompound blockEntityNbt in chunk.BlockEntities.Values)
 			{
-				NbtCompound nbtClone = (NbtCompound) blockEntityNbt.Clone();
+				NbtCompound nbtClone = (NbtCompound)blockEntityNbt.Clone();
 				nbtClone.Name = null;
 				blockEntitiesTag.Add(nbtClone);
 			}
@@ -908,10 +913,10 @@ namespace MiNET.Worlds
 			ConcurrentDictionary<ChunkCoordinates, ChunkColumn> chunkCache = new ConcurrentDictionary<ChunkCoordinates, ChunkColumn>();
 			foreach (KeyValuePair<ChunkCoordinates, ChunkColumn> valuePair in _chunkCache)
 			{
-				chunkCache.TryAdd(valuePair.Key, (ChunkColumn) valuePair.Value?.Clone());
+				chunkCache.TryAdd(valuePair.Key, (ChunkColumn)valuePair.Value?.Clone());
 			}
 
-			AnvilWorldProvider provider = new AnvilWorldProvider(BasePath, (LevelInfo) LevelInfo.Clone(), chunkCache);
+			AnvilWorldProvider provider = new AnvilWorldProvider(BasePath, (LevelInfo)LevelInfo.Clone(), chunkCache);
 			return provider;
 		}
 

@@ -47,7 +47,7 @@ namespace MiNET.Items
 			Arrow arrow = new Arrow(player, world, 2, !(force < 1.0));
 			arrow.PowerLevel = this.GetEnchantingLevel(EnchantingType.Power);
 			arrow.KnownPosition = (PlayerLocation) player.KnownPosition.Clone();
-			arrow.KnownPosition.Y += 1.62f;
+		//	arrow.KnownPosition.Y += (float)(player.Height * player.Scale) / 2F;
 
 			arrow.Velocity = arrow.KnownPosition.GetHeadDirection() * (force * 2.0f * 1.5f);
 			arrow.KnownPosition.Yaw = (float) arrow.Velocity.GetYaw();

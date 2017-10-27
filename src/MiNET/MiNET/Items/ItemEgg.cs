@@ -18,7 +18,7 @@ namespace MiNET.Items
 
 			Egg egg = new Egg(player, world);
 			egg.KnownPosition = (PlayerLocation) player.KnownPosition.Clone();
-			egg.KnownPosition.Y += 1.62f;
+	//		egg.KnownPosition.Y += 1.62f;
 			egg.Velocity = egg.KnownPosition.GetDirection()*(force);
 			egg.BroadcastMovement = false;
 			egg.DespawnOnImpact = true;

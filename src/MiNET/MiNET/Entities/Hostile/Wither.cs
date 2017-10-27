@@ -32,7 +32,7 @@ namespace MiNET.Entities.Hostile
 {
 	public class Wither : HostileMob, IAgeable
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (ElderGuardian));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(ElderGuardian));
 
 		public int AnimationStep { get; set; } = 0;
 		public bool ShowAuora { get; set; } = true;
@@ -72,7 +72,7 @@ namespace MiNET.Entities.Hostile
 			metadata[50] = new MetadataLong(-1);
 			metadata[51] = new MetadataLong(-1);
 			metadata[52] = new MetadataLong(-1);
-			metadata[53] = new MetadataShort((short) (ShowAuora ? 0 : 1));
+			metadata[53] = new MetadataShort((short)(ShowAuora ? 0 : 1));
 			metadata[54] = new MetadataFloat(1f);
 			metadata[55] = new MetadataFloat(3f);
 			metadata[58] = new MetadataByte(0);
@@ -99,7 +99,7 @@ namespace MiNET.Entities.Hostile
 		private long _tick = 0;
 		private CooldownTimer cooldown = new CooldownTimer(TimeSpan.FromMilliseconds(10000));
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
 			//base.OnTick();
 
@@ -123,7 +123,7 @@ namespace MiNET.Entities.Hostile
 					ShowAuora = false;
 				}
 
-				AnimationStep = (int) _tick;
+				AnimationStep = (int)_tick;
 				BroadcastSetEntityData();
 			}
 		}

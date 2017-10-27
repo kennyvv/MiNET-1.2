@@ -4,13 +4,14 @@ using System.Text;
 using MiNET.Items;
 using MiNET.Net;
 using MiNET.Utils;
+using MiNET.Utils.Skins;
 using MiNET.Worlds;
 
 namespace MiNET.Entities
 {
 	public class PlayerMob : Mob
 	{
-		public UUID Uuid { get; private set; }
+		public UUID ClientUuid { get; private set; }
 		public Skin Skin { get; set; }
 
 		public short Boots { get; set; }
@@ -22,7 +23,7 @@ namespace MiNET.Entities
 
 		public PlayerMob(string name, Level level) : base(63, level)
 		{
-			Uuid = new UUID(Guid.NewGuid().ToByteArray());
+			ClientUuid = new UUID(Guid.NewGuid().ToByteArray());
 
 			Width = 0.6;
 			Length = 0.6;
@@ -31,7 +32,7 @@ namespace MiNET.Entities
 			IsSpawned = false;
 
 			NameTag = name;
-			Skin = new Skin {Slim = false, SkinData = Encoding.Default.GetBytes(new string('Z', 8192))};
+			Skin = new Skin { Slim = false, SkinData = Encoding.Default.GetBytes(new string('Z', 8192)) };
 
 			ItemInHand = new ItemAir();
 
@@ -43,6 +44,25 @@ namespace MiNET.Entities
 			HealthManager.IsOnFire = false;
 			Velocity = Vector3.Zero;
 			PositionOffset = 1.62f;
+		}
+
+		[Wired]
+		public void SetPosition(PlayerLocation position, bool teleport = true)
+		{
+			KnownPosition = position;
+			LastUpdatedTime = DateTime.UtcNow;
+
+			var package = McpeMovePlayer.CreateObject();
+			package.runtimeEntityId = EntityId;
+			package.x = position.X;
+			package.y = position.Y + 1.62f;
+			package.z = position.Z;
+			package.yaw = position.HeadYaw;
+			package.headYaw = position.Yaw;
+			package.pitch = position.Pitch;
+			package.mode = (byte)(teleport ? 1 : 0);
+
+			Level.RelayBroadcast(package);
 		}
 
 		public override MetadataDictionary GetMetadata()
@@ -58,23 +78,22 @@ namespace MiNET.Entities
 			{
 				Player fake = new Player(null, null)
 				{
-					ClientUuid = Uuid,
+					ClientUuid = ClientUuid,
 					EntityId = EntityId,
 					NameTag = NameTag,
 					Skin = Skin
 				};
 
 				McpePlayerList playerList = McpePlayerList.CreateObject();
-				playerList.records = new PlayerAddRecords {fake};
+				playerList.records = new PlayerAddRecords { fake };
 				Level.RelayBroadcast(players, Level.CreateMcpeBatch(playerList.Encode()));
 				playerList.records = null;
 				playerList.PutPool();
-
 			}
 
 			{
 				McpeAddPlayer message = McpeAddPlayer.CreateObject();
-				message.uuid = Uuid;
+				message.uuid = ClientUuid;
 				message.username = NameTag;
 				message.entityIdSelf = EntityId;
 				message.runtimeEntityId = EntityId;
@@ -107,14 +126,14 @@ namespace MiNET.Entities
 			{
 				Player fake = new Player(null, null)
 				{
-					ClientUuid = Uuid,
+					ClientUuid = ClientUuid,
 					EntityId = EntityId,
 					NameTag = NameTag,
 					Skin = Skin
 				};
 
 				McpePlayerList playerList = McpePlayerList.CreateObject();
-				playerList.records = new PlayerRemoveRecords {fake};
+				playerList.records = new PlayerRemoveRecords { fake };
 				Level.RelayBroadcast(players, Level.CreateMcpeBatch(playerList.Encode()));
 				playerList.records = null;
 				playerList.PutPool();
@@ -133,14 +152,14 @@ namespace MiNET.Entities
 			{
 				Player fake = new Player(null, null)
 				{
-					ClientUuid = Uuid,
+					ClientUuid = ClientUuid,
 					EntityId = EntityId,
 					NameTag = NameTag,
 					Skin = Skin
 				};
 
 				McpePlayerList playerList = McpePlayerList.CreateObject();
-				playerList.records = new PlayerRemoveRecords {fake};
+				playerList.records = new PlayerRemoveRecords { fake };
 				Level.RelayBroadcast(players, Level.CreateMcpeBatch(playerList.Encode()));
 				playerList.records = null;
 				playerList.PutPool();
@@ -151,10 +170,29 @@ namespace MiNET.Entities
 			Level.RelayBroadcast(players, mcpeRemovePlayer);
 		}
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
+			OnTicking(new PlayerEventArgs(null));
+
 			// Do nothing of the mob stuff
+
+			OnTicked(new PlayerEventArgs(null));
 		}
+
+		public event EventHandler<PlayerEventArgs> Ticking;
+
+		protected virtual void OnTicking(PlayerEventArgs e)
+		{
+			Ticking?.Invoke(this, e);
+		}
+
+		public event EventHandler<PlayerEventArgs> Ticked;
+
+		protected virtual void OnTicked(PlayerEventArgs e)
+		{
+			Ticked?.Invoke(this, e);
+		}
+
 
 		protected virtual void SendEquipment()
 		{

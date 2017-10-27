@@ -35,12 +35,12 @@ namespace MiNET.Entities.Behaviors
 			return _timeLeft-- > 0;
 		}
 
-		public virtual void OnTick()
+		public virtual void OnTick(Entity[] entities)
 		{
-			float speedFactor = (float) (_speed*_speedMultiplier);
+			float speedFactor = (float)(_speed * _speedMultiplier * 0.7f * (_entity.IsInWater ? 0.3 : 1.0)); // 0.7 is a general mob base factor
 			var level = _entity.Level;
 			var coordinates = _entity.KnownPosition;
-			var direction = _entity.GetHorizDir()*new Vector3(1, 0, 1);
+			var direction = _entity.GetHorizDir() * new Vector3(1, 0, 1);
 
 			var blockDown = level.GetBlock(coordinates + BlockCoordinates.Down);
 			if (_entity.Velocity.Y < 0 && blockDown is Air)
@@ -49,11 +49,11 @@ namespace MiNET.Entities.Behaviors
 				return;
 			}
 
-			BlockCoordinates coord = (BlockCoordinates) (coordinates + (direction*speedFactor) + (direction*(float) _entity.Length/2));
+			BlockCoordinates coord = (BlockCoordinates)(coordinates + (direction * speedFactor) + (direction * (float)_entity.Length / 2));
 
 			var players = level.GetSpawnedPlayers();
 			bool entityCollide = false;
-			var boundingBox = _entity.GetBoundingBox().OffsetBy((direction*speedFactor) + (direction*(float) _entity.Length/2));
+			var boundingBox = _entity.GetBoundingBox().OffsetBy((direction * speedFactor) + (direction * (float)_entity.Length / 2));
 			foreach (var player in players)
 			{
 				if (player.GetBoundingBox().Intersects(boundingBox))
@@ -65,12 +65,12 @@ namespace MiNET.Entities.Behaviors
 
 			if (!entityCollide)
 			{
-				var entities = level.GetEntites();
+				var bbox = boundingBox;
 				foreach (var ent in entities)
 				{
 					if (ent == _entity) continue;
 
-					if (ent.GetBoundingBox().Intersects(boundingBox) && ent.EntityId > _entity.EntityId)
+					if (ent.EntityId > _entity.EntityId && _entity.IsColliding(bbox, ent))
 					{
 						if (_entity.Velocity == Vector3.Zero && level.Random.Next(1000) == 0)
 						{
@@ -89,9 +89,9 @@ namespace MiNET.Entities.Behaviors
 			var colliding = block.IsSolid || (_entity.Height >= 1 && blockUp.IsSolid);
 			if (!colliding && !entityCollide)
 			{
-				var velocity = direction*speedFactor;
+				var velocity = direction * speedFactor;
 				//Log.Debug($"Moving sheep: {velocity}");
-				if ((_entity.Velocity*new Vector3(1, 0, 1)).Length() < velocity.Length())
+				if ((_entity.Velocity * new Vector3(1, 0, 1)).Length() < velocity.Length())
 				{
 					_entity.Velocity += velocity - _entity.Velocity;
 				}
@@ -112,8 +112,9 @@ namespace MiNET.Entities.Behaviors
 					//Log.Debug($"Block ahead: {block}, turning");
 					int rot = level.Random.Next(2) == 0 ? level.Random.Next(45, 180) : level.Random.Next(-180, -45);
 					_entity.Direction += rot;
-					_entity.KnownPosition.HeadYaw += rot;
-					_entity.KnownPosition.Yaw += rot;
+					_entity.Direction = Mob.ClampDegrees(_entity.Direction);
+					_entity.KnownPosition.HeadYaw = (float)_entity.Direction;
+					_entity.KnownPosition.Yaw = (float)_entity.Direction;
 					_entity.Velocity *= new Vector3(0, 1, 0);
 				}
 			}

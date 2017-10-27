@@ -13,16 +13,16 @@ namespace MiNET.Entities.Projectiles
 {
 	public class Projectile : Entity
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (Projectile));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(Projectile));
 
-		public Player Shooter { get; set; }
+		public Entity Shooter { get; set; }
 		public int Ttl { get; set; }
 		public bool DespawnOnImpact { get; set; }
 		public int Damage { get; set; }
 		public int PowerLevel { get; set; } = 0;
 		public float HitBoxPrecision { get; set; } = 0.3f;
 
-		protected Projectile(Player shooter, int entityTypeId, Level level, int damage, bool isCritical = false) : base(entityTypeId, level)
+		protected Projectile(Entity shooter, int entityTypeId, Level level, int damage, bool isCritical = false) : base(entityTypeId, level)
 		{
 			Shooter = shooter;
 			Damage = damage;
@@ -66,13 +66,13 @@ namespace MiNET.Entities.Projectiles
 			return metadata;
 		}
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
 			//base.OnTick();
 
 			if (KnownPosition.Y <= 0
-			    || (Velocity.Length() <= 0 && DespawnOnImpact)
-			    || (Velocity.Length() <= 0 && !DespawnOnImpact && Ttl <= 0))
+				|| (Velocity.Length() <= 0 && DespawnOnImpact)
+				|| (Velocity.Length() <= 0 && !DespawnOnImpact && Ttl <= 0))
 			{
 				if (DespawnOnImpact || (!DespawnOnImpact && Ttl <= 0))
 				{
@@ -95,55 +95,59 @@ namespace MiNET.Entities.Projectiles
 			bool collided = false;
 			if (entityCollided != null)
 			{
-				double speed = Math.Sqrt(Velocity.X*Velocity.X + Velocity.Y*Velocity.Y + Velocity.Z*Velocity.Z);
-				double damage = Math.Ceiling(speed*Damage);
-				if (IsCritical)
+				if (OnEntityColission(entityCollided))
 				{
-					damage += Level.Random.Next((int) (damage/2 + 2));
+					double speed = Math.Sqrt(Velocity.X*Velocity.X + Velocity.Y*Velocity.Y + Velocity.Z*Velocity.Z);
+					double damage = Math.Ceiling(speed*Damage);
+					if (IsCritical)
+					{
+						damage += Level.Random.Next((int) (damage/2 + 2));
 
-					McpeAnimate animate = McpeAnimate.CreateObject();
-					animate.runtimeEntityId = entityCollided.EntityId;
-					animate.actionId = 4;
-					Level.RelayBroadcast(animate);
+						McpeAnimate animate = McpeAnimate.CreateObject();
+						animate.runtimeEntityId = entityCollided.EntityId;
+						animate.actionId = 4;
+						Level.RelayBroadcast(animate);
+					}
+
+					if (PowerLevel > 0)
+					{
+						damage = damage + ((PowerLevel + 1)*0.25);
+					}
+
+
+					Player player = entityCollided as Player;
+
+					if (player != null)
+					{
+						damage = player.DamageCalculator.CalculatePlayerDamage(this, player, null, damage, DamageCause.Projectile);
+						player.LastAttackTarget = entityCollided;
+					}
+
+					entityCollided.HealthManager.TakeHit(this, (int) damage, DamageCause.Projectile);
+					entityCollided.HealthManager.LastDamageSource = Shooter;
+
+					DespawnEntity();
+					return;
 				}
-
-				if (PowerLevel > 0)
-				{
-					damage = damage + ((PowerLevel + 1)*0.25);
-				}
-
-				Player player = entityCollided as Player;
-
-				if (player != null)
-				{
-					damage = player.DamageCalculator.CalculatePlayerDamage(this, player, null, damage, DamageCause.Projectile);
-					player.LastAttackTarget = entityCollided;
-				}
-
-				entityCollided.HealthManager.TakeHit(this, (int) damage, DamageCause.Projectile);
-				entityCollided.HealthManager.LastDamageSource = Shooter;
-
-				DespawnEntity();
-				return;
 			}
 			else
 			{
 				var velocity2 = Velocity;
-				velocity2 *= (float) (1.0d - Drag);
-				velocity2 -= new Vector3(0, (float) Gravity, 0);
+				velocity2 *= (float)(1.0d - Drag);
+				velocity2 -= new Vector3(0, (float)Gravity, 0);
 				double distance = velocity2.Length();
-				velocity2 = Vector3.Normalize(velocity2)/2;
+				velocity2 = Vector3.Normalize(velocity2) / 2;
 
-				for (int i = 0; i < Math.Ceiling(distance)*2; i++)
+				for (int i = 0; i < Math.Ceiling(distance) * 2; i++)
 				{
 					Vector3 nextPos = KnownPosition.ToVector3();
-					nextPos.X += (float) velocity2.X*i;
-					nextPos.Y += (float) velocity2.Y*i;
-					nextPos.Z += (float) velocity2.Z*i;
+					nextPos.X += velocity2.X * i;
+					nextPos.Y += velocity2.Y * i;
+					nextPos.Z += velocity2.Z * i;
 
 					Block block = Level.GetBlock(nextPos);
 					collided = block.IsSolid && block.GetBoundingBox().Contains(nextPos);
-					if (collided)
+					if (collided && OnBlockColission(block))
 					{
 						SetIntersectLocation(block.GetBoundingBox(), KnownPosition.ToVector3());
 						break;
@@ -157,15 +161,15 @@ namespace MiNET.Entities.Projectiles
 			}
 			else
 			{
-				KnownPosition.X += (float) Velocity.X;
-				KnownPosition.Y += (float) Velocity.Y;
-				KnownPosition.Z += (float) Velocity.Z;
+				KnownPosition.X += (float)Velocity.X;
+				KnownPosition.Y += (float)Velocity.Y;
+				KnownPosition.Z += (float)Velocity.Z;
 
-				Velocity *= (float) (1.0 - Drag);
-				Velocity -= new Vector3(0, (float) Gravity, 0);
+				Velocity *= (float)(1.0 - Drag);
+				Velocity -= new Vector3(0, (float)Gravity, 0);
 
-				KnownPosition.Yaw = (float) Velocity.GetYaw();
-				KnownPosition.Pitch = (float) Velocity.GetPitch();
+				KnownPosition.Yaw = (float)Velocity.GetYaw();
+				KnownPosition.Pitch = (float)Velocity.GetPitch();
 			}
 
 			// For debugging of flight-path
@@ -195,8 +199,8 @@ namespace MiNET.Entities.Projectiles
 				{
 					if (ray.tNear > direction.Length()) break;
 
-					Vector3 p = ray.x + new Vector3((float) ray.tNear)*ray.d;
-					KnownPosition = new PlayerLocation((float) p.X, (float) p.Y, (float) p.Z);
+					Vector3 p = ray.x + new Vector3((float)ray.tNear) * ray.d;
+					KnownPosition = new PlayerLocation((float)p.X, (float)p.Y, (float)p.Z);
 					return entity;
 				}
 			}
@@ -212,7 +216,7 @@ namespace MiNET.Entities.Projectiles
 				{
 					if (ray.tNear > direction.Length()) break;
 
-					Vector3 p = ray.x + new Vector3((float) ray.tNear)*ray.d;
+					Vector3 p = ray.x + new Vector3((float)ray.tNear) * ray.d;
 					KnownPosition = new PlayerLocation(p.X, p.Y, p.Z);
 					return entity;
 				}
@@ -227,9 +231,9 @@ namespace MiNET.Entities.Projectiles
 			var pos = location.ToVector3();
 
 			var coords = new BlockCoordinates(
-				(int) Math.Floor(KnownPosition.X),
-				(int) Math.Floor((bbox.Max.Y + bbox.Min.Y)/2.0),
-				(int) Math.Floor(KnownPosition.Z));
+				(int)Math.Floor(KnownPosition.X),
+				(int)Math.Floor((bbox.Max.Y + bbox.Min.Y) / 2.0),
+				(int)Math.Floor(KnownPosition.Z));
 
 			Dictionary<double, Block> blocks = new Dictionary<double, Block>();
 
@@ -276,7 +280,7 @@ namespace MiNET.Entities.Projectiles
 			}
 
 			// Use to debug hits, makes visual impressions (can be used for paintball too)
-			var substBlock = new Stone {Coordinates = firstBlock.Coordinates};
+			var substBlock = new Stone { Coordinates = firstBlock.Coordinates };
 			Level.SetBlock(substBlock);
 			// End debug block
 
@@ -290,8 +294,8 @@ namespace MiNET.Entities.Projectiles
 			double? distance = ray.Intersects(bbox);
 			if (distance != null)
 			{
-				float dist = (float) distance - 0.1f;
-				Vector3 pos = ray.Position + (ray.Direction*new Vector3(dist));
+				float dist = (float)distance - 0.1f;
+				Vector3 pos = ray.Position + (ray.Direction * new Vector3(dist));
 				KnownPosition.X = pos.X;
 				KnownPosition.Y = pos.Y;
 				KnownPosition.Z = pos.Z;
@@ -322,14 +326,28 @@ namespace MiNET.Entities.Projectiles
 
 			if (Shooter != null && IsCritical)
 			{
-				var particle = new CriticalParticle(Level);
-				particle.Position = KnownPosition.ToVector3();
-				particle.Spawn(new[] {Shooter});
+				var p = Shooter as Player;
+
+				if (p != null)
+				{
+					var particle = new CriticalParticle(Level);
+					particle.Position = KnownPosition.ToVector3();
+					particle.Spawn(new[] {p});
+				}
 			}
 		}
 
 		public bool BroadcastMovement { get; set; }
 
+		protected virtual bool OnEntityColission(Entity entity)
+		{
+			return true;
+		}
+
+		protected virtual bool OnBlockColission(Block block)
+		{
+			return true;
+		}
 
 		public static Vector3 GetMinimum(BoundingBox bbox)
 		{
@@ -352,13 +370,13 @@ namespace MiNET.Entities.Projectiles
 
 			ray.tNear = Double.MaxValue;
 
-			t = (min.X - ix)/ray.d.X;
+			t = (min.X - ix) / ray.d.X;
 			if (t < ray.tNear && t > -Ray2.EPSILON)
 			{
-				u = iz + ray.d.Z*t;
-				v = iy + ray.d.Y*t;
+				u = iz + ray.d.Z * t;
+				v = iy + ray.d.Y * t;
 				if (u >= min.Z && u <= max.Z &&
-				    v >= min.Y && v <= max.Y)
+					v >= min.Y && v <= max.Y)
 				{
 					hit = true;
 					ray.tNear = t;
@@ -369,13 +387,13 @@ namespace MiNET.Entities.Projectiles
 					ray.n.Z = 0;
 				}
 			}
-			t = (max.X - ix)/ray.d.X;
+			t = (max.X - ix) / ray.d.X;
 			if (t < ray.tNear && t > -Ray2.EPSILON)
 			{
-				u = iz + ray.d.Z*t;
-				v = iy + ray.d.Y*t;
+				u = iz + ray.d.Z * t;
+				v = iy + ray.d.Y * t;
 				if (u >= min.Z && u <= max.Z &&
-				    v >= min.Y && v <= max.Y)
+					v >= min.Y && v <= max.Y)
 				{
 					hit = true;
 					ray.tNear = t;
@@ -386,13 +404,13 @@ namespace MiNET.Entities.Projectiles
 					ray.n.Z = 0;
 				}
 			}
-			t = (min.Y - iy)/ray.d.Y;
+			t = (min.Y - iy) / ray.d.Y;
 			if (t < ray.tNear && t > -Ray2.EPSILON)
 			{
-				u = ix + ray.d.X*t;
-				v = iz + ray.d.Z*t;
+				u = ix + ray.d.X * t;
+				v = iz + ray.d.Z * t;
 				if (u >= min.X && u <= max.X &&
-				    v >= min.Z && v <= max.Z)
+					v >= min.Z && v <= max.Z)
 				{
 					hit = true;
 					ray.tNear = t;
@@ -403,13 +421,13 @@ namespace MiNET.Entities.Projectiles
 					ray.n.Z = 0;
 				}
 			}
-			t = (max.Y - iy)/ray.d.Y;
+			t = (max.Y - iy) / ray.d.Y;
 			if (t < ray.tNear && t > -Ray2.EPSILON)
 			{
-				u = ix + ray.d.X*t;
-				v = iz + ray.d.Z*t;
+				u = ix + ray.d.X * t;
+				v = iz + ray.d.Z * t;
 				if (u >= min.X && u <= max.X &&
-				    v >= min.Z && v <= max.Z)
+					v >= min.Z && v <= max.Z)
 				{
 					hit = true;
 					ray.tNear = t;
@@ -420,13 +438,13 @@ namespace MiNET.Entities.Projectiles
 					ray.n.Z = 0;
 				}
 			}
-			t = (min.Z - iz)/ray.d.Z;
+			t = (min.Z - iz) / ray.d.Z;
 			if (t < ray.tNear && t > -Ray2.EPSILON)
 			{
-				u = ix + ray.d.X*t;
-				v = iy + ray.d.Y*t;
+				u = ix + ray.d.X * t;
+				v = iy + ray.d.Y * t;
 				if (u >= min.X && u <= max.X &&
-				    v >= min.Y && v <= max.Y)
+					v >= min.Y && v <= max.Y)
 				{
 					hit = true;
 					ray.tNear = t;
@@ -437,13 +455,13 @@ namespace MiNET.Entities.Projectiles
 					ray.n.Z = -1;
 				}
 			}
-			t = (max.Z - iz)/ray.d.Z;
+			t = (max.Z - iz) / ray.d.Z;
 			if (t < ray.tNear && t > -Ray2.EPSILON)
 			{
-				u = ix + ray.d.X*t;
-				v = iy + ray.d.Y*t;
+				u = ix + ray.d.X * t;
+				v = iy + ray.d.Y * t;
 				if (u >= min.X && u <= max.X &&
-				    v >= min.Y && v <= max.Y)
+					v >= min.Y && v <= max.Y)
 				{
 					hit = true;
 					ray.tNear = t;

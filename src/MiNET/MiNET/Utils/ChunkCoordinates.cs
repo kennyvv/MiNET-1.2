@@ -56,8 +56,8 @@ namespace MiNET.Utils
 
 		public ChunkCoordinates(PlayerLocation location)
 		{
-			X = ((int) Math.Floor(location.X)) >> 4;
-			Z = ((int) Math.Floor(location.Z)) >> 4;
+			X = ((int)Math.Floor(location.X)) >> 4;
+			Z = ((int)Math.Floor(location.Z)) >> 4;
 		}
 
 		/// <summary>
@@ -77,7 +77,7 @@ namespace MiNET.Utils
 		public double DistanceTo(ChunkCoordinates other)
 		{
 			return Math.Sqrt(Square(other.X - X) +
-			                 Square(other.Z - Z));
+							 Square(other.Z - Z));
 		}
 
 		/// <summary>
@@ -85,7 +85,7 @@ namespace MiNET.Utils
 		/// </summary>
 		private int Square(int num)
 		{
-			return num*num;
+			return num * num;
 		}
 
 		/// <summary>
@@ -145,17 +145,17 @@ namespace MiNET.Utils
 
 		public static ChunkCoordinates operator *(ChunkCoordinates a, ChunkCoordinates b)
 		{
-			return new ChunkCoordinates(a.X*b.X, a.Z*b.Z);
+			return new ChunkCoordinates(a.X * b.X, a.Z * b.Z);
 		}
 
 		public static ChunkCoordinates operator /(ChunkCoordinates a, ChunkCoordinates b)
 		{
-			return new ChunkCoordinates(a.X/b.X, a.Z/b.Z);
+			return new ChunkCoordinates(a.X / b.X, a.Z / b.Z);
 		}
 
 		public static ChunkCoordinates operator %(ChunkCoordinates a, ChunkCoordinates b)
 		{
-			return new ChunkCoordinates(a.X%b.X, a.Z%b.Z);
+			return new ChunkCoordinates(a.X % b.X, a.Z % b.Z);
 		}
 
 		public static ChunkCoordinates operator +(ChunkCoordinates a, int b)
@@ -170,17 +170,17 @@ namespace MiNET.Utils
 
 		public static ChunkCoordinates operator *(ChunkCoordinates a, int b)
 		{
-			return new ChunkCoordinates(a.X*b, a.Z*b);
+			return new ChunkCoordinates(a.X * b, a.Z * b);
 		}
 
 		public static ChunkCoordinates operator /(ChunkCoordinates a, int b)
 		{
-			return new ChunkCoordinates(a.X/b, a.Z/b);
+			return new ChunkCoordinates(a.X / b, a.Z / b);
 		}
 
 		public static ChunkCoordinates operator %(ChunkCoordinates a, int b)
 		{
-			return new ChunkCoordinates(a.X%b, a.Z%b);
+			return new ChunkCoordinates(a.X % b, a.Z % b);
 		}
 
 		public static ChunkCoordinates operator +(int a, ChunkCoordinates b)
@@ -195,17 +195,17 @@ namespace MiNET.Utils
 
 		public static ChunkCoordinates operator *(int a, ChunkCoordinates b)
 		{
-			return new ChunkCoordinates(a*b.X, a*b.Z);
+			return new ChunkCoordinates(a * b.X, a * b.Z);
 		}
 
 		public static ChunkCoordinates operator /(int a, ChunkCoordinates b)
 		{
-			return new ChunkCoordinates(a/b.X, a/b.Z);
+			return new ChunkCoordinates(a / b.X, a / b.Z);
 		}
 
 		public static ChunkCoordinates operator %(int a, ChunkCoordinates b)
 		{
-			return new ChunkCoordinates(a%b.X, a%b.Z);
+			return new ChunkCoordinates(a % b.X, a % b.Z);
 		}
 
 		public static explicit operator ChunkCoordinates(BlockCoordinates b)
@@ -216,6 +216,8 @@ namespace MiNET.Utils
 		#endregion
 
 		#region Constants
+
+		public static readonly ChunkCoordinates None = new ChunkCoordinates(Int32.MinValue);
 
 		public static readonly ChunkCoordinates Zero = new ChunkCoordinates(0);
 		public static readonly ChunkCoordinates One = new ChunkCoordinates(1);
@@ -235,14 +237,14 @@ namespace MiNET.Utils
 		public override bool Equals(object obj)
 		{
 			if (ReferenceEquals(null, obj)) return false;
-			return obj is ChunkCoordinates && Equals((ChunkCoordinates) obj);
+			return obj is ChunkCoordinates && Equals((ChunkCoordinates)obj);
 		}
 
 		public override int GetHashCode()
 		{
 			unchecked
 			{
-				return (X*397) ^ Z;
+				return (X * 397) ^ Z;
 			}
 		}
 	}

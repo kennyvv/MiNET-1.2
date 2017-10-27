@@ -13,7 +13,7 @@
 // WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 // the specific language governing rights and limitations under the License.
 // 
-// The Original Code is Niclas Olofsson.
+// The Original Code is MiNET.
 // 
 // The Original Developer is the Initial Developer.  The Initial Developer of
 // the Original Code is Niclas Olofsson.
@@ -33,7 +33,7 @@ namespace MiNET.Crafting
 {
 	public class RecipeManager
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (RecipeManager));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(RecipeManager));
 
 		public static Recipes Recipes { get; private set; }
 
@@ -4146,75 +4146,6 @@ namespace MiNET.Crafting
 		public static void Add(Recipe recipe)
 		{
 			Log.InfoFormat("{0}", recipe.Id);
-		}
-	}
-
-
-	public class Recipes : List<Recipe>
-	{
-	}
-
-	public abstract class Recipe
-	{
-		public UUID Id { get; set; }
-	}
-
-	public class EnchantingRecipe : Recipe
-	{
-	}
-
-
-	public class ShapelessRecipe : Recipe
-	{
-		public List<Item> Input { get; private set; }
-		public Item Result { get; set; }
-
-		public ShapelessRecipe()
-		{
-			Input = new List<Item>();
-		}
-
-		public ShapelessRecipe(Item result, List<Item> input) : this()
-		{
-			Result = result;
-			Input = input;
-		}
-	}
-
-	public class ShapedRecipe : Recipe
-	{
-		public int Width { get; set; }
-		public int Height { get; set; }
-		public Item[] Input { get; set; }
-		public Item Result { get; set; }
-
-		public ShapedRecipe(int width, int height)
-		{
-			Width = width;
-			Height = height;
-			Input = new Item[Width*height];
-		}
-
-		public ShapedRecipe(int width, int height, Item result, Item[] input) : this(width, height)
-		{
-			Result = result;
-			Input = input;
-		}
-	}
-
-	public class SmeltingRecipe : Recipe
-	{
-		public Item Input { get; set; }
-		public Item Result { get; set; }
-
-		public SmeltingRecipe()
-		{
-		}
-
-		public SmeltingRecipe(Item result, Item input) : this()
-		{
-			Result = result;
-			Input = input;
 		}
 	}
 }

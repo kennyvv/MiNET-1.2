@@ -39,9 +39,10 @@ namespace MiNET.Worlds
 {
 	public class ChunkColumn : ICloneable
 	{
-		private static readonly ILog Log = LogManager.GetLogger(typeof (ChunkColumn));
+		private static readonly ILog Log = LogManager.GetLogger(typeof(ChunkColumn));
 
 		public bool isAllAir = false;
+		public bool isNew = true;
 
 		public int x;
 		public int z;
@@ -79,7 +80,7 @@ namespace MiNET.Worlds
 		public byte GetBlock(int bx, int by, int bz)
 		{
 			Chunk chunk = chunks[by >> 4];
-			return chunk.GetBlock(bx, by - 16*(by >> 4), bz);
+			return chunk.GetBlock(bx, by - 16 * (by >> 4), bz);
 		}
 
 		public void SetBlock(int bx, int by, int bz, byte bid)
@@ -87,7 +88,7 @@ namespace MiNET.Worlds
 			//int i = 30 - (16*(30 >> 4));
 
 			Chunk chunk = chunks[by >> 4];
-			chunk.SetBlock(bx, by - 16*(by >> 4), bz, bid);
+			chunk.SetBlock(bx, by - 16 * (by >> 4), bz, bid);
 			SetDirty();
 		}
 
@@ -99,7 +100,7 @@ namespace MiNET.Worlds
 
 		public byte GetHeight(int bx, int bz)
 		{
-			return (byte) height[((bz << 4) + (bx))];
+			return (byte)height[((bz << 4) + (bx))];
 		}
 
 		public void SetBiome(int bx, int bz, byte biome)
@@ -116,40 +117,40 @@ namespace MiNET.Worlds
 		public byte GetBlocklight(int bx, int by, int bz)
 		{
 			Chunk chunk = chunks[by >> 4];
-			return chunk.GetBlocklight(bx, by - 16*(by >> 4), bz);
+			return chunk.GetBlocklight(bx, by - 16 * (by >> 4), bz);
 		}
 
 		public void SetBlocklight(int bx, int by, int bz, byte data)
 		{
 			Chunk chunk = chunks[by >> 4];
-			chunk.SetBlocklight(bx, by - 16*(by >> 4), bz, data);
-			SetDirty();
+			chunk.SetBlocklight(bx, by - 16 * (by >> 4), bz, data);
+			//SetDirty();
 		}
 
 		public byte GetMetadata(int bx, int by, int bz)
 		{
 			Chunk chunk = chunks[by >> 4];
-			return chunk.GetMetadata(bx, by - 16*(by >> 4), bz);
+			return chunk.GetMetadata(bx, by - 16 * (by >> 4), bz);
 		}
 
 		public void SetMetadata(int bx, int by, int bz, byte data)
 		{
 			Chunk chunk = chunks[by >> 4];
-			chunk.SetMetadata(bx, by - 16*(by >> 4), bz, data);
+			chunk.SetMetadata(bx, by - 16 * (by >> 4), bz, data);
 			SetDirty();
 		}
 
 		public byte GetSkylight(int bx, int by, int bz)
 		{
 			Chunk chunk = chunks[by >> 4];
-			return chunk.GetSkylight(bx, by - 16*(by >> 4), bz);
+			return chunk.GetSkylight(bx, by - 16 * (by >> 4), bz);
 		}
 
 		public void SetSkyLight(int bx, int by, int bz, byte data)
 		{
 			Chunk chunk = chunks[by >> 4];
-			chunk.SetSkylight(bx, by - 16*(by >> 4), bz, data);
-			SetDirty();
+			chunk.SetSkylight(bx, by - 16 * (by >> 4), bz, data);
+			//SetDirty();
 		}
 
 		public NbtCompound GetBlockEntity(BlockCoordinates coordinates)
@@ -158,12 +159,12 @@ namespace MiNET.Worlds
 			BlockEntities.TryGetValue(coordinates, out nbt);
 
 			// High cost clone. Consider alternative options on this.
-			return (NbtCompound) nbt?.Clone();
+			return (NbtCompound)nbt?.Clone();
 		}
 
 		public void SetBlockEntity(BlockCoordinates coordinates, NbtCompound nbt)
 		{
-			NbtCompound blockEntity = (NbtCompound) nbt.Clone();
+			NbtCompound blockEntity = (NbtCompound)nbt.Clone();
 			BlockEntities[coordinates] = blockEntity;
 			SetDirty();
 		}
@@ -183,9 +184,9 @@ namespace MiNET.Worlds
 		/// <returns>The blended colors.</returns>
 		public static Color Blend(Color color, Color backColor, double amount)
 		{
-			byte r = (byte) ((color.R*amount) + backColor.R*(1 - amount));
-			byte g = (byte) ((color.G*amount) + backColor.G*(1 - amount));
-			byte b = (byte) ((color.B*amount) + backColor.B*(1 - amount));
+			byte r = (byte)((color.R * amount) + backColor.R * (1 - amount));
+			byte g = (byte)((color.G * amount) + backColor.G * (1 - amount));
+			byte b = (byte)((color.B * amount) + backColor.B * (1 - amount));
 			return Color.FromArgb(r, g, b);
 		}
 
@@ -272,7 +273,7 @@ namespace MiNET.Worlds
 			// set the initial array value
 			Array.Copy(value, destinationArray, value.Length);
 
-			int arrayToFillHalfLength = destinationArray.Length/2;
+			int arrayToFillHalfLength = destinationArray.Length / 2;
 			int copyLength;
 
 			for (copyLength = value.Length; copyLength < arrayToFillHalfLength; copyLength <<= 1)
@@ -415,12 +416,12 @@ namespace MiNET.Worlds
 					else break;
 				}
 
-				writer.Write((byte) topEmpty);
+				writer.Write((byte)topEmpty);
 
 				int sent = 0;
 				for (int ci = 0; ci < topEmpty; ci++)
 				{
-					writer.Write((byte) 0);
+					writer.Write((byte)0);
 					writer.Write(chunks[ci].GetBytes());
 					sent++;
 				}
@@ -456,13 +457,13 @@ namespace MiNET.Worlds
 				// - Hash SignedVarint x << 12, z << 8, y
 				// - Block data short
 
-				writer.Write((byte) 0); // Border blocks - nope
+				writer.Write((byte)0); // Border blocks - nope
 
 				VarInt.WriteSInt32(stream, 0); // Block extradata count
-				//VarInt.WriteSInt32(stream, 2);
-				//VarInt.WriteSInt32(stream, 1 << 12 | 1 << 8 | 4);
-				//writer.Write((byte)31);
-				//writer.Write((byte)0);
+											   //VarInt.WriteSInt32(stream, 2);
+											   //VarInt.WriteSInt32(stream, 1 << 12 | 1 << 8 | 4);
+											   //writer.Write((byte)31);
+											   //writer.Write((byte)0);
 
 				if (BlockEntities.Count == 0)
 				{
@@ -473,7 +474,7 @@ namespace MiNET.Worlds
 				{
 					foreach (NbtCompound blockEntity in BlockEntities.Values.ToArray())
 					{
-						NbtFile file = new NbtFile(blockEntity) {BigEndian = false, UseVarInt = true};
+						NbtFile file = new NbtFile(blockEntity) { BigEndian = false, UseVarInt = true };
 						file.SaveToStream(writer.BaseStream, NbtCompression.None);
 					}
 				}
@@ -486,26 +487,26 @@ namespace MiNET.Worlds
 
 		public object Clone()
 		{
-			ChunkColumn cc = (ChunkColumn) MemberwiseClone();
+			ChunkColumn cc = (ChunkColumn)MemberwiseClone();
 
 			cc.chunks = new Chunk[16];
 			for (int i = 0; i < chunks.Length; i++)
 			{
-				cc.chunks[i] = (Chunk) chunks[i].Clone();
+				cc.chunks[i] = (Chunk)chunks[i].Clone();
 			}
 
-			cc.biomeId = (byte[]) biomeId.Clone();
-			cc.height = (short[]) height.Clone();
+			cc.biomeId = (byte[])biomeId.Clone();
+			cc.height = (short[])height.Clone();
 
 			cc.BlockEntities = new Dictionary<BlockCoordinates, NbtCompound>();
 			foreach (KeyValuePair<BlockCoordinates, NbtCompound> blockEntityPair in BlockEntities)
 			{
-				cc.BlockEntities.Add(blockEntityPair.Key, (NbtCompound) blockEntityPair.Value.Clone());
+				cc.BlockEntities.Add(blockEntityPair.Key, (NbtCompound)blockEntityPair.Value.Clone());
 			}
 
 			if (_cache != null)
 			{
-				cc._cache = (byte[]) _cache.Clone();
+				cc._cache = (byte[])_cache.Clone();
 			}
 
 			McpeWrapper batch = McpeWrapper.CreateObject();
@@ -526,7 +527,7 @@ namespace MiNET.Worlds
 	{
 		public static T[] Create(int size, T initialValue)
 		{
-			T[] array = (T[]) Array.CreateInstance(typeof (T), size);
+			T[] array = (T[])Array.CreateInstance(typeof(T), size);
 			for (int i = 0; i < array.Length; i++)
 				array[i] = initialValue;
 			return array;
@@ -534,7 +535,7 @@ namespace MiNET.Worlds
 
 		public static T[] Create(int size)
 		{
-			T[] array = (T[]) Array.CreateInstance(typeof (T), size);
+			T[] array = (T[])Array.CreateInstance(typeof(T), size);
 			for (int i = 0; i < array.Length; i++)
 				array[i] = new T();
 			return array;

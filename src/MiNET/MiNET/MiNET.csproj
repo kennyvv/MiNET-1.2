@@ -313,9 +313,13 @@
     <Compile Include="Blocks\Tnt.cs" />
     <Compile Include="Blocks\Wool.cs" />
     <Compile Include="Blocks\YellowGlazedTerracotta.cs" />
+    <Compile Include="Crafting\RecipeManager.cs" />
+    <Compile Include="Crafting\Recipes.cs" />
+    <Compile Include="Entities\Behaviors\WanderBehavior.cs" />
+    <Compile Include="Entities\Projectiles\EnderPearl.cs" />
+    <Compile Include="Items\ItemEnderPearl.cs" />
     <Compile Include="Net\CertificateData.cs" />
     <Compile Include="Net\ConnectionState.cs" />
-    <Compile Include="Crafting\Recipe.cs" />
     <Compile Include="DamageCalculator.cs" />
     <Compile Include="Effects\Absorption.cs" />
     <Compile Include="Effects\Blindness.cs" />
@@ -537,6 +541,12 @@
     <Compile Include="Items\ItemRawChicken.cs" />
     <Compile Include="Items\ItemRawPorkchop.cs" />
     <Compile Include="LevelEventType.cs" />
+    <Compile Include="Utils\Skins\Bone.cs" />
+    <Compile Include="Utils\Skins\Cube.cs" />
+    <Compile Include="Utils\Skins\Geometry.cs" />
+    <Compile Include="Utils\Skins\GeometryModel.cs" />
+    <Compile Include="Utils\Skins\Skin.cs" />
+    <Compile Include="Worlds\IBlockAccess.cs" />
     <Compile Include="Worlds\LevelManager.cs" />
     <Compile Include="Net\LoginMessageHandler.cs" />
     <Compile Include="MessageType.cs" />
@@ -553,7 +563,6 @@
     <Compile Include="Net\SplitPartPackage.cs" />
     <Compile Include="Net\UUID.cs" />
     <Compile Include="Net\WiredAttribute.cs" />
-    <Compile Include="Net\Skin.cs" />
     <Compile Include="Particles\BubbleParticle.cs" />
     <Compile Include="Particles\CriticalParticle.cs" />
     <Compile Include="Particles\DestroyBlockParticle.cs" />

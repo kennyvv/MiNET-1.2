@@ -52,7 +52,7 @@ namespace MiNET.Entities
 		public int Progress { get; set; } = 100;
 		public int MaxProgress { get; set; } = 100;
 
-		public BossBar(Level level) : base((int) EntityType.Slime, level)
+		public BossBar(Level level) : base((int)EntityType.Slime, level)
 		{
 			Width = 0;
 			Length = 0;
@@ -83,7 +83,7 @@ namespace MiNET.Entities
 
 			var bossEvent = McpeBossEvent.CreateObject();
 			bossEvent.bossEntityId = EntityId;
-			bossEvent.eventType = (uint) (IsVisible ? 0 : 2);
+			bossEvent.eventType = (uint)(IsVisible ? 0 : 2);
 			Level?.RelayBroadcast(bossEvent);
 		}
 
@@ -117,7 +117,7 @@ namespace MiNET.Entities
 
 			var bossEvent = McpeBossEvent.CreateObject();
 			bossEvent.bossEntityId = EntityId;
-			bossEvent.eventType = (uint) (IsVisible ? 0 : 2);
+			bossEvent.eventType = (uint)(IsVisible ? 0 : 2);
 			Level?.RelayBroadcast(players, bossEvent);
 		}
 
@@ -131,13 +131,13 @@ namespace MiNET.Entities
 			Level?.RelayBroadcast(players, bossEvent);
 		}
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
-			base.OnTick();
+			base.OnTick(entities);
 
 			if (!Animate) return;
 
-			if (Level.TickTime%2 == 0)
+			if (Level.TickTime % 2 == 0)
 			{
 				if (Progress > MaxProgress) Progress = 0;
 				SetProgress();

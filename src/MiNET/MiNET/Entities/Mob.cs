@@ -22,9 +22,7 @@ namespace MiNET.Entities
 		public MobController Controller { get; private set; }
 
 		public double Direction { get; set; }
-		public double Speed { get; set; } = 0.25f;
-
-		public bool IsOnGround { get; set; }
+		public virtual double Speed { get; set; } = 0.25f;
 
 		public Entity Target { get; private set; }
 
@@ -76,12 +74,13 @@ namespace MiNET.Entities
 		public Vector3 _lastSentRotation = Vector3.Zero;
 		public Vector3 _lastSentPos = new Vector3();
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
-			base.OnTick();
+			base.OnTick(entities);
 
 			if (HealthManager.IsDead) return;
 
+			bool noPlayersWithing32 = false;
 			if (Level.EnableChunkTicking && DespawnIfNotSeenPlayer && DateTime.UtcNow - LastSeenPlayerTimer > TimeSpan.FromSeconds(30))
 			{
 				if (Level.Players.Count(player => player.Value.IsSpawned && Vector3.Distance(KnownPosition, player.Value.KnownPosition) < 32) == 0)
@@ -94,6 +93,8 @@ namespace MiNET.Entities
 						DespawnEntity();
 						return;
 					}
+
+					noPlayersWithing32 = true;
 				}
 				else
 				{
@@ -106,20 +107,21 @@ namespace MiNET.Entities
 			// Execute move
 			bool onGroundBefore = IsMobOnGround(KnownPosition);
 
-			KnownPosition.X += (float) Velocity.X;
-			KnownPosition.Y += (float) Velocity.Y;
-			KnownPosition.Z += (float) Velocity.Z;
+			KnownPosition.X += (float)Velocity.X;
+			KnownPosition.Y += (float)Velocity.Y;
+			KnownPosition.Z += (float)Velocity.Z;
 
 			// Fix potential fall through ground because of speed
-			IsOnGround = IsMobOnGround(KnownPosition);
+			bool inWater = IsMobInFluid(KnownPosition);
+			IsOnGround = !inWater && IsMobOnGround(KnownPosition);
 			if (!onGroundBefore && IsOnGround)
 			{
 				while (Level.GetBlock(KnownPosition).IsSolid)
 				{
-					KnownPosition.Y = (float) Math.Floor(KnownPosition.Y + 1);
+					KnownPosition.Y = (float)Math.Floor(KnownPosition.Y + 1);
 				}
 
-				KnownPosition.Y = (float) Math.Floor(KnownPosition.Y);
+				KnownPosition.Y = (float)Math.Floor(KnownPosition.Y);
 				Velocity *= new Vector3(0, 1, 0);
 			}
 
@@ -135,14 +137,19 @@ namespace MiNET.Entities
 				BroadcastMotion();
 			}
 
+			var oldVelocity = Velocity;
 			// Calculate velocity for next move
-			_currentBehavior?.OnTick();
+			_currentBehavior?.OnTick(entities);
 
-			bool inWater = IsMobInFluid(KnownPosition);
+			if (noPlayersWithing32)
+			{
+				Velocity = oldVelocity;
+			}
 
 			if (inWater && Level.Random.NextDouble() < 0.8)
 			{
 				Velocity += new Vector3(0, 0.039f, 0);
+				Velocity *= new Vector3(0.2f, 1.0f, 0.2f);
 			}
 			else if (IsOnGround)
 			{
@@ -150,10 +157,10 @@ namespace MiNET.Entities
 			}
 			else
 			{
-				Velocity -= new Vector3(0, (float) Gravity, 0);
+				Velocity -= new Vector3(0, (float)Gravity, 0);
 			}
 
-			float drag = (float) (1 - Drag);
+			float drag = (float)(1 - Drag);
 			if (inWater)
 			{
 				drag = 0.8F;
@@ -192,18 +199,18 @@ namespace MiNET.Entities
 
 		protected void CheckBlockAhead()
 		{
-			var length = Length/2;
-			var direction = Vector3.Normalize(Velocity*1.00000101f);
+			var length = Length / 2;
+			var direction = Vector3.Normalize(Velocity * 1.00000101f);
 			Vector3 position = KnownPosition;
-			int count = (int) (Math.Ceiling(Velocity.Length()/length) + 2);
+			int count = (int)(Math.Ceiling(Velocity.Length() / length) + 2);
 			for (int i = 0; i < count; i++)
 			{
-				var distVec = direction*(float) length*i;
+				var distVec = direction * (float)length * i;
 				BlockCoordinates blockPos = position + distVec;
 				Block block = Level.GetBlock(blockPos);
 				if (block.IsSolid)
 				{
-					var yaw = (Math.Atan2(direction.X, direction.Z)*180.0D/Math.PI) + 180;
+					var yaw = (Math.Atan2(direction.X, direction.Z) * 180.0D / Math.PI) + 180;
 					//Log.Warn($"Will hit block {block} at angle of {yaw}");
 
 					Ray ray = new Ray(position, direction);
@@ -353,6 +360,11 @@ namespace MiNET.Entities
 			Block block = Level.GetBlock(position);
 
 			return block.IsSolid;
+		}
+
+		public static double ClampDegrees(double degrees)
+		{
+			return Math.Floor((degrees % 360 + 360) % 360);
 		}
 	}
 }

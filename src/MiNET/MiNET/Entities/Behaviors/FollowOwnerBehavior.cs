@@ -12,11 +12,11 @@ namespace MiNET.Entities.Behaviors
 	{
 		private static readonly ILog Log = LogManager.GetLogger(typeof (TemptedBehavior));
 
-		private readonly Wolf _entity;
+		private readonly Mob _entity;
 		private readonly double _lookDistance;
 		private readonly double _speedMultiplier;
 
-		public FollowOwnerBehavior(Wolf entity, double lookDistance, double speedMultiplier)
+		public FollowOwnerBehavior(Mob entity, double lookDistance, double speedMultiplier)
 		{
 			_entity = entity;
 			_lookDistance = lookDistance;
@@ -38,10 +38,11 @@ namespace MiNET.Entities.Behaviors
 
 		private List<Tile> _currentPath = null;
 
-		public void OnTick()
+		public void OnTick(Entity[] entities)
 		{
 			if (_entity.Owner == null) return;
-			Player player = (Player) _entity.Owner;
+			//Player player = (Player) _entity.Owner;
+			Entity player = _entity.Owner;
 
 			var distanceToPlayer = _entity.KnownPosition.DistanceTo(player.KnownPosition);
 
@@ -56,7 +57,7 @@ namespace MiNET.Entities.Behaviors
 			if (_currentPath == null || _currentPath.Count == 0)
 			{
 				Log.Debug($"Search new solution");
-				var pathFinder = new PathFinder();
+				var pathFinder = new Pathfinder();
 				_currentPath = pathFinder.FindPath(_entity, player, distanceToPlayer + 1);
 				if (_currentPath.Count == 0)
 				{
@@ -91,12 +92,17 @@ namespace MiNET.Entities.Behaviors
 						m = m/2.0;
 					}
 					//double m = 1;
-					_entity.Controller.MoveForward(_speedMultiplier*m);
+					_entity.Controller.MoveForward(_speedMultiplier*m, entities);
 				}
 			}
 			else
 			{
 				Log.Debug($"Found no path solution");
+				if (distanceToPlayer >= 16)
+				{
+					_entity.KnownPosition = player.KnownPosition;
+				}
+
 				_entity.Velocity = Vector3.Zero;
 				_currentPath = null;
 			}

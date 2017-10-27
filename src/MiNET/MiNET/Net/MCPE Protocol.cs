@@ -38,6 +38,7 @@ using MiNET.Crafting;
 using little = MiNET.Utils.Int24; // friendly name
 using LongString = System.String;
 using MiNET.Plugins;
+using MiNET.Utils.Skins;
 
 namespace MiNET.Net
 {

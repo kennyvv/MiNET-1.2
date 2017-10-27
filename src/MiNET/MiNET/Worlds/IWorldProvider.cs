@@ -34,7 +34,7 @@ namespace MiNET.Worlds
 
 		void Initialize();
 
-		ChunkColumn GenerateChunkColumn(ChunkCoordinates chunkCoordinates);
+		ChunkColumn GenerateChunkColumn(ChunkCoordinates chunkCoordinates, bool cacheOnly = false);
 
 		Vector3 GetSpawnPoint();
 		string GetName();

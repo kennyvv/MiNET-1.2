@@ -58,7 +58,7 @@ namespace MiNET.Entities.Behaviors
 			return true;
 		}
 
-		public void OnTick()
+		public void OnTick(Entity[] entities)
 		{
 			if (_cooldown-- > 0) return;
 			_cooldown = 0;
@@ -74,7 +74,7 @@ namespace MiNET.Entities.Behaviors
 			if (haveNoPath || Vector3.Distance(_lastPlayerPos, target.KnownPosition) > 0.01)
 			{
 				Log.Debug($"Search new solution. Have no path={haveNoPath}");
-				var pathFinder = new PathFinder();
+				var pathFinder = new Pathfinder();
 				_currentPath = pathFinder.FindPath(entity, target, distanceToPlayer + 1);
 				if (_currentPath.Count == 0)
 				{
@@ -91,7 +91,7 @@ namespace MiNET.Entities.Behaviors
 				if (GetNextTile(out next))
 				{
 					entity.Controller.RotateTowards(new Vector3((float) next.X + 0.5f, entity.KnownPosition.Y, (float) next.Y + 0.5f));
-					entity.Controller.MoveForward(_speedMultiplier);
+					entity.Controller.MoveForward(_speedMultiplier, entities);
 				}
 			}
 			else
@@ -105,7 +105,7 @@ namespace MiNET.Entities.Behaviors
 
 			if ((entity.GetBoundingBox() + 0.3f).Intersects(target.GetBoundingBox()))
 			{
-				var damage = !(_entity is Wolf) ? 0 : _entity.IsTamed ? 4 : 2;
+				var damage = !(_entity is Wolf) ? _entity.AttackDamage : _entity.IsTamed ? 4 : 2;
 				target.HealthManager.TakeHit(_entity, damage, DamageCause.EntityAttack);
 				_cooldown = 10;
 			}

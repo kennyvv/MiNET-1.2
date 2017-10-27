@@ -15,15 +15,17 @@ namespace MiNET.Entities.Hostile
 
 		public Item ItemInHand { get; set; }
 
-		public Skeleton(Level level) : base((int) EntityType.Skeleton, level)
+		public Skeleton(Level level) : base((int)EntityType.Skeleton, level)
 		{
 			Width = Length = 0.6;
 			Height = 1.95;
 			NoAi = true;
 
+			AttackDamage = 4;
+
 			ItemInHand = ItemFactory.GetItem("bow");
 
-			Behaviors.Add(new StrollBehavior(this, 60, Speed, 0.7));
+			Behaviors.Add(new WanderBehavior(this, Speed, 1.0));
 			Behaviors.Add(new LookAtPlayerBehavior(this, 8.0));
 			Behaviors.Add(new RandomLookaroundBehavior(this));
 		}
@@ -56,12 +58,12 @@ namespace MiNET.Entities.Hostile
 			Level.RelayBroadcast(armorEquipment);
 		}
 
-		public override void OnTick()
+		public override void OnTick(Entity[] entities)
 		{
-			base.OnTick();
+			base.OnTick(entities);
 
 			Block block = Level.GetBlock(KnownPosition);
-			if (!(block is StationaryWater) && !(block is FlowingWater) && block.SkyLight > 7 && (Level.CurrentWorldTime > 450 && Level.CurrentWorldTime < 11615))
+			if (!(block is StationaryWater) && !(block is FlowingWater) && block.SkyLight > 7 && (Level.CurrentWorldTime < 12566 || Level.CurrentWorldTime > 23450))
 			{
 				if (!HealthManager.IsOnFire) HealthManager.Ignite(80);
 			}

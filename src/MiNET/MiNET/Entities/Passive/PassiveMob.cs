@@ -7,6 +7,7 @@ namespace MiNET.Entities.Passive
 		protected PassiveMob(EntityType type, Level level)
 			: base(type, level)
 		{
+			NoAi = true;
 		}
 	}
 }

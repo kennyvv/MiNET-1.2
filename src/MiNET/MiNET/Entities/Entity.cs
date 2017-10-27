@@ -42,7 +42,7 @@ namespace MiNET.Entities
 
 		public Level Level { get; set; }
 
-		public int EntityTypeId { get; private set; }
+		public int EntityTypeId { get; protected set; }
 		public long EntityId { get; set; }
 		public bool IsSpawned { get; set; }
 
@@ -50,8 +50,10 @@ namespace MiNET.Entities
 		public PlayerLocation KnownPosition { get; set; }
 		public Vector3 Velocity { get; set; }
 		public float PositionOffset { get; set; }
+		public bool IsOnGround { get; set; } = true;
 
 		public HealthManager HealthManager { get; set; }
+		public Entity Owner { get; set; } = null;
 
 		public string NameTag { get; set; }
 
@@ -63,11 +65,12 @@ namespace MiNET.Entities
 
 		public long Age { get; set; }
 		public double Scale { get; set; } = 1.0;
-		public double Height { get; set; } = 1;
-		public double Width { get; set; } = 1;
-		public double Length { get; set; } = 1;
+		public virtual double Height { get; set; } = 1;
+		public virtual double Width { get; set; } = 1;
+		public virtual double Length { get; set; } = 1;
 		public double Drag { get; set; } = 0.02;
 		public double Gravity { get; set; } = 0.08;
+		public int AttackDamage { get; set; } = 2;
 		public int Data { get; set; }
 
 		public long PortalDetected { get; set; }
@@ -282,16 +285,34 @@ namespace MiNET.Entities
 			return Level.GetBlock(KnownPosition + new Vector3(0, 0.3f, 0)) is Portal;
 		}
 
-		public virtual void OnTick()
+		public virtual void OnTick(Entity[] entities)
 		{
 			Age++;
 
 			HealthManager.OnTick();
 		}
 
-		private void CheckBlockCollisions()
+		public bool IsColliding(Entity other)
 		{
-			// Check all blocks within entity BB
+			return IsColliding(GetBoundingBox(), other);
+		}
+
+		public bool IsColliding(BoundingBox bbox, Entity other)
+		{
+			//if (!Compare((int) KnownPosition.X, (int) other.KnownPosition.X, 5)) return false;
+			//if (!Compare((int) KnownPosition.Z, (int) other.KnownPosition.Z, 5)) return false;
+			if (!Compare((int)KnownPosition.X, (int)other.KnownPosition.X, 4)) return false;
+			if (!Compare((int)KnownPosition.Z, (int)other.KnownPosition.Z, 4)) return false;
+			if (!bbox.Intersects(other.GetBoundingBox())) return false;
+
+			return true;
+		}
+
+		private bool Compare(int a, int b, int m)
+		{
+			a = a >> m;
+			b = b >> m;
+			return a == b || a == b - 1 || a == b + 1;
 		}
 
 		public virtual void SpawnEntity()
@@ -304,7 +325,7 @@ namespace MiNET.Entities
 		public virtual void SpawnToPlayers(Player[] players)
 		{
 			var addEntity = McpeAddEntity.CreateObject();
-			addEntity.entityType = (byte) EntityTypeId;
+			addEntity.entityType = (byte)EntityTypeId;
 			addEntity.entityIdSelf = EntityId;
 			addEntity.runtimeEntityId = EntityId;
 			addEntity.x = KnownPosition.X;
@@ -313,9 +334,9 @@ namespace MiNET.Entities
 			addEntity.yaw = KnownPosition.Yaw;
 			addEntity.pitch = KnownPosition.Pitch;
 			addEntity.metadata = GetMetadata();
-			addEntity.speedX = (float) Velocity.X;
-			addEntity.speedY = (float) Velocity.Y;
-			addEntity.speedZ = (float) Velocity.Z;
+			addEntity.speedX = Velocity.X;
+			addEntity.speedY = Velocity.Y;
+			addEntity.speedZ = Velocity.Z;
 			addEntity.attributes = GetEntityAttributes();
 
 			Level.RelayBroadcast(players, addEntity);
@@ -327,9 +348,9 @@ namespace MiNET.Entities
 			attributes["minecraft:attack_damage"] = new EntityAttribute
 			{
 				Name = "minecraft:attack_damage",
-				MinValue = 1,
-				MaxValue = 1,
-				Value = 1,
+				MinValue = 0,
+				MaxValue = 16,
+				Value = AttackDamage,
 			};
 			attributes["minecraft:absorption"] = new EntityAttribute
 			{
@@ -410,9 +431,15 @@ namespace MiNET.Entities
 		public BoundingBox GetBoundingBox()
 		{
 			var pos = KnownPosition;
-			double halfWidth = Width/2;
+			//if (Math.Abs(pos.X - _bboxCache.Item1.X) < 0.01 && Math.Abs(pos.Y - _bboxCache.Item1.Y) < 0.01 && Math.Abs(pos.Z - _bboxCache.Item1.Z) < 0.01) return _bboxCache.Item2;
 
-			return new BoundingBox(new Vector3((float) (pos.X - halfWidth), pos.Y, (float) (pos.Z - halfWidth)), new Vector3((float) (pos.X + halfWidth), (float) (pos.Y + Height), (float) (pos.Z + halfWidth)));
+			float halfWidth = (float)(Width / 2);
+
+			var bbox = new BoundingBox(
+				Vector3.Min(new Vector3(pos.X - halfWidth, pos.Y, pos.Z - halfWidth), new Vector3(pos.X + halfWidth, pos.Y, pos.Z + halfWidth)),
+				Vector3.Max(new Vector3(pos.X - halfWidth, (float)(pos.Y - Height), pos.Z - halfWidth), new Vector3(pos.X + halfWidth, (float)(pos.Y + Height), pos.Z + halfWidth)));
+			//_bboxCache = new Tuple<Vector3, BoundingBox>(KnownPosition, bbox);
+			return bbox;
 		}
 
 		public double DistanceTo(Entity entity)
@@ -467,7 +494,8 @@ namespace MiNET.Entities
 			{
 				McpeMoveEntity moveEntity = McpeMoveEntity.CreateObject();
 				moveEntity.runtimeEntityId = EntityId;
-				moveEntity.position = (PlayerLocation) KnownPosition.Clone();
+				moveEntity.position = (PlayerLocation)KnownPosition.Clone();
+				moveEntity.onGround = IsOnGround;
 				moveEntity.Encode();
 				Level.RelayBroadcast(moveEntity);
 			}

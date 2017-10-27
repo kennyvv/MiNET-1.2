@@ -1,4 +1,4 @@
-#region LICENSE
+﻿#region LICENSE
 
 // The contents of this file are subject to the Common Public Attribution
 // License Version 1.0. (the "License"); you may not use this file except in
@@ -13,7 +13,7 @@
 // WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 // the specific language governing rights and limitations under the License.
 // 
-// The Original Code is Niclas Olofsson.
+// The Original Code is MiNET.
 // 
 // The Original Developer is the Initial Developer.  The Initial Developer of
 // the Original Code is Niclas Olofsson.
@@ -23,30 +23,47 @@
 
 #endregion
 
-using MiNET.Net;
-using MiNET.Worlds;
+using System;
+using System.Numerics;
+using Newtonsoft.Json;
 
-namespace MiNET.Entities
+namespace MiNET.Utils.Skins
 {
-	public class Hologram : PlayerMob
+	public enum Face
 	{
-		public Hologram(string text, Level level) : base(text, level)
+		None,
+		Inside,
+		Top,
+		Bottom,
+		Right,
+		Front,
+		Left,
+		Back,
+	}
+
+	public class Cube : ICloneable
+	{
+		public float[] Origin { get; set; } = new float[3];
+		public float[] Size { get; set; } = new float[3];
+		public float[] Uv { get; set; } = new float[3];
+		public float Inflate { get; set; }
+		public bool Mirror { get; set; }
+
+		[JsonIgnore]
+		public Vector3 Velocity { get; set; } = Vector3.Zero;
+
+		[JsonIgnore]
+		public Face Face { get; set; } = Face.None;
+
+		public object Clone()
 		{
-			Width = 0;
-			Length = 0;
-			Height = 0;
-			Scale = 0;
+			var cube = (Cube)MemberwiseClone();
 
-			HideNameTag = false;
-			IsAlwaysShowName = true;
-		}
+			cube.Origin = (float[])Origin?.Clone();
+			cube.Size = (float[])Size?.Clone();
+			cube.Uv = (float[])Uv?.Clone();
 
-		[Wired]
-		public virtual void SetNameTag(string nameTag)
-		{
-			NameTag = nameTag;
-
-			BroadcastSetEntityData();
+			return cube;
 		}
 	}
 }

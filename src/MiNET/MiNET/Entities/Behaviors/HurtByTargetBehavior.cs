@@ -4,18 +4,18 @@ namespace MiNET.Entities.Behaviors
 {
 	public class HurtByTargetBehavior : IBehavior
 	{
-		private Wolf _wolf;
+		private Mob _mob;
 
-		public HurtByTargetBehavior(Wolf wolf)
+		public HurtByTargetBehavior(Mob wolf)
 		{
-			_wolf = wolf;
+			_mob = wolf;
 		}
 
 		public bool ShouldStart()
 		{
-			if (_wolf.HealthManager.LastDamageSource == null) return false;
+			if (_mob.HealthManager.LastDamageSource == null) return false;
 
-			_wolf.SetTarget(_wolf.HealthManager.LastDamageSource);
+			_mob.SetTarget(_mob.HealthManager.LastDamageSource);
 
 			return true;
 		}
@@ -25,7 +25,7 @@ namespace MiNET.Entities.Behaviors
 			return false;
 		}
 
-		public void OnTick()
+		public void OnTick(Entity[] entities)
 		{
 		}
 
