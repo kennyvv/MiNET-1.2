@@ -315,6 +315,7 @@
     <Compile Include="Blocks\YellowGlazedTerracotta.cs" />
     <Compile Include="Crafting\RecipeManager.cs" />
     <Compile Include="Crafting\Recipes.cs" />
+    <Compile Include="Entities\Behaviors\CreepBehavior.cs" />
     <Compile Include="Entities\Behaviors\WanderBehavior.cs" />
     <Compile Include="Entities\Projectiles\EnderPearl.cs" />
     <Compile Include="Items\ItemEnderPearl.cs" />

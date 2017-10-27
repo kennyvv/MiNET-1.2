@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Numerics;
+using MiNET.Worlds;
 
 namespace MiNET.Entities.Behaviors
 {
@@ -20,7 +21,7 @@ namespace MiNET.Entities.Behaviors
 		{
 			var player = _entity.Level.Players
 				.OrderBy(p => Vector3.Distance(_entity.KnownPosition, p.Value.KnownPosition))
-				.FirstOrDefault(p => p.Value.IsSpawned && _entity.DistanceTo(p.Value) < _targetDistance);
+				.FirstOrDefault(p => p.Value.IsSpawned &&( p.Value.GameMode == GameMode.Survival || p.Value.GameMode == GameMode.Adventure) && _entity.DistanceTo(p.Value) < _targetDistance);
 
 			if (player.Value == null) return false;
 
