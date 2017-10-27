@@ -27,14 +27,57 @@ namespace MiNET.Utils
 		}
 
 
-		public double Noise(double x, double y, double frequency, double amplitude)
+		public double Noise(double x, double y, double frequency, double amplitude, bool normalized)
 		{
-			return Noise(x, y, 0, 0, frequency, amplitude, false);
+			double result = 0;
+			double amp = 1;
+			double freq = 1;
+			double max = 0;
+
+			x *= XScale;
+			y *= YScale;
+
+			foreach (var octave in _generators)
+			{
+				result += octave.GetValue((float)(x * freq), (float)(y * freq)) * amp;
+				max += amp;
+				freq *= frequency;
+				amp *= amplitude;
+			}
+
+			if (normalized)
+			{
+				result /= max;
+			}
+
+			return result;
 		}
 
-		public double Noise(double x, double y, double z, double frequency, double amplitude)
+		public double Noise(double x, double y, double z, double frequency, double amplitude, bool normalized)
 		{
-			return Noise(x, y, z, 0, frequency, amplitude, false);
+			double result = 0;
+			double amp = 1;
+			double freq = 1;
+			double max = 0;
+
+			x *= XScale;
+			y *= YScale;
+			z *= ZScale;
+
+			foreach (var octave in _generators)
+			{
+				result += octave.GetValue((float)(x * freq), (float)(y * freq), (float)(z * freq)) * amp;
+				max += amp;
+				freq *= frequency;
+				amp *= amplitude;
+			}
+
+			if (normalized)
+			{
+				result /= max;
+			}
+
+			return result;
 		}
 
 		public double Noise(double x, double y, double z, double w, double frequency, double amplitude)

@@ -32,6 +32,7 @@ using log4net;
 using MiNET.Utils;
 using MiNET.Worlds;
 using MiNET.Worlds.Generators;
+using MiNET.Worlds.Generators.Survival;
 
 namespace MiNET
 {

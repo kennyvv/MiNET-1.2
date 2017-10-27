@@ -541,11 +541,23 @@
     <Compile Include="Items\ItemRawChicken.cs" />
     <Compile Include="Items\ItemRawPorkchop.cs" />
     <Compile Include="LevelEventType.cs" />
+    <Compile Include="Utils\MathHelpers.cs" />
+    <Compile Include="Utils\Noise\ModifiedVoronoi.cs" />
+    <Compile Include="Utils\Noise\NoiseBlend.cs" />
+    <Compile Include="Utils\Noise\ScaleableNoise.cs" />
+    <Compile Include="Utils\Noise\SimplexPerlin.cs" />
     <Compile Include="Utils\Skins\Bone.cs" />
     <Compile Include="Utils\Skins\Cube.cs" />
     <Compile Include="Utils\Skins\Geometry.cs" />
     <Compile Include="Utils\Skins\GeometryModel.cs" />
     <Compile Include="Utils\Skins\Skin.cs" />
+    <Compile Include="Worlds\Decorators\ChunkDecorator.cs" />
+    <Compile Include="Worlds\Decorators\FoliageDecorator.cs" />
+    <Compile Include="Worlds\Decorators\OreDecorator.cs" />
+    <Compile Include="Worlds\Decorators\WaterDecorator.cs" />
+    <Compile Include="Worlds\Generators\Survival\EndGenerator.cs" />
+    <Compile Include="Worlds\Generators\Survival\NetherGenerator.cs" />
+    <Compile Include="Worlds\Generators\Survival\OverworldGenerator.cs" />
     <Compile Include="Worlds\IBlockAccess.cs" />
     <Compile Include="Worlds\LevelManager.cs" />
     <Compile Include="Net\LoginMessageHandler.cs" />
@@ -733,6 +745,17 @@
     <Compile Include="Worlds\Mapper.cs" />
     <Compile Include="Worlds\NoDataMapper.cs" />
     <Compile Include="Worlds\SkyLightCalculations.cs" />
+    <Compile Include="Worlds\Structures\AcaciaTree.cs" />
+    <Compile Include="Worlds\Structures\BirchTree.cs" />
+    <Compile Include="Worlds\Structures\CactusStructure.cs" />
+    <Compile Include="Worlds\Structures\JungleTree.cs" />
+    <Compile Include="Worlds\Structures\LargeJungleTree.cs" />
+    <Compile Include="Worlds\Structures\OakTree.cs" />
+    <Compile Include="Worlds\Structures\PineTree.cs" />
+    <Compile Include="Worlds\Structures\SmallJungleTree.cs" />
+    <Compile Include="Worlds\Structures\SpruceTree.cs" />
+    <Compile Include="Worlds\Structures\StructureClass.cs" />
+    <Compile Include="Worlds\Structures\TreeStructure.cs" />
     <None Include="Net\MCPE Protocol Documentation.md">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
