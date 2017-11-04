@@ -210,8 +210,9 @@ namespace MiNET.Utils.Noise
 				{
 					// Calculate the position and distance to the seed point inside of
 					// this unit cube.
-					float xPos = xCur + _source2D.GetValue(xCur, yCur);
-					float yPos = yCur + _source2D.GetValue(xCur, yCur);
+					var off = _source2D.GetValue(xCur, yCur);
+					float xPos = xCur + off;//_source2D.GetValue(xCur, yCur);
+					float yPos = yCur + off;//_source2D.GetValue(xCur, yCur);
 
 					float xDist = xPos - x;
 					float yDist = yPos - y;

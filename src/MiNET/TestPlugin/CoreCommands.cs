@@ -64,6 +64,7 @@ namespace TestPlugin
 		{
 			Context.PluginManager.LoadCommands(new HelpCommand(Context.Server.PluginManager));
 			Context.PluginManager.LoadCommands(new VanillaCommands(Context.Server.PluginManager));
+			Context.PluginManager.LoadCommands(this);
 		}
 
 		//[PacketHandler, Receive, UsedImplicitly]

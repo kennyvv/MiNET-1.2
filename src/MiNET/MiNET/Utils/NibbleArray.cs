@@ -47,13 +47,13 @@ namespace MiNET.Utils
 
 		public byte this[int index]
 		{
-			get { return (byte) (Data[index >> 1] >> ((index & 1)*4) & 0xF); }
+			get { return (byte) (Data[index >> 1] >> ((index & 1) << 2) & 0xF); }
 			set
 			{
 				value &= 0xF;
 				var idx = index >> 1;
-				Data[idx] &= (byte) (0xF << (((index + 1) & 1)*4));
-				Data[idx] |= (byte) (value << ((index & 1)*4));
+				Data[idx] &= (byte) (0xF << (((index + 1) & 1) << 2));
+				Data[idx] |= (byte) (value << ((index & 1) << 2));
 			}
 		}
 

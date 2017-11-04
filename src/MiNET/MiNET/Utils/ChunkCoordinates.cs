@@ -213,6 +213,11 @@ namespace MiNET.Utils
 			return new ChunkCoordinates(b.X >> 4, b.Z >> 4);
 		}
 
+		public static explicit operator ChunkCoordinates(PlayerLocation b)
+		{
+			return new ChunkCoordinates(b.GetCoordinates3D());
+		}
+
 		#endregion
 
 		#region Constants

@@ -544,6 +544,7 @@
     <Compile Include="LevelEventType.cs" />
     <Compile Include="Utils\MathHelpers.cs" />
     <Compile Include="Utils\Noise\ModifiedVoronoi.cs" />
+    <Compile Include="Utils\Noise\ModTurbulence.cs" />
     <Compile Include="Utils\Noise\NoiseBlend.cs" />
     <Compile Include="Utils\Noise\ScaleableNoise.cs" />
     <Compile Include="Utils\Noise\SimplexPerlin.cs" />

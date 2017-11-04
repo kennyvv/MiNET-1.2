@@ -25,11 +25,12 @@ namespace MiNET.Worlds.Structures
 
 		protected void GenerateVanillaLeaves(ChunkColumn chunk, Vector3 location, int radius, byte id, byte meta)
 		{
+			if (location.X > 16 || location.X < 0 || location.Z > 16 || location.Z < 0) return;
 			var radiusOffset = radius;
 			for (var yOffset = -radius; yOffset <= radius; yOffset = (yOffset + 1))
 			{
 				var y = location.Y + yOffset;
-				if (y > 256)
+				if (y > 255)
 					continue;
 				GenerateVanillaCircle(chunk, new Vector3(location.X, y, location.Z), radiusOffset, id, meta);
 				if (yOffset != -radius && yOffset % 2 == 0)
@@ -87,6 +88,9 @@ namespace MiNET.Worlds.Structures
 						}
 						var x = location.X + I;
 						var z = location.Z + j;
+						if (x < 0 || z > 16) continue;
+						if (z < 0 || z > 16) continue;
+
 						if (chunk.GetBlock((int)x, (int)location.Y, (int)z) == 0)
 						{
 							chunk.SetBlock((int)x, (int)location.Y, (int)z, id);

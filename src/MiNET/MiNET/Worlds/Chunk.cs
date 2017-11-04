@@ -67,7 +67,7 @@ namespace MiNET.Worlds
 
 		private static int GetIndex(int bx, int by, int bz)
 		{
-			return (bx * 256) + (bz * 16) + by;
+			return (bx << 8) + (bz << 4) + by;
 		}
 
 		public byte GetBlock(int bx, int by, int bz)

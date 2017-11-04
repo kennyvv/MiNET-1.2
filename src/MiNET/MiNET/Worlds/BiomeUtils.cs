@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using log4net;
+using MiNET.Utils;
 
 namespace MiNET.Worlds
 {
@@ -46,8 +48,8 @@ namespace MiNET.Worlds
 				Name = "Plains",
 				Temperature = 0.8f,
 				Downfall = 0.4f,
-				MinHeight = 0.125f,
-				MaxHeight = 0.05f, //TODO
+				MinHeight = 0.0125f,
+				MaxHeight = 0.5f, //TODO
 			},
 			new Biome
 			{
@@ -55,8 +57,8 @@ namespace MiNET.Worlds
 				Name = "Desert",
 				Temperature = 2.0f,
 				Downfall = 0.0f,
-				MaxHeight = 0.2f,
 				MinHeight = 0.1f,
+				MaxHeight = 0.2f,
 				SurfaceBlock = 12,
 				SoilBlock = 24
 			},
@@ -67,7 +69,7 @@ namespace MiNET.Worlds
 				Temperature = 0.2f,
 				Downfall = 0.3f,
 				MinHeight = 0.2f,
-				MaxHeight = 1.3f
+				MaxHeight = 1f
 			},
 			new Biome
 			{
@@ -148,7 +150,7 @@ namespace MiNET.Worlds
 				Temperature = 0.0f,
 				Downfall = 0.5f,
 				MinHeight = 0.125f,
-				MaxHeight = 0.05f //TODO
+				MaxHeight = 0.5f //TODO
 			},
 			new Biome
 			{
@@ -240,8 +242,8 @@ namespace MiNET.Worlds
 				Name = "Jungle Hills",
 				Temperature = 1.2f,
 				Downfall = 0.9f,
-				MinHeight = 1.8f,
-				MaxHeight = 0.2f
+				MinHeight = 0.2f,
+				MaxHeight = 1.8f
 			},
 			
 			//TODO: The rest of min/max
@@ -296,8 +298,8 @@ namespace MiNET.Worlds
 				Name = "Birch Forest Hills",
 				Temperature = 0.6f,
 				Downfall = 0.6f,
-				MinHeight = 0.45f,
-				MaxHeight = 0.3f
+				MinHeight = 0.35f,
+				MaxHeight = 0.45f
 			},
 			new Biome
 			{
@@ -323,8 +325,8 @@ namespace MiNET.Worlds
 				Name = "Cold Taiga Hills",
 				Temperature = -0.5f,
 				Downfall = 0.4f,
-				MinHeight = 0.45f,
-				MaxHeight = 0.3f
+				MinHeight = 0.3f,
+				MaxHeight = 0.45f
 			},
 			new Biome
 			{
@@ -341,8 +343,8 @@ namespace MiNET.Worlds
 				Name = "Mega Taiga Hills",
 				Temperature = 0.3f,
 				Downfall = 0.8f,
-				MinHeight = 0.45f,
-				MaxHeight = 0.3f
+				MinHeight = 0.3f,
+				MaxHeight = 0.45f
 			},
 			new Biome
 			{
@@ -350,8 +352,8 @@ namespace MiNET.Worlds
 				Name = "Extreme Hills+",
 				Temperature = 0.2f,
 				Downfall = 0.3f,
-				MinHeight = 1f,
-				MaxHeight = 0.5f
+				MinHeight = 0.5f,
+				MaxHeight = 1f
 			},
 			new Biome
 			{
@@ -359,8 +361,8 @@ namespace MiNET.Worlds
 				Name = "Savanna",
 				Temperature = 1.2f,
 				Downfall = 0.0f,
-				MinHeight = 0.125f,
-				MaxHeight = 0.05f,
+				MinHeight = 0.005f,
+				MaxHeight = 0.125f,
 			},
 			new Biome
 			{
@@ -368,8 +370,8 @@ namespace MiNET.Worlds
 				Name = "Savanna Plateau",
 				Temperature = 1.0f,
 				Downfall = 0.0f,
-				MinHeight = 1.5f,
-				MaxHeight = 0.025f
+				MinHeight = 0.025f,
+				MaxHeight = 1.5f
 			},
 			new Biome
 			{
@@ -478,6 +480,45 @@ namespace MiNET.Worlds
 			public int Red;
 			public int Green;
 			public int Blue;
+		}
+
+		private static readonly ILog Log = LogManager.GetLogger(typeof (BiomeUtils));
+		
+		internal static void FixMinMaxHeight()
+		{
+			float minTemp = float.MaxValue;
+			float maxTemp = float.MinValue;
+			float minRain = float.MaxValue;
+			float maxRain = float.MinValue;
+			for (int i = 0; i < Biomes.Length; i++)
+			{
+				var biome = Biomes[i];
+				var min = MathHelpers.Min(biome.MinHeight, biome.MaxHeight);
+				var max = MathHelpers.Max(biome.MinHeight, biome.MaxHeight);
+
+				biome.MinHeight = min;
+				biome.MaxHeight = max;
+
+				if (biome.Temperature < minTemp)
+				{
+					minTemp = biome.Temperature;
+				}
+				if (biome.Temperature > maxTemp)
+				{
+					maxTemp = biome.Temperature;
+				}
+				if (biome.Downfall < minRain)
+				{
+					minRain = biome.Downfall;
+				}
+				if (biome.Downfall > maxRain)
+				{
+					maxRain = biome.Downfall;
+				}
+
+				Biomes[i] = biome;
+			}
+			Debug.WriteLine($"Temperature (min: {minTemp} max: {maxTemp}) Downfall (min:{minRain} max: {maxRain})");
 		}
 
 		//$c = self::interpolateColor(256, $x, $z, [0x47, 0xd0, 0x33], [0x6c, 0xb4, 0x93], [0xbf, 0xb6, 0x55], [0x80, 0xb4, 0x97]);
@@ -672,7 +713,7 @@ namespace MiNET.Worlds
 			return biome;
 		}
 
-		public static Dictionary<Biome, double> GetBiomes(double temp, double rain)
+		public static Dictionary<Biome, double> GetBiomes(float temp, float rain)
 		{
 			if (temp < -1f || temp > 2f || rain < 0f || rain > 1f)
 				Debug.WriteLine($"Temp: {temp} Rain: {rain}");
@@ -719,9 +760,35 @@ namespace MiNET.Worlds
 
 		}
 
-		private static double GetSquaredDistance(Biome biome, double temp, double rain)
+		public static Biome GetBiome(float temp, float rain)
 		{
-			return Math.Abs((biome.Temperature - temp) * (biome.Temperature - temp) + (biome.Downfall - rain) * (biome.Downfall - rain));
+			if (temp < -1f || temp > 2f || rain < 0f || rain > 1f)
+				Debug.WriteLine($"Temp: {temp} Rain: {rain}");
+
+			return ClosestTo(Biomes, temp, rain);
+		}
+
+		private static Biome ClosestTo(IEnumerable<Biome> collection, float targetTemp, float targetRain)
+		{
+			Biome closest = null;
+			float closestDistance = float.MaxValue;
+			foreach (var element in collection)
+			{
+				var distance = GetSquaredDistance(element, targetTemp, targetRain);
+				if (distance < closestDistance)
+				{
+					closestDistance = distance;
+					closest = element;
+				}
+			}
+
+			//Debug.WriteLine($"Closest biome to temp: {targetTemp} rain: {targetRain} is {closest.Name}, distance: {closestDistance}");
+			return closest;
+		}
+
+		private static float GetSquaredDistance(Biome biome, float temp, float rain)
+		{
+			return MathHelpers.Abs((biome.Temperature - temp) * (biome.Temperature - temp) + (biome.Downfall - rain) * (biome.Downfall - rain));
 		}
 	}
 }

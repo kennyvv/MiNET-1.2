@@ -33,13 +33,9 @@ namespace MiNET.Utils
 			//return x;
 		}
 
-		public static float Normalize(this float x, float newMin, float newMax)
-		{
-			return (((x - newMin) / newMax) * newMax);
-		}
-
 		public static float Lerp(float a, float b, float f)
 		{
+			//f = f*f;
 			return a + f * (b - a);
 		}
 
@@ -382,15 +378,19 @@ namespace MiNET.Utils
 			return Lerp(z, z1, z2, r0, r1);
 		}
 
-		private static float Cubic(float n0, float n1, float n2, float n3, float a)
+		public static float CubicInterpolate(float p00, float p01, float p02, float p03, float x)
 		{
-			return n1 + 0.5f * a * (n2 - n0 + a * (2.0f * n0 - 5.0f * n1 + 4.0f * n2 - n3 + a * (3.0f * (n1 - n2) + n3 - n0)));
+			return p01 + 0.5f * x * (p02 - p00 + x * (2.0f * p00 - 5.0f * p01 + 4.0f * p02 - p03 + x * (3.0f * (p01 - p02) + p03 - p00)));
+		}
 
-			/*float num1 = n3 - n2 - (n0 - n1);
-			float num2 = n0 - n1 - num1;
-			float num3 = n2 - n0;
-			float num4 = n1;
-			return (num1 * a * a * a + num2 * a * a + num3 * a) + num4;*/
+		public static float BiCubicInterpolate(float p00, float p01, float p02, float p03, float p10, float p11, float p12,
+			float p13, float p20, float p21, float p22, float p23, float p30, float p31, float p32, float p33, float x, float y)
+		{
+			float r0 = CubicInterpolate(p00, p01, p02, p03, y);
+			float r1 = CubicInterpolate(p10, p11, p12, p13, y);
+			float r2 = CubicInterpolate(p20, p21, p22, p23, y);
+			float r3 = CubicInterpolate(p30, p31, p32, p33, y);
+			return CubicInterpolate(r0, r1, r2, r3, x);
 		}
 
 		public static float BilinearCubic(float x, float y, float q11, float q12, float q21, float q22, float x1, float x2,
@@ -398,10 +398,10 @@ namespace MiNET.Utils
 		{
 			var xAlpha = (x2 - x) / (x2 - x1);
 			var yAlpha = (y2 - y) / (y2 - y1);
-			float r1 = Cubic(q11, q21, q11, q21, xAlpha);
-			float r2 = Cubic(q12, q22, q12, q22, xAlpha);
+			float r1 = CubicInterpolate(q11, q21, q11, q21, xAlpha);
+			float r2 = CubicInterpolate(q12, q22, q12, q22, xAlpha);
 
-			return Cubic(r1, r2, r1, r2, yAlpha);
+			return CubicInterpolate(r1, r2, r1, r2, yAlpha);
 		}
 
 		public static float TrilinearCubic(float x, float y, float z, float q000, float q001, float q010, float q011,
@@ -411,13 +411,13 @@ namespace MiNET.Utils
 			var yAlpha = (y2 - y) / (y2 - y1);
 			var zAlpha = (z2 - z) / (z2 - z1);
 
-			float x00 = Cubic(q000, q100, q000, q100, xAlpha);
-			float x10 = Cubic(q010, q110, q010, q110, xAlpha);
-			float x01 = Cubic(q001, q101, q001, q101, xAlpha);
-			float x11 = Cubic(q011, q111, q011, q111, xAlpha);
-			float r0 = Cubic(x00, x01, x00, x01, yAlpha);
-			float r1 = Cubic(x10, x11, x10, x11, yAlpha);
-			return Cubic(z1, z2, r0, r1, zAlpha);
+			float x00 = CubicInterpolate(q000, q100, q000, q100, xAlpha);
+			float x10 = CubicInterpolate(q010, q110, q010, q110, xAlpha);
+			float x01 = CubicInterpolate(q001, q101, q001, q101, xAlpha);
+			float x11 = CubicInterpolate(q011, q111, q011, q111, xAlpha);
+			float r0 = CubicInterpolate(x00, x01, x00, x01, yAlpha);
+			float r1 = CubicInterpolate(x10, x11, x10, x11, yAlpha);
+			return CubicInterpolate(z1, z2, r0, r1, zAlpha);
 		}
 
 		///Catmull-rom
