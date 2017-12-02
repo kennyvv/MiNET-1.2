@@ -540,7 +540,7 @@ namespace MiNET
 					pGen.Init(genParam);
 
 					AsymmetricCipherKeyPair keyPair = pGen.GenerateKeyPair();
-
+					
 					ECDHBasicAgreement agreement = new ECDHBasicAgreement();
 					agreement.Init(keyPair.Private);
 
@@ -557,7 +557,7 @@ namespace MiNET
 						memoryStream.Position = 0;
 						secret = sha.ComputeHash(memoryStream);
 					}
-
+					sha.Dispose();
 
 					//if (Log.IsDebugEnabled) Log.Debug($"SECRET KEY (b64, {secret.Length}):\n{secret.EncodeBase64()}");
 
