@@ -1,7 +1,5 @@
 MiNET - .NET Standard
-=====    
-
-## What is this?
+=====
 This is a custom fork of MiNET with modifications to my wishes.
 This specific branch is a version of MiNET able to run on .NET Core / .NET Standard 2.0
 
