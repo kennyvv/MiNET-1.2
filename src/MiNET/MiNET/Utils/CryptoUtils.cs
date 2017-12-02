@@ -34,9 +34,21 @@ using System.Text;
 using System.Threading;
 using JetBrains.Annotations;
 using Jose;
+using Jose.netstandard1_4;
 using log4net;
 using MiNET.Net;
 using MiNET.Utils.Skins;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
 
 namespace MiNET.Utils
 {
@@ -75,10 +87,20 @@ namespace MiNET.Utils
 			return asn.Concat(key.ToByteArray().Skip(8)).ToArray();
 		}
 
+		public static byte[] ToDerEncoded([NotNull] this ECPublicKeyParameters key)
+		{
+			byte[] asn = new byte[24]
+			{
+				0x30, 0x76, 0x30, 0x10, 0x6, 0x7, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x2,
+				0x1, 0x6, 0x5, 0x2b, 0x81, 0x4, 0x0, 0x22, 0x3, 0x62, 0x0, 0x4
+			};
+
+			return asn.Concat(key.Q.GetEncoded().Skip(8)).ToArray();
+		}
+
 		public static ECDiffieHellmanPublicKey FromDerEncoded(byte[] keyBytes)
 		{
 			var clientPublicKeyBlob = FixPublicKey(keyBytes.Skip(23).ToArray());
-
 			ECDiffieHellmanPublicKey clientKey = ECDiffieHellmanCngPublicKey.FromByteArray(clientPublicKeyBlob, CngKeyBlobFormat.EccPublicBlob);
 			return clientKey;
 		}
@@ -162,6 +184,112 @@ namespace MiNET.Utils
 			return clearBytes;
 		}
 
+		public static string Encode(object payload, object key, JwsAlgorithm algorithm, IDictionary<string, object> extraHeaders = null, JwtSettings settings = null)
+		{
+			return Encode(JsonConvert.SerializeObject(payload), key, algorithm, extraHeaders, settings);
+		}
+
+		public static string Encode(string payload, object key, JwsAlgorithm algorithm, IDictionary<string, object> extraHeaders = null, JwtSettings settings = null)
+		{
+			return EncodeBytes(Encoding.UTF8.GetBytes(payload), key, algorithm, extraHeaders, settings);
+		}
+
+		public static string EncodeBytes(byte[] payload, object key, JwsAlgorithm algorithm, IDictionary<string, object> extraHeaders = null, JwtSettings settings = null)
+		{
+			if (payload == null)
+				throw new ArgumentNullException(nameof(payload));
+
+			if (extraHeaders == null) //allow overload, but keep backward compatible defaults
+			{
+				extraHeaders = new Dictionary<string, object> { { "typ", "JWT" } };
+			}
+
+			var jwtHeader = new Dictionary<string, object> { { "alg", algorithm.ToString() } };
+
+			Dictionaries.Append(jwtHeader, extraHeaders);
+			byte[] headerBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(jwtHeader));
+
+			var bytesToSign = Encoding.UTF8.GetBytes(Serialize(headerBytes, payload));
+
+			var signer = SignerUtilities.GetSigner("SHA-384withECDSA");
+			signer.Init(true, (ECPrivateKeyParameters)key);
+
+			signer.BlockUpdate(bytesToSign, 0, bytesToSign.Length);
+			byte[] signature = signer.GenerateSignature();
+
+			return Serialize(headerBytes, payload, transcodeSignatureToConcat(signature, 96));
+		}
+
+		public static byte[] transcodeSignatureToConcat(byte[] derSignature, int outputLength) {
+
+		if (derSignature.Length < 8 || derSignature[0] != 48) {
+			throw new Exception("Invalid ECDSA signature format");
+		}
+
+		int offset;
+		if (derSignature[1] > 0) {
+			offset = 2;
+		} else if (derSignature[1] == (byte) 0x81) {
+			offset = 3;
+		} else {
+			throw new Exception("Invalid ECDSA signature format");
+		}
+
+		byte rLength = derSignature[offset + 1];
+
+		int i;
+		for (i = rLength; (i > 0) && (derSignature[(offset + 2 + rLength) - i] == 0); i--) {
+			// do nothing
+		}
+
+		byte sLength = derSignature[offset + 2 + rLength + 1];
+
+		int j;
+		for (j = sLength; (j > 0) && (derSignature[(offset + 2 + rLength + 2 + sLength) - j] == 0); j--) {
+			// do nothing
+		}
+
+		int rawLen = Math.Max(i, j);
+		rawLen = Math.Max(rawLen, outputLength / 2);
+
+		if ((derSignature[offset - 1] & 0xff) != derSignature.Length - offset
+			|| (derSignature[offset - 1] & 0xff) != 2 + rLength + 2 + sLength
+			|| derSignature[offset] != 2
+			|| derSignature[offset + 2 + rLength] != 2) {
+			throw new Exception("Invalid ECDSA signature format");
+		}
+
+		byte[] concatSignature = new byte[2 * rawLen];
+
+	    Array.Copy(derSignature, (offset + 2 + rLength) - i, concatSignature, rawLen - i, i);
+		Array.Copy(derSignature, (offset + 2 + rLength + 2 + sLength) - j, concatSignature, 2 * rawLen - j, j);
+
+		return concatSignature;
+	}
+
+		private static string Serialize(params byte[][] parts)
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (byte[] part in parts)
+				stringBuilder.Append(Base64Url.Encode(part)).Append(".");
+			stringBuilder.Remove(stringBuilder.Length - 1, 1);
+			return stringBuilder.ToString();
+		}
+
+		public static CertificateData Decode(string token, AsymmetricKeyParameter key)
+		{
+			string[] parts = token.Split('.');
+			string header = parts[0];
+			string payload = parts[1];
+			byte[] crypto = parts[2].DecodeBase64Url();
+
+			string headerJson = Encoding.UTF8.GetString(header.DecodeBase64Url());
+			JObject headerData = JObject.Parse(headerJson);
+
+			string payloadJson = Encoding.UTF8.GetString(payload.DecodeBase64Url());
+			JObject payloadData = JObject.Parse(payloadJson);
+			return payloadData.ToObject<CertificateData>();
+		}
 
 		// CLIENT TO SERVER STUFF
 

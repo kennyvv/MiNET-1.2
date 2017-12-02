@@ -69,7 +69,7 @@ namespace MiNET.Worlds.Decorators
 		{
 			if (surface || column.GetBlock(x, y, z) != 1 && isBelowMaxHeight) return;
 
-			if (isBelowMaxHeight)
+			if (isBelowMaxHeight && !surface)
 			{
 				int rx = column.x*16 + x;
 				int rz = column.z*16 + z;
@@ -89,7 +89,7 @@ namespace MiNET.Worlds.Decorators
 						}
 
 						weight /= ore.Rarity;
-						weight = weightOffsets[0] - Math.Abs(weight - weightOffsets[1]);
+						weight = weightOffsets[0] - MathHelpers.Abs((float)weight - weightOffsets[1]);
 
 						if (noise > weight)
 						{

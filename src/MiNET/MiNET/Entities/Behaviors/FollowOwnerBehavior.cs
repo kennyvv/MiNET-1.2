@@ -36,7 +36,7 @@ namespace MiNET.Entities.Behaviors
 			return ShouldStart();
 		}
 
-		private List<Tile> _currentPath = null;
+		private List<ImprovedTile> _currentPath = null;
 
 		public void OnTick(Entity[] entities)
 		{
@@ -67,7 +67,7 @@ namespace MiNET.Entities.Behaviors
 
 			if (_currentPath.Count > 0)
 			{
-				Tile next;
+				ImprovedTile next;
 				if (!GetNextTile(out next)) return;
 
 				_entity.Controller.RotateTowards(new Vector3((float) next.X + 0.5f, _entity.KnownPosition.Y, (float) next.Y + 0.5f));
@@ -110,9 +110,9 @@ namespace MiNET.Entities.Behaviors
 			_entity.Controller.LookAt(player, true);
 		}
 
-		private bool GetNextTile(out Tile next)
+		private bool GetNextTile(out ImprovedTile next)
 		{
-			next = new Tile();
+			next = new ImprovedTile();
 			if (_currentPath.Count == 0) return false;
 
 			next = _currentPath.First();

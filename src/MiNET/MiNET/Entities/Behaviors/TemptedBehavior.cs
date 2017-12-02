@@ -80,7 +80,7 @@ namespace MiNET.Entities.Behaviors
 			return ShouldStart();
 		}
 
-		private List<Tile> _currentPath = null;
+		private List<ImprovedTile> _currentPath = null;
 		private Pathfinder _pathfinder;
 
 		public void OnTick(Entity[] entities)
@@ -120,9 +120,9 @@ namespace MiNET.Entities.Behaviors
 			if (_currentPath.Count > 0)
 			{
 				// DEBUG
-				_pathfinder?.PrintPath(_entity.Level, _currentPath);
+				//_pathfinder?.PrintPath(_entity.Level, _currentPath);
 
-				Tile next;
+				ImprovedTile next;
 				if (!GetNextTile(out next))
 				{
 					_currentPath = null;
@@ -166,9 +166,9 @@ namespace MiNET.Entities.Behaviors
 			_entity.Controller.LookAt(_player, true);
 		}
 
-		private bool GetNextTile(out Tile next)
+		private bool GetNextTile(out ImprovedTile next)
 		{
-			next = new Tile();
+			next = new ImprovedTile();
 			if (_currentPath.Count == 0) return false;
 
 			next = _currentPath.First();

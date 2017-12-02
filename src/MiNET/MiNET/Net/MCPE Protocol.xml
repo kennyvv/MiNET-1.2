@@ -795,11 +795,11 @@
 	    <enum id="Internal" value="10" />
 	  </enums>
 
-    <field name="Command" type="string"  />
-    <field name="Command type" type="SignedVarInt" />
-    <field name="Request ID" type="string" />
+    <field name="Command" type="string" />
+	  <field name="Command type" type="SignedVarInt" />
+	  <field name="Unknown UUID" type="UUID" />
+	  <field name="Request ID" type="string" />
 	  <field name="Unknown" type="bool" />
-		
    <!-- <field name="Command overload" type="string"  />
 		<field name="Unknown 1" type="UnsignedVarInt"  />
 		<field name="Current Step " type="UnsignedVarInt"  />

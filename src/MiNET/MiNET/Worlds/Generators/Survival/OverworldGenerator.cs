@@ -30,7 +30,7 @@ namespace MiNET.Worlds.Generators.Survival
 
 		public OverworldGenerator()
 		{
-			int seed = Config.GetProperty("seed", "kennyiscool").GetHashCode();
+			int seed = Config.GetProperty("seed", "YoHoMotherducker!").GetHashCode();
 			Seed = seed;
 
 			BiomeModifierX = new SimplexPerlin(seed + 3700);
@@ -125,7 +125,7 @@ namespace MiNET.Worlds.Generators.Survival
 		private const float DepthFrequency = 0.662f;
 		private const float DepthLacunarity = 2.375f; //6f;
 		private const float DepthNoiseGain = 2f;//0.256f;
-		private const float DepthNoiseScaleExponent = 0.5f;//1;// 0.25f;//1.2f; //0.9f; //1.2F;
+		private const float DepthNoiseScaleExponent = 1f;//1;// 0.25f;//1.2f; //0.9f; //1.2F;
 
 		private const float CoordinateScale = 684.412F;
 		private const float HeightScale = 684.412F;
@@ -166,10 +166,10 @@ namespace MiNET.Worlds.Generators.Survival
 			CreateTerrainShape(chunk, heightMap, thresholdMap, biomes);
 			DecorateChunk(chunk, heightMap, thresholdMap, biomes, chunkDecorators);
 
-			chunk.isDirty = true;
-			chunk.NeedSave = true;
+			//chunk.isDirty = true;
+			//chunk.NeedSave = true;
 
-			for (int x = 0; x < 16; x++)
+			/*for (int x = 0; x < 16; x++)
 			{
 				for (int z = 0; z < 16; z++)
 				{
@@ -178,7 +178,7 @@ namespace MiNET.Worlds.Generators.Survival
 						chunk.SetSkyLight(x, y, z, 255);
 					}
 				}
-			}
+			}*/
 			//	sw.Stop();
 
 			//	if (sw.ElapsedMilliseconds > previousTime)

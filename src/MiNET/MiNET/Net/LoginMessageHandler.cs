@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Xml.Xsl;
 using fNbt;
@@ -37,6 +38,21 @@ using MiNET.Net;
 using MiNET.Utils;
 using MiNET.Utils.Skins;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Nist;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.Sec;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Agreement;
+using Org.BouncyCastle.Crypto.EC;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Pkcs;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.X509;
+using Security.Cryptography;
 
 namespace MiNET
 {
@@ -74,7 +90,14 @@ namespace MiNET
 
 			_playerInfo.ProtocolVersion = message.protocolVersion;
 
-			DecodeCert(message);
+			//if (MiNetServer.IsRunningOnMono())
+			{
+			//	DecodeCertMono(message);
+			}
+			//else
+			{
+				DecodeCert(message);
+			}
 		}
 
 		protected void DecodeCert(McpeLogin message)
@@ -162,11 +185,11 @@ namespace MiNET
 
 						_playerInfo.Skin = new Skin()
 						{
-							CapeData = Convert.FromBase64String((string)payload.CapeData),
+							CapeData = Convert.FromBase64String((string) payload.CapeData),
 							SkinId = payload.SkinId,
-							SkinData = Convert.FromBase64String((string)payload.SkinData),
+							SkinData = Convert.FromBase64String((string) payload.SkinData),
 							SkinGeometryName = payload.SkinGeometryName,
-							SkinGeometry = Encoding.UTF8.GetString(Convert.FromBase64String((string)payload.SkinGeometry)),
+							SkinGeometry = Encoding.UTF8.GetString(Convert.FromBase64String((string) payload.SkinGeometry)),
 						};
 						Log.Warn($"Cape data lenght={_playerInfo.Skin.CapeData.Length}");
 					}
@@ -176,16 +199,17 @@ namespace MiNET
 					}
 				}
 
+				//var chainArray = chain.ToArray();
+
+				string validationKey = null;
+				string identityPublicKey = null;
+				//if (!isMono)
 				{
 					dynamic json = JObject.Parse(certificateChain);
 
 					if (Log.IsDebugEnabled) Log.Debug($"Certificate JSON:\n{json}");
 
 					JArray chain = json.chain;
-					//var chainArray = chain.ToArray();
-
-					string validationKey = null;
-					string identityPublicKey = null;
 
 					foreach (JToken token in chain)
 					{
@@ -226,18 +250,11 @@ namespace MiNET
 						{
 							Log.Debug("Derived Key is ok");
 						}
-
-						if (Log.IsDebugEnabled)
-						{
-							Log.Debug($"x5u cert (string): {x5u}");
-							ECDiffieHellmanPublicKey publicKey = CryptoUtils.FromDerEncoded(x5u.DecodeBase64Url());
-							Log.Debug($"Cert:\n{publicKey.ToXmlString()}");
-						}
-
 						// Validate
-						ECDiffieHellmanCngPublicKey newKey = (ECDiffieHellmanCngPublicKey)CryptoUtils.FromDerEncoded(x5u.DecodeBase64Url());
-						CertificateData data = JWT.Decode<CertificateData>(token.ToString(), newKey.Import());
 
+						var key = PublicKeyFactory.CreateKey(x5u.DecodeBase64Url());
+
+						CertificateData data = CryptoUtils.Decode(token.ToString(), key);
 						if (data != null)
 						{
 							identityPublicKey = data.IdentityPublicKey;
@@ -272,86 +289,118 @@ namespace MiNET
 							Log.Error("Not a valid Identity Public Key for decoding");
 						}
 					}
+				}
 
-					//TODO: Implement disconnect here
+				//TODO: Implement disconnect here
+
+
+				_playerInfo.Username = _playerInfo.CertificateData.ExtraData.DisplayName;
+				_session.Username = _playerInfo.Username;
+				string identity = _playerInfo.CertificateData.ExtraData.Identity;
+
+				if (Log.IsDebugEnabled) Log.Debug($"Connecting user {_playerInfo.Username} with identity={identity}");
+				_playerInfo.ClientUuid = new UUID(identity);
+
+				bool useEncryption = (Config.GetProperty("UseEncryptionForAll", false) ||
+				                      (Config.GetProperty("UseEncryption", true) &&
+				                       !string.IsNullOrWhiteSpace(_playerInfo.CertificateData.ExtraData.Xuid)));
+
+				if (useEncryption)
+				{
+					var publicKey = PublicKeyFactory.CreateKey(_playerInfo.CertificateData.IdentityPublicKey.DecodeBase64Url());
+
+					string namedCurve = "secp384r1";
+					ECKeyPairGenerator pGen = new ECKeyPairGenerator();
+					ECKeyGenerationParameters genParam = new ECKeyGenerationParameters(
+						SecNamedCurves.GetOid(namedCurve),
+						new SecureRandom());
+					pGen.Init(genParam);
+
+					AsymmetricCipherKeyPair keyPair = pGen.GenerateKeyPair();
+
+					ECDHBasicAgreement agreement = new ECDHBasicAgreement();
+					agreement.Init(keyPair.Private);
+
+					byte[] preHash = agreement.CalculateAgreement(publicKey).ToByteArray();
+
+					byte[] prepend = Encoding.UTF8.GetBytes("RANDOM SECRET");
+					byte[] secret;
+
+					SHA256Managed sha = new SHA256Managed();
+					using (var memoryStream = new MemoryStream())
+					{
+						memoryStream.Write(prepend, 0, prepend.Length);
+						memoryStream.Write(preHash, 0, preHash.Length);
+						memoryStream.Position = 0;
+						secret = sha.ComputeHash(memoryStream);
+					}
+
+
+					//if (Log.IsDebugEnabled) Log.Debug($"SECRET KEY (b64, {secret.Length}):\n{secret.EncodeBase64()}");
 
 					{
-						_playerInfo.Username = _playerInfo.CertificateData.ExtraData.DisplayName;
-						_session.Username = _playerInfo.Username;
-						string identity = _playerInfo.CertificateData.ExtraData.Identity;
+						RijndaelManaged rijAlg = new RijndaelManaged
+						{
+							BlockSize = 128,
+							Padding = PaddingMode.None,
+							Mode = CipherMode.CFB,
+							FeedbackSize = 8,
+							Key = secret,
+							IV = secret.Take(16).ToArray(),
+						};
 
-						if (Log.IsDebugEnabled) Log.Debug($"Connecting user {_playerInfo.Username} with identity={identity}");
-						_playerInfo.ClientUuid = new UUID(identity);
+						// Create a decrytor to perform the stream transform.
+						ICryptoTransform decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
+						MemoryStream inputStream = new MemoryStream();
+						CryptoStream cryptoStreamIn = new CryptoStream(inputStream, decryptor, CryptoStreamMode.Read);
+
+						ICryptoTransform encryptor = rijAlg.CreateEncryptor(rijAlg.Key, rijAlg.IV);
+						MemoryStream outputStream = new MemoryStream();
+						CryptoStream cryptoStreamOut = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
 
 						_session.CryptoContext = new CryptoContext
 						{
-							UseEncryption = Config.GetProperty("UseEncryptionForAll", false) || (Config.GetProperty("UseEncryption", true) && !string.IsNullOrWhiteSpace(_playerInfo.CertificateData.ExtraData.Xuid)),
+							UseEncryption = true,
+							Algorithm = rijAlg,
+							Decryptor = decryptor,
+							Encryptor = encryptor,
+							InputStream = inputStream,
+							OutputStream = outputStream,
+							CryptoStreamIn = cryptoStreamIn,
+							CryptoStreamOut = cryptoStreamOut
 						};
 
-						if (_session.CryptoContext.UseEncryption)
+
+						var pubKey1 = ((ECPublicKeyParameters)keyPair.Public);
+
+						byte[] asn = new byte[24]
 						{
-							ECDiffieHellmanPublicKey publicKey = CryptoUtils.FromDerEncoded(_playerInfo.CertificateData.IdentityPublicKey.DecodeBase64Url());
-							if (Log.IsDebugEnabled) Log.Debug($"Cert:\n{publicKey.ToXmlString()}");
+							0x30, 0x76, 0x30, 0x10, 0x6, 0x7, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x2,
+							0x1, 0x6, 0x5, 0x2b, 0x81, 0x4, 0x0, 0x22, 0x3, 0x62, 0x0, 0x4
+						};
+						string b64Key = asn.Concat(ConvertToNCryptEccPublicBlob(pubKey1.Q).Skip(8)).ToArray().EncodeBase64();
+						var handshakeJson = new HandshakeData() {salt = prepend.EncodeBase64()};
 
-							// Create shared shared secret
-							ECDiffieHellmanCng ecKey = new ECDiffieHellmanCng(384);
-							ecKey.HashAlgorithm = CngAlgorithm.Sha256;
-							ecKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-							ecKey.SecretPrepend = Encoding.UTF8.GetBytes("RANDOM SECRET"); // Server token
-							byte[] secret = ecKey.DeriveKeyMaterial(publicKey);
+						string val = CryptoUtils.Encode(handshakeJson, keyPair.Private, JwsAlgorithm.ES384,
+							new Dictionary<string, object> { { "x5u", b64Key } });
 
-							if (Log.IsDebugEnabled) Log.Debug($"SECRET KEY (b64):\n{secret.EncodeBase64()}");
+						var response = McpeServerToClientHandshake.CreateObject();
+						response.NoBatch = true;
+						response.ForceClear = true;
+						response.token = val;
 
-							{
-								RijndaelManaged rijAlg = new RijndaelManaged
-								{
-									BlockSize = 128,
-									Padding = PaddingMode.None,
-									Mode = CipherMode.CFB,
-									FeedbackSize = 8,
-									Key = secret,
-									IV = secret.Take(16).ToArray(),
-								};
+						_session.SendPackage(response);
 
-								// Create a decrytor to perform the stream transform.
-								ICryptoTransform decryptor = rijAlg.CreateDecryptor(rijAlg.Key, rijAlg.IV);
-								MemoryStream inputStream = new MemoryStream();
-								CryptoStream cryptoStreamIn = new CryptoStream(inputStream, decryptor, CryptoStreamMode.Read);
-
-								ICryptoTransform encryptor = rijAlg.CreateEncryptor(rijAlg.Key, rijAlg.IV);
-								MemoryStream outputStream = new MemoryStream();
-								CryptoStream cryptoStreamOut = new CryptoStream(outputStream, encryptor, CryptoStreamMode.Write);
-
-								_session.CryptoContext.Algorithm = rijAlg;
-								_session.CryptoContext.Decryptor = decryptor;
-								_session.CryptoContext.Encryptor = encryptor;
-								_session.CryptoContext.InputStream = inputStream;
-								_session.CryptoContext.OutputStream = outputStream;
-								_session.CryptoContext.CryptoStreamIn = cryptoStreamIn;
-								_session.CryptoContext.CryptoStreamOut = cryptoStreamOut;
-
-								string b64Key = ecKey.PublicKey.ToDerEncoded().EncodeBase64();
-								var handshakeJson = new HandshakeData() { salt = ecKey.SecretPrepend.EncodeBase64() };
-
-								string val = JWT.Encode(handshakeJson, ecKey.Key, JwsAlgorithm.ES384, new Dictionary<string, object> { { "x5u", b64Key } });
-								Log.Warn($"Headers: {string.Join(";", JWT.Headers(val))}");
-								Log.Warn($"Return salt:\n{JWT.Payload(val)}");
-
-								var response = McpeServerToClientHandshake.CreateObject();
-								response.NoBatch = true;
-								response.ForceClear = true;
-								response.token = val;
-
-								_session.SendPackage(response);
-
-								if (Log.IsDebugEnabled) Log.Warn($"Encryption enabled for {_session.Username}");
-							}
-						}
+						if (Log.IsDebugEnabled) Log.Warn($"Encryption enabled for {_session.Username}");
 					}
 				}
-
-				if (!_session.CryptoContext.UseEncryption)
+				else
 				{
+					_session.CryptoContext = new CryptoContext
+					{
+						UseEncryption = false
+					};
+
 					_session.MessageHandler.HandleMcpeClientToServerHandshake(null);
 				}
 			}
@@ -359,6 +408,18 @@ namespace MiNET
 			{
 				Log.Error("Decrypt", e);
 			}
+		}
+
+		//0x334B4345
+		public static byte[] ConvertToNCryptEccPublicBlob(Org.BouncyCastle.Math.EC.ECPoint q)
+		{
+			var magic = new byte[] { 0x45, 0x43, 0x4B, 0x33 };
+			var len = new byte[] { 0x30, 0, 0, 0 }; // key length - 384 bit / 8
+
+			var qx = q.AffineXCoord.GetEncoded();
+			var qy = q.AffineYCoord.GetEncoded();
+
+			return (new[] { magic, len, qx, qy }).SelectMany(_ => _).ToArray();
 		}
 
 		public void HandleMcpeClientToServerHandshake(McpeClientToServerHandshake message)
@@ -381,8 +442,8 @@ namespace MiNET
 				_session.Disconnect($"Wrong version ({_playerInfo.ProtocolVersion}) of Minecraft. Downgrade to join this server. ({MotdProvider.ProtocolVersion})");
 				return;
 			}
-
-			if (Config.GetProperty("ForceXBLAuthentication", false) && _playerInfo.CertificateData.ExtraData.Xuid == null)
+			
+			if (Config.GetProperty("ForceXBLAuthentication", false) && _playerInfo.CertificateData?.ExtraData?.Xuid == null)
 			{
 				Log.Warn($"You must authenticate to XBOX Live to join this server.");
 				_session.Disconnect(Config.GetProperty("ForceXBLLogin", "You must authenticate to XBOX Live to join this server."));

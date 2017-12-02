@@ -309,9 +309,11 @@ namespace MiNET
 
 					// Get bytes
 					byte[] payload = batch.payload;
+					bool decrypted = false;
 					if (playerSession.CryptoContext != null && playerSession.CryptoContext.UseEncryption)
 					{
 						payload = CryptoUtils.Decrypt(payload, playerSession.CryptoContext);
+						decrypted = true;
 					}
 
 					// Decompress bytes
@@ -319,7 +321,7 @@ namespace MiNET
 					MemoryStream stream = new MemoryStream(payload);
 					if (stream.ReadByte() != 0x78)
 					{
-						throw new InvalidDataException("Incorrect ZLib header. Expected 0x78 0x9C");
+						throw new InvalidDataException($"Incorrect ZLib header. Expected 0x78 0x9C ({decrypted})");
 					}
 					stream.ReadByte();
 					using (var defStream2 = new DeflateStream(stream, CompressionMode.Decompress, false))

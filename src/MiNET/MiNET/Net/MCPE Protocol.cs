@@ -5950,6 +5950,7 @@ namespace MiNET.Net
 
 		public string command; // = null;
 		public int commandType; // = null;
+		public UUID unknownUuid; // = null;
 		public string requestId; // = null;
 		public bool unknown; // = null;
 
@@ -5967,6 +5968,7 @@ namespace MiNET.Net
 
 			Write(command);
 			WriteSignedVarInt(commandType);
+			Write(unknownUuid);
 			Write(requestId);
 			Write(unknown);
 
@@ -5984,6 +5986,7 @@ namespace MiNET.Net
 
 			command = ReadString();
 			commandType = ReadSignedVarInt();
+			unknownUuid = ReadUUID();
 			requestId = ReadString();
 			unknown = ReadBool();
 
@@ -5999,6 +6002,7 @@ namespace MiNET.Net
 
 			command=default(string);
 			commandType=default(int);
+			unknownUuid=default(UUID);
 			requestId=default(string);
 			unknown=default(bool);
 		}

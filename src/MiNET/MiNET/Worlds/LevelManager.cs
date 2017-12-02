@@ -61,7 +61,7 @@ namespace MiNET
 			{
 				AnvilWorldProvider worldProvider = new AnvilWorldProvider
 				{
-					MissingChunkProvider = new OverworldGenerator(),
+					MissingChunkProvider = new FlatLandWorldGenerator(),
 					ReadSkyLight = !Config.GetProperty("CalculateLights", false),
 					ReadBlockLight = !Config.GetProperty("CalculateLights", false),
 				};

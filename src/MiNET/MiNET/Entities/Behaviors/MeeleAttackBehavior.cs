@@ -18,7 +18,7 @@ namespace MiNET.Entities.Behaviors
 		private readonly double _followRange;
 
 		private int _cooldown;
-		private List<Tile> _currentPath;
+		private List<ImprovedTile> _currentPath;
 		private Vector3 _lastPlayerPos;
 
 		public MeeleAttackBehavior(Mob entity, double speedMultiplier, double followRange = 16)
@@ -87,7 +87,7 @@ namespace MiNET.Entities.Behaviors
 
 			if (_currentPath.Count > 0)
 			{
-				Tile next;
+				ImprovedTile next;
 				if (GetNextTile(out next))
 				{
 					entity.Controller.RotateTowards(new Vector3((float) next.X + 0.5f, entity.KnownPosition.Y, (float) next.Y + 0.5f));
@@ -111,9 +111,9 @@ namespace MiNET.Entities.Behaviors
 			}
 		}
 
-		private bool GetNextTile(out Tile next)
+		private bool GetNextTile(out ImprovedTile next)
 		{
-			next = new Tile();
+			next = new ImprovedTile(0,0);
 			if (_currentPath.Count == 0) return false;
 
 			next = _currentPath.First();

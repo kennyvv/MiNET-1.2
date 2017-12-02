@@ -45,7 +45,7 @@ namespace MiNET.Entities.Behaviors
 		private readonly double _speed;
 		private readonly double _speedMultiplier;
 		private readonly int _chance;
-		private List<Tile> _currentPath;
+		private List<ImprovedTile> _currentPath;
 		private Pathfinder _pathfinder;
 
 		public WanderBehavior(Mob entity, double speed, double speedMultiplier, int chance = 120)
@@ -80,9 +80,9 @@ namespace MiNET.Entities.Behaviors
 			if (_currentPath.Count > 0)
 			{
 				// DEBUG
-			//	_pathfinder.PrintPath(_entity.Level, _currentPath);
+				//	_pathfinder.PrintPath(_entity.Level, _currentPath);
 
-				Tile next;
+				ImprovedTile next;
 				if (!GetNextTile(out next))
 				{
 					_currentPath = null;
@@ -103,9 +103,9 @@ namespace MiNET.Entities.Behaviors
 			}
 		}
 
-		private bool GetNextTile(out Tile next)
+		private bool GetNextTile(out ImprovedTile next)
 		{
-			next = new Tile();
+			next = new ImprovedTile(0,0);
 			if (_currentPath.Count == 0) return false;
 
 			next = _currentPath.First();

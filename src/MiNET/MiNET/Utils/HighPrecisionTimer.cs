@@ -79,7 +79,10 @@ namespace MiNET.Utils
 			// this, thanks.
 			//
 			// HERE BE DRAGONS!
-			WinApi.TimeBeginPeriod(1);
+			if (!MiNetServer.IsRunningOnMono())
+			{
+				WinApi.TimeBeginPeriod(1);
+			}
 			// END IS HERE. SAFE AGAIN ...
 
 			Avarage = interval;

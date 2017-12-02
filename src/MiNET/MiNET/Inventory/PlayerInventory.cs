@@ -70,14 +70,14 @@ namespace MiNET
 		}
 
 		[Wired]
-		public void SetInventorySlot(int slot, Item item)
+		public virtual void SetInventorySlot(int slot, Item item)
 		{
 			Slots[slot] = item;
 
 			SendSetSlot(slot);
 		}
 
-		public void UpdateInventorySlot(int slot, Item item)
+		public virtual void UpdateInventorySlot(int slot, Item item)
 		{
 			var existing = Slots[slot];
 			if (existing.Id != item.Id)
@@ -91,7 +91,7 @@ namespace MiNET
 			existing.ExtraData = item.ExtraData;
 		}
 
-		public ItemStacks GetSlots()
+		public virtual ItemStacks GetSlots()
 		{
 			ItemStacks slotData = new ItemStacks();
 			for (int i = 0; i < Slots.Length; i++)
@@ -103,7 +103,7 @@ namespace MiNET
 			return slotData;
 		}
 
-		public ItemStacks GetArmor()
+		public virtual ItemStacks GetArmor()
 		{
 			return new ItemStacks
 			{
@@ -114,7 +114,7 @@ namespace MiNET
 			};
 		}
 
-		public bool SetFirstEmptySlot(Item item, bool update, bool reverseOrder)
+		public virtual bool SetFirstEmptySlot(Item item, bool update, bool reverseOrder)
 		{
 			if (reverseOrder)
 			{
@@ -156,7 +156,7 @@ namespace MiNET
 			return false;
 		}
 
-		public void SetHeldItemSlot(int selectedHotbarSlot, bool sendToPlayer = true)
+		public virtual void SetHeldItemSlot(int selectedHotbarSlot, bool sendToPlayer = true)
 		{
 			SelectedHotbarSlot = selectedHotbarSlot;
 			InHandSlot = selectedHotbarSlot;
@@ -184,12 +184,12 @@ namespace MiNET
 		///     Empty the specified slot
 		/// </summary>
 		/// <param name="slot">The slot to empty.</param>
-		public void ClearInventorySlot(byte slot)
+		public virtual void ClearInventorySlot(byte slot)
 		{
 			SetInventorySlot(slot, new ItemAir());
 		}
 
-		public bool HasItem(Item item)
+		public virtual bool HasItem(Item item)
 		{
 			for (byte i = 0; i < Slots.Length; i++)
 			{
@@ -201,7 +201,7 @@ namespace MiNET
 			return false;
 		}
 
-		public void RemoveItems(short id, byte count)
+		public virtual void RemoveItems(short id, byte count)
 		{
 			for (byte i = 0; i < Slots.Length; i++)
 			{
@@ -220,7 +220,7 @@ namespace MiNET
 			}
 		}
 
-		public void SendSetSlot(int slot)
+		public virtual void SendSetSlot(int slot)
 		{
 			if (slot < 0 || slot > Slots.Length - 1) return;
 
@@ -254,7 +254,7 @@ namespace MiNET
 			}
 		}
 
-		public void Clear()
+		public virtual void Clear()
 		{
 			for (int i = 0; i < Slots.Length; ++i)
 			{

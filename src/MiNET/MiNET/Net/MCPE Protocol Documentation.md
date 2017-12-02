@@ -1661,6 +1661,7 @@ Wiki: [Command Request](https://github.com/NiclasOlofsson/MiNET/wiki//Protocol-C
 |:-----|:-----|:-----|
 |Command | string |  |
 |Command type | SignedVarInt |  |
+|Unknown UUID | UUID |  |
 |Request ID | string |  |
 |Unknown | bool |  |
 -----------------------------------------------------------------------

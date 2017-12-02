@@ -19,7 +19,7 @@ namespace MiNET.Entities.Behaviors
 		private Mob _entity;
 
 		private int _fuse = 30;
-		private List<Tile> _currentPath;
+		private List<ImprovedTile> _currentPath;
 		private Vector3 _lastPlayerPos;
 		private bool _damageWorld;
 		public CreepBehavior(Mob creeper, double speedMultiplier, double followRange = 16, bool damageWorld = true)
@@ -122,7 +122,7 @@ namespace MiNET.Entities.Behaviors
 
 				if (_currentPath.Count > 0)
 				{
-					Tile next;
+					ImprovedTile next;
 					if (GetNextTile(out next))
 					{
 						entity.Controller.RotateTowards(new Vector3((float)next.X + 0.5f, entity.KnownPosition.Y, (float)next.Y + 0.5f));
@@ -152,9 +152,9 @@ namespace MiNET.Entities.Behaviors
 				c.BroadcastSetEntityData();
 			}
 		}
-		private bool GetNextTile(out Tile next)
+		private bool GetNextTile(out ImprovedTile next)
 		{
-			next = new Tile();
+			next = new ImprovedTile(0,0);
 			if (_currentPath.Count == 0) return false;
 
 			next = _currentPath.First();

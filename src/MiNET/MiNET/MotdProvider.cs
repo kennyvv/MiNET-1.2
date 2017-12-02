@@ -6,8 +6,8 @@ namespace MiNET
 {
 	public class MotdProvider
 	{
-		public const int ProtocolVersion = 137;
-		public const string ClientVersion = "1.2";
+		public const int ProtocolVersion = 140;
+		public const string ClientVersion = "1.2.6.2";
 
 		public string Motd { get; set; }
 
